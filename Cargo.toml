@@ -1,0 +1,7 @@
+[package]
+name = "vrcounter"
+version = "0.1.0"
+authors = ["Jeffrey Yu <wehjin@gmail.com>"]
+
+[dependencies]
+sdl2 = "0.22.0"
