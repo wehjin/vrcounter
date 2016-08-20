@@ -5,3 +5,6 @@ authors = ["Jeffrey Yu <wehjin@gmail.com>"]
 
 [dependencies]
 sdl2 = "0.22.0"
+openvr = { git = "https://github.com/rust-openvr/rust-openvr", rev="fd417046ab3fe720492455d4830a4fdc724abfe6" }
+glium = "0.14.0"
+nalgebra = "0.8.2"
