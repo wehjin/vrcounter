@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Jeffrey Yu <wehjin@gmail.com>"]
 
 [dependencies]
+libc = "0.2.15"
 sdl2 = "0.22.0"
 openvr = { git = "https://github.com/rust-openvr/rust-openvr", rev="fd417046ab3fe720492455d4830a4fdc724abfe6" }
 glium = "0.14.0"

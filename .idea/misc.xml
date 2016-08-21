@@ -59,6 +59,6 @@
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="RustProjectSettings">
-    <option name="toolchainHomeDirectory" value="C:\Program Files\Rust stable MSVC 1.11\bin" />
+    <option name="toolchainHomeDirectory" value="/usr/local/bin" />
   </component>
 </project>

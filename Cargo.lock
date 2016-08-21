@@ -3,6 +3,7 @@ name = "vrcounter"
 version = "0.1.0"
 dependencies = [
  "glium 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "openvr 0.4.0 (git+https://github.com/rust-openvr/rust-openvr?rev=fd417046ab3fe720492455d4830a4fdc724abfe6)",
  "sdl2 0.22.0 (registry+https://github.com/rust-lang/crates.io-index)",
