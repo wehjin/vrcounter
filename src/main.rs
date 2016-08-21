@@ -1,60 +1,26 @@
-extern crate sdl2;
+#[macro_use] extern crate glium;
 
-use sdl2::pixels::Color;
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
-use sdl2::video::GLProfile;
+mod world;
 
-extern crate libc;
-
-#[link(name = "GLEW")]
-#[allow(non_snake_case)]
-extern {
-    static mut glewExperimental: libc::c_int;
-    fn glewInit() -> i32;
-}
-
-fn glew_init() -> i32 {
-    unsafe {glewExperimental = 1};
-    return unsafe { glewInit() };
-}
-
-pub fn main() {
-    println!("Main!!");
-
-    let sdl_context = sdl2::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
-    let window = video_subsystem.window("rust-sdl2 demo: Video", 800, 600)
-        .position_centered()
-        .opengl()
-        .build()
+fn main() {
+    use glium::{DisplayBuild, Surface};
+    let display: glium::Display = glium::glutin::WindowBuilder::new()
+        .with_title("vrcounter")
+        .build_glium()
         .unwrap();
 
-    let gl_context = window.gl_create_context().unwrap();
-    let gl_attr = video_subsystem.gl_attr();
-    gl_attr.set_context_major_version(3);
-    gl_attr.set_context_minor_version(2);
-    gl_attr.set_context_profile(GLProfile::Core);
-    gl_attr.set_double_buffer(true);
-    video_subsystem.gl_set_swap_interval(1);
-    glew_init();
+    let room = world::Room::for_display(&display);
 
-    let mut renderer = window.renderer().build().unwrap();
-
-    renderer.set_draw_color(Color::RGB(255, 0, 0));
-    renderer.clear();
-    renderer.present();
-    let mut event_pump = sdl_context.event_pump().unwrap();
-
-    'running: loop {
-        for event in event_pump.poll_iter() {
-            match event {
-                Event::Quit { .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-                    break 'running
-                },
-                _ => {}
+    loop {
+        let mut target = display.draw();
+        target.clear_color(0.0, 0.0, 0.0, 0.0);
+        room.draw(&mut target);
+        target.finish().unwrap();
+        for ev in display.poll_events() {
+            match ev {
+                glium::glutin::Event::Closed => return,
+                _ => ()
             }
         }
-        // The rest of the game loop goes here...
     }
 }
