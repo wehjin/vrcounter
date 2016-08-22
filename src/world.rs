@@ -26,6 +26,8 @@ static FRAGMENT_SHADER: &'static str = r#"
         }
     "#;
 
+static PI: f32 = 3.141592;
+
 #[derive(Copy, Clone)]
 struct Vertex {
     position: [f32; 3],
@@ -37,7 +39,7 @@ implement_vertex!(Vertex, position, normal);
 pub struct Room {
     program: glium::Program,
     vertex_buffer: glium::VertexBuffer<Vertex>,
-    indices: glium::index::NoIndices
+    indices: glium::index::NoIndices,
 }
 
 impl Room {
@@ -50,28 +52,9 @@ impl Room {
             [0.0, 0.0, 1.0, 0.0],
             [0.0, 0.0, 0.0, 1.0f32],
         ];
-
-        let view = view_matrix(&[0.5, 0.2, -3.0], &[-0.5, -0.2, 3.0], &[0.0, 1.0, 0.0]);
-
-        let perspective = {
-            let (width, height) = frame.get_dimensions();
-            let aspect_ratio = height as f32 / width as f32;
-
-            let fov: f32 = 3.141592 / 3.0;
-            let zfar = 1024.0;
-            let znear = 0.1;
-
-            let f = 1.0 / (fov / 2.0).tan();
-
-            [
-                [f * aspect_ratio, 0.0, 0.0, 0.0],
-                [0.0, f, 0.0, 0.0],
-                [0.0, 0.0, (zfar + znear) / (zfar - znear), 1.0],
-                [0.0, 0.0, -(2.0 * zfar * znear) / (zfar - znear), 0.0],
-            ]
-        };
-
-        let params = glium::DrawParameters {
+        let view = view_matrix(&[0.0, 0.0, 0.0], &[0.0, 0.0, 1.0], &[0.0, 1.0, 0.0]);
+        let perspective = perspective_matrix(frame.get_dimensions(), PI / 3.0);
+        let draw_params = glium::DrawParameters {
             depth: glium::Depth {
                 test: glium::draw_parameters::DepthTest::IfLess,
                 write: true,
@@ -79,18 +62,16 @@ impl Room {
             },
             ..Default::default()
         };
-
-
         frame.draw(&self.vertex_buffer, &self.indices, &self.program,
                    &uniform! {model:model, view:view, perspective:perspective},
-                   &params)
+                   &draw_params)
             .unwrap();
     }
 
     fn make_shape() -> Vec<Vertex> {
-        let vertex1 = Vertex { position: [-0.5, -0.5, 0.0], normal: [0.0, 0.0, -1.0] };
-        let vertex2 = Vertex { position: [0.0, 0.5, 0.0], normal: [0.0, 0.0, -1.0] };
-        let vertex3 = Vertex { position: [0.5, -0.25, 0.0], normal: [0.0, 0.0, -1.0] };
+        let vertex1 = Vertex { position: [-0.5, -0.5, 1.0], normal: [0.0, 0.0, -1.0] };
+        let vertex2 = Vertex { position: [0.0, 0.5, 1.0], normal: [0.0, 0.0, -1.0] };
+        let vertex3 = Vertex { position: [0.5, -0.25, 1.0], normal: [0.0, 0.0, -1.0] };
         let shape = vec![vertex1, vertex2, vertex3];
         return shape;
     }
@@ -103,6 +84,19 @@ impl Room {
         let floor = Room { program: program, vertex_buffer: vertex_buffer, indices: indices };
         return floor;
     }
+}
+
+fn perspective_matrix((width, height): (u32, u32), fov: f32) -> [[f32; 4]; 4] {
+    let aspect_ratio = height as f32 / width as f32;
+    let zfar = 1024.0;
+    let znear = 0.1;
+    let f = 1.0 / (fov / 2.0).tan();
+    return [
+        [f * aspect_ratio, 0.0, 0.0, 0.0],
+        [0.0, f, 0.0, 0.0],
+        [0.0, 0.0, (zfar + znear) / (zfar - znear), 1.0],
+        [0.0, 0.0, -(2.0 * zfar * znear) / (zfar - znear), 0.0],
+    ]
 }
 
 
