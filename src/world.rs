@@ -86,6 +86,24 @@ impl Room {
     }
 }
 
+fn view_matrix(e: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> [[f32; 4]; 4] {
+    let f = norm(&direction);
+    let s = norm(&cross(&f, up));
+    let u = cross(&s, &f);
+    let neg_e = neg(e);
+    let p = [
+        dot(&neg_e, &s),
+        dot(&neg_e, &u),
+        dot(&neg_e, &f),
+    ];
+    [
+        [s[0], u[0], f[0], 0.0],
+        [s[1], u[1], f[1], 0.0],
+        [s[2], u[2], f[2], 0.0],
+        [p[0], p[1], p[2], 1.0],
+    ]
+}
+
 fn perspective_matrix((width, height): (u32, u32), fov: f32) -> [[f32; 4]; 4] {
     let aspect_ratio = height as f32 / width as f32;
     let zfar = 1024.0;
@@ -120,20 +138,3 @@ fn neg(a: &[f32; 3]) -> [f32; 3] {
     [-a[0], -a[1], -a[2]]
 }
 
-fn view_matrix(eye: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> [[f32; 4]; 4] {
-    let f = norm(&direction);
-    let s_norm = norm(&cross(up, &f));
-    let u = cross(&f, &s_norm);
-    let neg_eye = neg(eye);
-    let p = [
-        dot(&neg_eye, &s_norm),
-        dot(&neg_eye, &u),
-        dot(&neg_eye, &f),
-    ];
-    [
-        [s_norm[0], u[0], f[0], 0.0],
-        [s_norm[1], u[1], f[1], 0.0],
-        [s_norm[2], u[2], f[2], 0.0],
-        [p[0], p[1], p[2], 1.0],
-    ]
-}
