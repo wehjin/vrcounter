@@ -50,7 +50,7 @@ impl Room {
             [1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
             [0.0, 0.0, 1.0, 0.0],
-            [0.0, 0.0, -10.0, 1.0f32],
+            [0.0, 0.0, -1.0, 1.0f32],
         ];
         let view = view_matrix(&[0.0, 0.0, 0.0], &[0.0, 0.0, -1.0], &[0.0, 1.0, 0.0]);
         let perspective = perspective_matrix(frame.get_dimensions(), PI / 3.0);
@@ -69,8 +69,8 @@ impl Room {
     }
 
     fn make_shape() -> Vec<Vertex> {
-        let vertex1 = Vertex { position: [-0.5, -0.5, 0.0], normal: [0.0, 0.0, -1.0] };
-        let vertex2 = Vertex { position: [0.0, 0.5, 0.0], normal: [0.0, 0.0, -1.0] };
+        let vertex1 = Vertex { position: [-0.5, -0.25, 0.0], normal: [0.0, 0.0, -1.0] };
+        let vertex2 = Vertex { position: [0.0, 0.25, 0.0], normal: [0.0, 0.0, -1.0] };
         let vertex3 = Vertex { position: [0.5, -0.25, 0.0], normal: [0.0, 0.0, -1.0] };
         let shape = vec![vertex1, vertex2, vertex3];
         return shape;
@@ -91,15 +91,16 @@ fn view_matrix(e: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> [[f32; 4]; 
     let s = norm(&cross(&f, up));
     let u = cross(&s, &f);
     let neg_e = neg(e);
+    let z = neg(&f);
     let p = [
         dot(&neg_e, &s),
         dot(&neg_e, &u),
-        dot(&neg_e, &f),
+        dot(&neg_e, &z),
     ];
     [
-        [s[0], u[0], f[0], 0.0],
-        [s[1], u[1], f[1], 0.0],
-        [s[2], u[2], f[2], 0.0],
+        [s[0], u[0], z[0], 0.0],
+        [s[1], u[1], z[1], 0.0],
+        [s[2], u[2], z[2], 0.0],
         [p[0], p[1], p[2], 1.0],
     ]
 }
@@ -110,9 +111,9 @@ fn perspective_matrix((width, height): (u32, u32), fov: f32) -> [[f32; 4]; 4] {
     let znear = 0.1;
     let f = 1.0 / (fov / 2.0).tan();
     [
-        [f * aspect_ratio, 0.0, 0.0, 0.0],
+        [f *aspect_ratio, 0.0, 0.0, 0.0],
         [0.0, f, 0.0, 0.0],
-        [0.0, 0.0, (zfar + znear) / (zfar - znear), 1.0],
+        [0.0, 0.0, -(zfar + znear) / (zfar - znear), -1.0],
         [0.0, 0.0, -(2.0 * zfar * znear) / (zfar - znear), 0.0],
     ]
 }
