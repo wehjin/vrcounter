@@ -50,9 +50,9 @@ impl Room {
             [1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
             [0.0, 0.0, 1.0, 0.0],
-            [0.0, 0.0, 0.0, 1.0f32],
+            [0.0, 0.0, -10.0, 1.0f32],
         ];
-        let view = view_matrix(&[0.0, 0.0, 0.0], &[0.0, 0.0, 1.0], &[0.0, 1.0, 0.0]);
+        let view = view_matrix(&[0.0, 0.0, 0.0], &[0.0, 0.0, -1.0], &[0.0, 1.0, 0.0]);
         let perspective = perspective_matrix(frame.get_dimensions(), PI / 3.0);
         let draw_params = glium::DrawParameters {
             depth: glium::Depth {
@@ -69,9 +69,9 @@ impl Room {
     }
 
     fn make_shape() -> Vec<Vertex> {
-        let vertex1 = Vertex { position: [-0.5, -0.5, 1.0], normal: [0.0, 0.0, -1.0] };
-        let vertex2 = Vertex { position: [0.0, 0.5, 1.0], normal: [0.0, 0.0, -1.0] };
-        let vertex3 = Vertex { position: [0.5, -0.25, 1.0], normal: [0.0, 0.0, -1.0] };
+        let vertex1 = Vertex { position: [-0.5, -0.5, 0.0], normal: [0.0, 0.0, -1.0] };
+        let vertex2 = Vertex { position: [0.0, 0.5, 0.0], normal: [0.0, 0.0, -1.0] };
+        let vertex3 = Vertex { position: [0.5, -0.25, 0.0], normal: [0.0, 0.0, -1.0] };
         let shape = vec![vertex1, vertex2, vertex3];
         return shape;
     }
@@ -91,7 +91,7 @@ fn perspective_matrix((width, height): (u32, u32), fov: f32) -> [[f32; 4]; 4] {
     let zfar = 1024.0;
     let znear = 0.1;
     let f = 1.0 / (fov / 2.0).tan();
-    return [
+    [
         [f * aspect_ratio, 0.0, 0.0, 0.0],
         [0.0, f, 0.0, 0.0],
         [0.0, 0.0, (zfar + znear) / (zfar - znear), 1.0],
@@ -99,33 +99,37 @@ fn perspective_matrix((width, height): (u32, u32), fov: f32) -> [[f32; 4]; 4] {
     ]
 }
 
+fn cross(a: &[f32; 3], b: &[f32; 3]) -> [f32; 3] {
+    [
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0]
+    ]
+}
 
-fn view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> [[f32; 4]; 4] {
-    let f = {
-        let f = direction;
-        let len = f[0] * f[0] + f[1] * f[1] + f[2] * f[2];
-        let len = len.sqrt();
-        [f[0] / len, f[1] / len, f[2] / len]
-    };
+fn norm(a: &[f32; 3]) -> [f32; 3] {
+    let len = (a[0] * a[0] + a[1] * a[1] + a[2] * a[2]).sqrt();
+    [a[0] / len, a[1] / len, a[2] / len]
+}
 
-    let s = [up[1] * f[2] - up[2] * f[1],
-        up[2] * f[0] - up[0] * f[2],
-        up[0] * f[1] - up[1] * f[0]];
+fn dot(a: &[f32; 3], b: &[f32; 3]) -> f32 {
+    a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+}
 
-    let s_norm = {
-        let len = s[0] * s[0] + s[1] * s[1] + s[2] * s[2];
-        let len = len.sqrt();
-        [s[0] / len, s[1] / len, s[2] / len]
-    };
+fn neg(a: &[f32; 3]) -> [f32; 3] {
+    [-a[0], -a[1], -a[2]]
+}
 
-    let u = [f[1] * s_norm[2] - f[2] * s_norm[1],
-        f[2] * s_norm[0] - f[0] * s_norm[2],
-        f[0] * s_norm[1] - f[1] * s_norm[0]];
-
-    let p = [-position[0] * s_norm[0] - position[1] * s_norm[1] - position[2] * s_norm[2],
-        -position[0] * u[0] - position[1] * u[1] - position[2] * u[2],
-        -position[0] * f[0] - position[1] * f[1] - position[2] * f[2]];
-
+fn view_matrix(eye: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> [[f32; 4]; 4] {
+    let f = norm(&direction);
+    let s_norm = norm(&cross(up, &f));
+    let u = cross(&f, &s_norm);
+    let neg_eye = neg(eye);
+    let p = [
+        dot(&neg_eye, &s_norm),
+        dot(&neg_eye, &u),
+        dot(&neg_eye, &f),
+    ];
     [
         [s_norm[0], u[0], f[0], 0.0],
         [s_norm[1], u[1], f[1], 0.0],
