@@ -14,6 +14,7 @@ impl Camera {
     }
 
     pub fn up(&self) -> Camera {
+        // TODO: Fix these to rotate look.
         Camera { eye: self.eye, look: mat::add_y(&self.look, STEP), up: self.up }
     }
 
@@ -30,6 +31,7 @@ impl Camera {
     }
 
     pub fn near(&self) -> Camera {
+        // TODO: Fix these to move forward along look.
         Camera { eye: mat::add_z(&self.eye, -STEP), look: self.look, up: self.up }
     }
 
