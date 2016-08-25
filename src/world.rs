@@ -1,6 +1,7 @@
 extern crate glium;
 
 use mat;
+use cam;
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -17,16 +18,16 @@ pub struct Room {
 }
 
 impl Room {
-    pub fn draw(&self, frame: &mut glium::Frame) {
+    pub fn draw(&self, frame: &mut glium::Frame, camera: &cam::Camera) {
         use glium::Surface;
 
         let model = [
             [1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
             [0.0, 0.0, 1.0, 0.0],
-            [0.0, 0.0, -1.0, 1.0f32],
+            [0.0, 1.6, -1.0, 1.0f32],
         ];
-        let view = mat::view_matrix(&[0.0, 0.0, 0.0], &[0.0, 0.0, -1.0], &[0.0, 1.0, 0.0]);
+        let view = mat::view_matrix(&camera.eye, &camera.look, &camera.up);
         let perspective = mat::perspective_matrix(frame.get_dimensions(), PI / 3.0);
         let draw_params = glium::DrawParameters {
             depth: glium::Depth {

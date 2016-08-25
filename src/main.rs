@@ -2,6 +2,7 @@
 
 mod world;
 mod mat;
+mod cam;
 
 fn main() {
     use glium::{DisplayBuild, Surface};
@@ -12,12 +13,13 @@ fn main() {
         .unwrap();
 
     let room = world::Room::for_display(&display);
+    let camera = cam::Camera::make();
 
     loop {
         let mut target = display.draw();
         target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
 
-        room.draw(&mut target);
+        room.draw(&mut target, &camera);
         target.finish().unwrap();
         for ev in display.poll_events() {
             match ev {
