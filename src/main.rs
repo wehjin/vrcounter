@@ -1,6 +1,7 @@
 #[macro_use] extern crate glium;
 
 mod world;
+mod mat;
 
 fn main() {
     use glium::{DisplayBuild, Surface};

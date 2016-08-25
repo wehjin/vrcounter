@@ -1,32 +1,6 @@
 extern crate glium;
 
-static VERTEX_SHADER: &'static str = r#"
-        #version 140
-
-        in vec3 position;
-        in vec3 normal;
-
-        uniform mat4 perspective;
-        uniform mat4 view;
-        uniform mat4 model;
-
-        void main() {
-            mat4 modelview = view * model;
-            gl_Position = perspective * modelview * vec4(position, 1.0);
-        }
-    "#;
-
-static FRAGMENT_SHADER: &'static str = r#"
-        #version 140
-
-        out vec4 color;
-
-        void main() {
-            color = vec4(1.0, 0.0, 0.0, 1.0);
-        }
-    "#;
-
-static PI: f32 = 3.141592;
+use mat;
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -52,8 +26,8 @@ impl Room {
             [0.0, 0.0, 1.0, 0.0],
             [0.0, 0.0, -1.0, 1.0f32],
         ];
-        let view = view_matrix(&[0.0, 0.0, 0.0], &[0.0, 0.0, -1.0], &[0.0, 1.0, 0.0]);
-        let perspective = perspective_matrix(frame.get_dimensions(), PI / 3.0);
+        let view = mat::view_matrix(&[0.0, 0.0, 0.0], &[0.0, 0.0, -1.0], &[0.0, 1.0, 0.0]);
+        let perspective = mat::perspective_matrix(frame.get_dimensions(), PI / 3.0);
         let draw_params = glium::DrawParameters {
             depth: glium::Depth {
                 test: glium::draw_parameters::DepthTest::IfLess,
@@ -86,56 +60,31 @@ impl Room {
     }
 }
 
-fn view_matrix(e: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> [[f32; 4]; 4] {
-    let f = norm(&direction);
-    let s = norm(&cross(&f, up));
-    let u = cross(&s, &f);
-    let neg_e = neg(e);
-    let z = neg(&f);
-    let p = [
-        dot(&neg_e, &s),
-        dot(&neg_e, &u),
-        dot(&neg_e, &z),
-    ];
-    [
-        [s[0], u[0], z[0], 0.0],
-        [s[1], u[1], z[1], 0.0],
-        [s[2], u[2], z[2], 0.0],
-        [p[0], p[1], p[2], 1.0],
-    ]
-}
 
-fn perspective_matrix((width, height): (u32, u32), fov: f32) -> [[f32; 4]; 4] {
-    let aspect_ratio = height as f32 / width as f32;
-    let zfar = 1024.0;
-    let znear = 0.1;
-    let f = 1.0 / (fov / 2.0).tan();
-    [
-        [f *aspect_ratio, 0.0, 0.0, 0.0],
-        [0.0, f, 0.0, 0.0],
-        [0.0, 0.0, -(zfar + znear) / (zfar - znear), -1.0],
-        [0.0, 0.0, -(2.0 * zfar * znear) / (zfar - znear), 0.0],
-    ]
-}
+static VERTEX_SHADER: &'static str = r#"
+        #version 140
 
-fn cross(a: &[f32; 3], b: &[f32; 3]) -> [f32; 3] {
-    [
-        a[1] * b[2] - a[2] * b[1],
-        a[2] * b[0] - a[0] * b[2],
-        a[0] * b[1] - a[1] * b[0]
-    ]
-}
+        in vec3 position;
+        in vec3 normal;
 
-fn norm(a: &[f32; 3]) -> [f32; 3] {
-    let len = (a[0] * a[0] + a[1] * a[1] + a[2] * a[2]).sqrt();
-    [a[0] / len, a[1] / len, a[2] / len]
-}
+        uniform mat4 perspective;
+        uniform mat4 view;
+        uniform mat4 model;
 
-fn dot(a: &[f32; 3], b: &[f32; 3]) -> f32 {
-    a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
-}
+        void main() {
+            mat4 modelview = view * model;
+            gl_Position = perspective * modelview * vec4(position, 1.0);
+        }
+    "#;
 
-fn neg(a: &[f32; 3]) -> [f32; 3] {
-    [-a[0], -a[1], -a[2]]
-}
+static FRAGMENT_SHADER: &'static str = r#"
+        #version 140
 
+        out vec4 color;
+
+        void main() {
+            color = vec4(1.0, 0.0, 0.0, 1.0);
+        }
+    "#;
+
+static PI: f32 = 3.141592;
