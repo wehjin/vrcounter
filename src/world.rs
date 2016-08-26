@@ -2,6 +2,7 @@ extern crate glium;
 
 use mat;
 use cam;
+use std::f32::consts::PI as PI;
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -10,6 +11,14 @@ struct Vertex {
 }
 
 implement_vertex!(Vertex, position, normal);
+
+fn make_shape() -> Vec<Vertex> {
+    let vertex1 = Vertex { position: [-0.5, -0.25, 0.0], normal: [0.0, 0.0, -1.0] };
+    let vertex2 = Vertex { position: [0.0, 0.25, 0.0], normal: [0.0, 0.0, -1.0] };
+    let vertex3 = Vertex { position: [0.5, -0.25, 0.0], normal: [0.0, 0.0, -1.0] };
+    let shape = vec![vertex1, vertex2, vertex3];
+    return shape;
+}
 
 pub struct Room {
     program: glium::Program,
@@ -43,21 +52,11 @@ impl Room {
             .unwrap();
     }
 
-    fn make_shape() -> Vec<Vertex> {
-        let vertex1 = Vertex { position: [-0.5, -0.25, 0.0], normal: [0.0, 0.0, -1.0] };
-        let vertex2 = Vertex { position: [0.0, 0.25, 0.0], normal: [0.0, 0.0, -1.0] };
-        let vertex3 = Vertex { position: [0.5, -0.25, 0.0], normal: [0.0, 0.0, -1.0] };
-        let shape = vec![vertex1, vertex2, vertex3];
-        return shape;
-    }
-
     pub fn for_display(display: &glium::Display) -> Room {
-        let shape = Room::make_shape();
-        let vertex_buffer = glium::VertexBuffer::new(display, &shape).unwrap();
-        let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
         let program = glium::Program::from_source(display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap();
-        let floor = Room { program: program, vertex_buffer: vertex_buffer, indices: indices };
-        return floor;
+        let vertex_buffer = glium::VertexBuffer::new(display, &make_shape()).unwrap();
+        let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
+        Room { program: program, vertex_buffer: vertex_buffer, indices: indices }
     }
 }
 
@@ -87,5 +86,3 @@ static FRAGMENT_SHADER: &'static str = r#"
             color = vec4(1.0, 0.0, 0.0, 1.0);
         }
     "#;
-
-static PI: f32 = 3.141592;
