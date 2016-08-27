@@ -6,6 +6,7 @@ dependencies = [
  "libc 0.2.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "openvr 0.4.0 (git+https://github.com/rust-openvr/rust-openvr?rev=fd417046ab3fe720492455d4830a4fdc724abfe6)",
+ "openvr_sys 1.0.1 (git+https://github.com/rust-openvr/rust-openvr-sys?rev=2a2d4bf37a4a1efc56e7c4bf6d6ee08888717411)",
 ]
 
 [[package]]
@@ -380,6 +381,11 @@ source = "git+https://github.com/rust-openvr/rust-openvr?rev=fd417046ab3fe720492
 dependencies = [
  "openvr_sys 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "openvr_sys"
+version = "1.0.1"
+source = "git+https://github.com/rust-openvr/rust-openvr-sys?rev=2a2d4bf37a4a1efc56e7c4bf6d6ee08888717411#2a2d4bf37a4a1efc56e7c4bf6d6ee08888717411"
 
 [[package]]
 name = "openvr_sys"

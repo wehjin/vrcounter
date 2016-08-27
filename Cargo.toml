@@ -8,3 +8,9 @@ libc = "0.2.15"
 glium = "0.15.0"
 openvr = { git = "https://github.com/rust-openvr/rust-openvr", rev="fd417046ab3fe720492455d4830a4fdc724abfe6" }
 nalgebra = "0.8.2"
+openvr_sys = {git="https://github.com/rust-openvr/rust-openvr-sys", rev="2a2d4bf37a4a1efc56e7c4bf6d6ee08888717411"}
+
+[lib]
+name = "vrcounterlib"
+path = "src/lib.rs"
+

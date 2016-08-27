@@ -1,15 +1,17 @@
-#[macro_use] extern crate glium;
-
-mod world;
-mod mat;
-mod cam;
-mod app;
+extern crate vrcounterlib as lib;
 
 fn main() {
-    let mut model = app::Model::init();
+    let vr_option = lib::System::up().ok();
+    if vr_option.is_some() {
+        let vr = vr_option.unwrap();
+        let render_size = vr.get_render_size();
+        println!("{:?}", render_size)
+    }
+
+    let mut model = lib::app::Model::init();
     loop {
-        let message = app::view(&model);
-        match app::update(&message, model) {
+        let message = lib::app::view(&model);
+        match lib::app::update(&message, model) {
             None => return,
             Some(next_model) => model = next_model,
         }
