@@ -11,8 +11,12 @@ fn main() {
         let can_render = vr.get_can_render();
         println!("Can render {}", can_render);
 
+        let left_projection = vr.get_left_projection();
+        println!("Left projection: {:?}", left_projection);
+
         let poses = vr.await_poses();
         poses.audit();
+
     }
 
     let mut model = lib::app::Model::init();
