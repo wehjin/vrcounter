@@ -1,3 +1,6 @@
 target
 .idea/workspace.xml
 .idea/libraries/Cargo__vrcounter_.xml
+.idea/misc.xml
+.idea/libraries/Rust__vrcounter_.xml
+SDL2.dll

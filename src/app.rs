@@ -61,6 +61,8 @@ pub fn update(message: &Message, model: Model) -> Option<Model> {
     }
 }
 
+static IS_WINDOWS:bool = true;
+
 pub fn view(model: &Model) -> Message {
     let mut target = model.display.draw();
     target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
@@ -69,22 +71,41 @@ pub fn view(model: &Model) -> Message {
     let mut message_option: Option<Message> = None;
     while message_option.is_none() {
         for glutin_event in model.display.poll_events() {
-            message_option = match glutin_event {
-                Event::Closed => Some(Message::Quit),
-                Event::KeyboardInput(ElementState::Pressed, 53, _) => Some(Message::Quit),
-                Event::KeyboardInput(ElementState::Pressed, 47, _) => Some(Message::Reset),
-                Event::KeyboardInput(ElementState::Pressed, 1, _) => Some(Message::Move(Direction::Down)),
-                Event::KeyboardInput(ElementState::Pressed, 13, _) => Some(Message::Move(Direction::Up)),
-                Event::KeyboardInput(ElementState::Pressed, 0, _) => Some(Message::Move(Direction::Left)),
-                Event::KeyboardInput(ElementState::Pressed, 2, _) => Some(Message::Move(Direction::Right)),
-                Event::KeyboardInput(ElementState::Pressed, 12, _) => Some(Message::Move(Direction::Far)),
-                Event::KeyboardInput(ElementState::Pressed, 14, _) => Some(Message::Move(Direction::Near)),
-                Event::KeyboardInput(ElementState::Pressed, code, _) => {
-                    println!("{}", code);
-                    None
-                },
-                _ => None
-            };
+            if IS_WINDOWS {
+                message_option = match glutin_event {
+                    Event::Closed => Some(Message::Quit),
+                    Event::KeyboardInput(ElementState::Pressed, 1, _) => Some(Message::Quit),
+                    Event::KeyboardInput(ElementState::Pressed, 52, _) => Some(Message::Reset),
+                    Event::KeyboardInput(ElementState::Pressed, 30, _) => Some(Message::Move(Direction::Left)),
+                    Event::KeyboardInput(ElementState::Pressed, 32, _) => Some(Message::Move(Direction::Right)),
+                    Event::KeyboardInput(ElementState::Pressed, 17, _) => Some(Message::Move(Direction::Up)),
+                    Event::KeyboardInput(ElementState::Pressed, 31, _) => Some(Message::Move(Direction::Down)),
+                    Event::KeyboardInput(ElementState::Pressed, 16, _) => Some(Message::Move(Direction::Far)),
+                    Event::KeyboardInput(ElementState::Pressed, 18, _) => Some(Message::Move(Direction::Near)),
+                    Event::KeyboardInput(ElementState::Pressed, code, _) => {
+                        println!("{}", code);
+                        None
+                    },
+                    _ => None
+                };
+            } else {
+                message_option = match glutin_event {
+                    Event::Closed => Some(Message::Quit),
+                    Event::KeyboardInput(ElementState::Pressed, 53, _) => Some(Message::Quit),
+                    Event::KeyboardInput(ElementState::Pressed, 47, _) => Some(Message::Reset),
+                    Event::KeyboardInput(ElementState::Pressed, 1, _) => Some(Message::Move(Direction::Down)),
+                    Event::KeyboardInput(ElementState::Pressed, 13, _) => Some(Message::Move(Direction::Up)),
+                    Event::KeyboardInput(ElementState::Pressed, 0, _) => Some(Message::Move(Direction::Left)),
+                    Event::KeyboardInput(ElementState::Pressed, 2, _) => Some(Message::Move(Direction::Right)),
+                    Event::KeyboardInput(ElementState::Pressed, 12, _) => Some(Message::Move(Direction::Far)),
+                    Event::KeyboardInput(ElementState::Pressed, 14, _) => Some(Message::Move(Direction::Near)),
+                    Event::KeyboardInput(ElementState::Pressed, code, _) => {
+                        println!("{}", code);
+                        None
+                    },
+                    _ => None
+                };
+            }
             if message_option.is_some() {
                 break;
             }
