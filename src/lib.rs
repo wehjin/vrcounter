@@ -50,7 +50,7 @@ impl Poses {
             });
         for it in poses_iter {
             let pose : &openvr::tracking::TrackedDevicePose = it;
-            println!("Class: {:?}, {:?}", pose.device_class(), pose);
+            println!("Class:{:?}, valid:{}, connected:{}, {:?}", pose.device_class(), pose.is_valid, pose.is_connected, pose);
         }
     }
 }
