@@ -40,6 +40,15 @@ impl From<openvr::tracking::TrackedDevicePoses> for Poses {
 }
 
 impl Poses {
+
+    fn get_hmd(&self) -> &openvr::tracking::TrackedDevicePose {
+        self.poses.poses.iter()
+            .filter(|&x| match x.device_class() {
+                openvr::tracking::TrackedDeviceClass::HMD => true,
+                _ => false
+            })
+            .last().unwrap()
+    }
     pub fn audit(&self) {
         println!("Count {}", self.poses.count);
         let poses : [TrackedDevicePose;16] = self.poses.poses;
