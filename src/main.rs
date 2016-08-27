@@ -12,7 +12,7 @@ fn main() {
         println!("Can render {}", can_render);
 
         let poses = vr.await_poses();
-        println!("{:?}", poses);
+        poses.audit();
     }
 
     let mut model = lib::app::Model::init();

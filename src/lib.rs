@@ -8,6 +8,8 @@ pub mod mat;
 pub mod cam;
 pub mod app;
 
+use openvr::tracking::{TrackedDevicePoses, TrackedDevicePose};
+
 #[derive(Debug)]
 pub enum Error {
     NoSystem,
@@ -34,6 +36,22 @@ pub struct Poses {
 impl From<openvr::tracking::TrackedDevicePoses> for Poses {
     fn from(poses: openvr::tracking::TrackedDevicePoses) -> Self {
         Poses {poses: poses}
+    }
+}
+
+impl Poses {
+    pub fn audit(&self) {
+        println!("Count {}", self.poses.count);
+        let poses : [TrackedDevicePose;16] = self.poses.poses;
+        let poses_iter = poses.iter().filter(
+            |&x| match x.device_class() {
+                openvr::tracking::TrackedDeviceClass::Invalid => false,
+                _ => true
+            });
+        for it in poses_iter {
+            let pose : &openvr::tracking::TrackedDevicePose = it;
+            println!("Class: {:?}, {:?}", pose.device_class(), pose);
+        }
     }
 }
 
