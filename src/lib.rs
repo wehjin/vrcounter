@@ -10,6 +10,7 @@ pub mod app;
 mod eyebuffers;
 mod common;
 mod os;
+mod shape;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
@@ -21,7 +22,8 @@ use glium::glutin::{Event, ElementState};
 use std::{thread, time};
 use eyebuffers::{EyeBuffers};
 use common::{Error, RenderSize};
-use patchprogram::{PatchProgram, ShapeList, Shape};
+use patchprogram::{PatchProgram};
+use shape::{Shape, ShapeList};
 
 pub const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 pub const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];

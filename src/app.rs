@@ -2,9 +2,10 @@ extern crate glium;
 
 use glium::{DisplayBuild, Surface, Display};
 use glium::glutin::{Event, ElementState};
-use patchprogram::{PatchProgram, ShapeList};
+use patchprogram::{PatchProgram};
 use cam;
 use os;
+use shape::ShapeList;
 
 pub struct Model {
     display: Display,

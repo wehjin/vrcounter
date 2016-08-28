@@ -5,6 +5,7 @@ use cam;
 use std::f32::consts::PI;
 use glium::{Surface, VertexBuffer, Program, Display};
 use glium::index::{NoIndices, PrimitiveType};
+use shape::{Shape, ShapeList};
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -14,22 +15,6 @@ struct Vertex {
 }
 implement_vertex!(Vertex, position, normal, color);
 
-pub struct ShapeList {
-    shapes: Vec<Shape>,
-}
-
-impl ShapeList {
-    pub fn new() -> Self {
-        ShapeList { shapes: Vec::new() }
-    }
-
-    pub fn push(&mut self, shape: Shape) -> u64 {
-        let id = shape.id;
-        self.shapes.push(shape);
-        id
-    }
-}
-
 fn get_vertices_for_shape_list(shape_list: &ShapeList) -> Vec<Vertex> {
     let mut vertices = Vec::new();
     for shape in shape_list.shapes.iter() {
@@ -37,30 +22,6 @@ fn get_vertices_for_shape_list(shape_list: &ShapeList) -> Vec<Vertex> {
         vertices.append(&mut shape_vertices);
     }
     vertices
-}
-
-pub struct Shape {
-    left: f32,
-    right: f32,
-    top: f32,
-    bottom: f32,
-    near: f32,
-    normal: [f32; 3],
-    color: [f32; 4],
-    id: u64,
-}
-
-impl Shape {
-    pub fn new(left: f32, right: f32, top: f32, bottom: f32, near: f32, color: [f32; 4], id: u64) -> Self {
-        Shape {
-            left: left, right: right,
-            top: top, bottom: bottom,
-            near: near,
-            normal: [0.0, 0.0, -1.0],
-            color: color,
-            id: id
-        }
-    }
 }
 
 fn get_vertex_for_shape(shape: &Shape, position: [f32; 3]) -> Vertex {
