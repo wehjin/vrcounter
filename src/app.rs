@@ -1,26 +1,26 @@
 extern crate glium;
 
-use glium::{DisplayBuild, Surface};
+use glium::{DisplayBuild, Surface, Display};
 use glium::glutin::{Event, ElementState};
-use world;
+use world::PatchProgram;
 use cam;
 use std::env;
 
 pub struct Model {
-    display: glium::Display,
-    room: world::PatchProgram,
+    display: Display,
+    patch_program: PatchProgram,
     camera: cam::Camera,
     is_windows: bool,
 }
 
 impl Model {
     pub fn init() -> Self {
-        let display: glium::Display = glium::glutin::WindowBuilder::new()
-            .with_title("vrcounter")
+        let display: Display = glium::glutin::WindowBuilder::new()
+            .with_title("vr counter")
             .with_depth_buffer(24)
             .build_glium()
             .unwrap();
-        let room = world::PatchProgram::new(&display);
+        let patch_program = PatchProgram::new(&display);
         let camera = cam::Camera::start();
         let is_windows = match env::var("HOME") {
             Ok(val) => {
@@ -32,11 +32,11 @@ impl Model {
             },
             Err(_) => true
         };
-        Model { display: display, room: room, camera: camera, is_windows: is_windows }
+        Model { display: display, patch_program: patch_program, camera: camera, is_windows: is_windows }
     }
 
     pub fn with_camera(self, camera: cam::Camera) -> Self {
-        Model { display: self.display, room: self.room, camera: camera, is_windows: self.is_windows }
+        Model { display: self.display, patch_program: self.patch_program, camera: camera, is_windows: self.is_windows }
     }
 }
 
@@ -76,7 +76,7 @@ pub fn update(message: &Message, model: Model) -> Option<Model> {
 pub fn view(model: &Model) -> Message {
     let mut target = model.display.draw();
     target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
-    model.room.draw_to_camera(&mut target, &model.camera);
+    model.patch_program.draw_to_camera(&mut target, &model.camera);
     target.finish().unwrap();
     let mut message_option: Option<Message> = None;
     while message_option.is_none() {

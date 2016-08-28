@@ -55,7 +55,7 @@ pub fn main() {
             .unwrap();
         let right_projection = vr.get_right_projection();
 
-        let room: world::PatchProgram = world::PatchProgram::new(&display);
+        let patch_program: world::PatchProgram = world::PatchProgram::new(&display);
         let clear_color = (0.05, 0.05, 0.08, 1.0);
         let clear_depth = 1.0;
 
@@ -66,15 +66,15 @@ pub fn main() {
 
             let mut target = display.draw();
             target.clear_color_and_depth(clear_color, clear_depth);
-            room.draw(&mut target, &world_to_hmd, &left_projection);
+            patch_program.draw(&mut target, &world_to_hmd, &left_projection);
             target.finish().unwrap();
 
             left_frame.clear_color_and_depth(clear_color, clear_depth);
-            room.draw(&mut left_frame, &world_to_hmd, &left_projection);
+            patch_program.draw(&mut left_frame, &world_to_hmd, &left_projection);
             vr.submit_left_texture(left_buffers.color.get_id() as usize);
 
             right_frame.clear_color_and_depth(clear_color, clear_depth);
-            room.draw(&mut right_frame, &world_to_hmd, &right_projection);
+            patch_program.draw(&mut right_frame, &world_to_hmd, &right_projection);
             vr.submit_right_texture(right_buffers.color.get_id() as usize);
 
             for ev in display.poll_events() {
