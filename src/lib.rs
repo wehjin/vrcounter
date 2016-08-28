@@ -3,6 +3,8 @@ extern crate openvr;
 extern crate openvr_sys;
 extern crate nalgebra;
 extern crate image;
+extern crate rusttype;
+extern crate unicode_normalization;
 
 pub mod patchprogram;
 pub mod mat;

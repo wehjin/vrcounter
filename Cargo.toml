@@ -10,6 +10,8 @@ openvr = { git = "https://github.com/rust-openvr/rust-openvr", rev="fd417046ab3f
 nalgebra = "0.8.2"
 openvr_sys = {git="https://github.com/rust-openvr/rust-openvr-sys", rev="2a2d4bf37a4a1efc56e7c4bf6d6ee08888717411"}
 image = "0.10.1"
+rusttype = "0.2.0"
+unicode-normalization = "^0.1.2"
 
 [lib]
 name = "vrcounterlib"
