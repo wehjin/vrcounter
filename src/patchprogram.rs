@@ -120,7 +120,8 @@ impl PatchProgram {
         let font_data = include_bytes!("Arial Unicode.ttf");
         let font = FontCollection::from_bytes(font_data as &[u8]).into_font().unwrap();
         let dpi_factor = display.get_window().unwrap().hidpi_factor();
-        let texture_pixels = 32;
+        let texture_pixels = 64;
+        let draw_scale = 96.0;
         let (cache_width, cache_height) = (texture_pixels * dpi_factor as u32, texture_pixels * dpi_factor as u32);
         let mut cache = Cache::new(cache_width, cache_height, 0.1, 0.1);
         let cache_tex = glium::texture::Texture2d::with_format(
@@ -133,7 +134,7 @@ impl PatchProgram {
             },
             glium::texture::UncompressedFloatFormat::U8,
             glium::texture::MipmapsOption::NoMipmap).unwrap();
-        let glyph = layout_text(&font, Scale::uniform(48.0 * dpi_factor), texture_pixels);
+        let glyph = layout_text(&font, Scale::uniform(draw_scale * dpi_factor), texture_pixels);
         cache.queue_glyph(0, glyph.clone());
         cache.cache_queued(|rect, data| {
             cache_tex.main_level().write(glium::Rect {
