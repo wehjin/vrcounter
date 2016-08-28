@@ -9,6 +9,7 @@ pub mod cam;
 pub mod app;
 mod eyebuffers;
 mod common;
+mod os;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
@@ -31,7 +32,25 @@ pub fn main() {
     shape_list.push(Shape::new(-0.5, 0.5, 0.25, -0.25, 0.0, RED, 0));
     shape_list.push(Shape::new(0.25, 0.75, 0.5, 0.0, -0.01, GREEN, 1));
     shape_list.push(Shape::new(-0.05, 0.05, 0.05, -0.05, 0.01, BLUE, 2));
+    if os::is_windows() {
+        run_in_vr(shape_list)
+    } else {
+        run_in_nr(shape_list)
+    }
+}
 
+fn run_in_nr(shape_list: ShapeList) {
+    let mut model = app::Model::init(shape_list);
+    loop {
+        let message = app::view(&model);
+        match app::update(&message, model) {
+            None => return,
+            Some(next_model) => model = next_model,
+        }
+    }
+}
+
+fn run_in_vr(shape_list: ShapeList) {
     let vr_option = System::up().ok();
     if vr_option.is_some() {
         let vr: System = vr_option.unwrap();
@@ -95,15 +114,6 @@ pub fn main() {
                 }
             }
             thread::sleep(sleep_time);
-        }
-    } else {
-        let mut model = app::Model::init(shape_list);
-        loop {
-            let message = app::view(&model);
-            match app::update(&message, model) {
-                None => return,
-                Some(next_model) => model = next_model,
-            }
         }
     }
 }

@@ -4,7 +4,7 @@ use glium::{DisplayBuild, Surface, Display};
 use glium::glutin::{Event, ElementState};
 use patchprogram::{PatchProgram, ShapeList};
 use cam;
-use std::env;
+use os;
 
 pub struct Model {
     display: Display,
@@ -22,17 +22,7 @@ impl Model {
             .unwrap();
         let patch_program = PatchProgram::new(&display, shape_list);
         let camera = cam::Camera::start();
-        let is_windows = match env::var("HOME") {
-            Ok(val) => {
-                if val.starts_with("/Users/") {
-                    false
-                } else {
-                    true
-                }
-            },
-            Err(_) => true
-        };
-        Model { display: display, patch_program: patch_program, camera: camera, is_windows: is_windows }
+        Model { display: display, patch_program: patch_program, camera: camera, is_windows: os::is_windows() }
     }
 
     pub fn with_camera(self, camera: cam::Camera) -> Self {
