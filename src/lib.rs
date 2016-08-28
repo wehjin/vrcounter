@@ -8,7 +8,9 @@ pub mod mat;
 pub mod cam;
 pub mod app;
 
+use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose};
+use openvr::common::{TextureBounds};
 use nalgebra::{Inverse, Transpose};
 
 #[derive(Debug)]
@@ -19,8 +21,8 @@ pub enum Error {
 
 #[derive(Debug)]
 pub struct RenderSize {
-    width: u32,
-    height: u32
+    pub width: u32,
+    pub height: u32
 }
 
 impl From<openvr::common::Size> for RenderSize {
@@ -79,6 +81,59 @@ pub struct System {
     compositor: openvr::compositor::IVRCompositor,
 }
 
+impl System {
+    pub fn up() -> Result<System, Error> {
+        let system = try!(openvr::init().map_err(|_| Error::NoSystem));
+        let compositor = try!(openvr::subsystems::compositor().map_err(|_| Error::NoCompositor));
+        Ok(System { system: system, compositor: compositor })
+    }
+
+    pub fn get_render_size(&self) -> RenderSize {
+        let size = self.system.recommended_render_target_size();
+        RenderSize::from(size)
+    }
+
+    pub fn get_can_render(&self) -> bool {
+        self.compositor.can_render_scene()
+    }
+
+    pub fn await_poses(&self) -> Poses {
+        Poses::from(self.compositor.wait_get_poses())
+    }
+
+    pub fn get_left_projection(&self) -> [[f32;4];4] {
+        self.get_projection(Eye::Left)
+    }
+    pub fn get_right_projection(&self) -> [[f32;4];4] {
+        self.get_projection(Eye::Right)
+    }
+    fn get_projection(&self, eye:Eye) -> [[f32;4];4] {
+        let raw_projection = self.system.projection_matrix(eye, 0.01, 1000.0);
+        let nalg_projection = nmatrix4_from_steam44(&raw_projection);
+        let raw_eye_to_head = self.system.eye_to_head_transform(eye);
+        let nalg_eye_to_head = nmatrix4_from_steam34(&raw_eye_to_head);
+        let nalg_head_to_eye = nalg_eye_to_head.inverse().unwrap();
+        let nalg_combined = nalg_projection * nalg_head_to_eye;
+        raw4_from_nmatrix4(&nalg_combined)
+    }
+
+    pub fn submit_left_texture(&self, texture_id: usize) {
+        self.submit_texture(Eye::Left, texture_id);
+    }
+    pub fn submit_right_texture(&self, texture_id: usize) {
+        self.submit_texture(Eye::Right, texture_id)
+    }
+    fn submit_texture(&self, eye: Eye, texture_id: usize) {
+        self.compositor.submit(eye, texture_id, TextureBounds::new((0.0,1.0), (0.0, 1.0)));
+    }
+}
+
+impl Drop for System {
+    fn drop(&mut self) {
+        openvr::shutdown();
+    }
+}
+
 fn raw4_from_nmatrix4(m: &nalgebra::Matrix4<f32>) -> [[f32;4];4] {
     [
         [m.m11, m.m21, m.m31, m.m41],
@@ -101,41 +156,4 @@ fn nmatrix4_from_steam44(r: &[[f32;4];4]) -> nalgebra::Matrix4<f32>{
         r[0][2], r[1][2], r[2][2], r[3][2],
         r[0][3], r[1][3], r[2][3], r[3][3],
     ).transpose()
-}
-
-impl System {
-    pub fn up() -> Result<System, Error> {
-        let system = try!(openvr::init().map_err(|_| Error::NoSystem));
-        let compositor = try!(openvr::subsystems::compositor().map_err(|_| Error::NoCompositor));
-        Ok(System { system: system, compositor: compositor })
-    }
-
-    pub fn get_render_size(&self) -> RenderSize {
-        let size = self.system.recommended_render_target_size();
-        RenderSize::from(size)
-    }
-
-    pub fn get_can_render(&self) -> bool {
-        self.compositor.can_render_scene()
-    }
-
-    pub fn await_poses(&self) -> Poses {
-        Poses::from(self.compositor.wait_get_poses())
-    }
-
-    pub fn get_left_projection(&self) -> [[f32;4];4] {
-        let raw_projection = self.system.projection_matrix(openvr::Eye::Left, 0.01, 1000.0);
-        let nalg_projection = nmatrix4_from_steam44(&raw_projection);
-        let raw_eye_to_head = self.system.eye_to_head_transform(openvr::Eye::Left);
-        let nalg_eye_to_head = nmatrix4_from_steam34(&raw_eye_to_head);
-        let nalg_head_to_eye = nalg_eye_to_head.inverse().unwrap();
-        let nalg_combined = nalg_projection * nalg_head_to_eye;
-        raw4_from_nmatrix4(&nalg_combined)
-    }
-}
-
-impl Drop for System {
-    fn drop(&mut self) {
-        openvr::shutdown();
-    }
 }
