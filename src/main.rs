@@ -59,7 +59,7 @@ fn main() {
         let right_projection = vr.get_right_projection();
 
         let room: lib::world::Room = lib::world::Room::for_display(&display);
-        let clear_color = (0.15, 0.15, 0.18, 1.0);
+        let clear_color = (0.05, 0.05, 0.08, 1.0);
         let clear_depth = 1.0;
 
         'render: loop {
@@ -69,18 +69,16 @@ fn main() {
 
             let mut target = display.draw();
             target.clear_color_and_depth(clear_color, clear_depth);
-            room.draw2(&mut target, &world_to_hmd, &left_projection);
+            room.draw(&mut target, &world_to_hmd, &left_projection);
+            target.finish().unwrap();
 
             left_frame.clear_color_and_depth(clear_color, clear_depth);
-            room.draw2(&mut left_frame, &world_to_hmd, &left_projection);
+            room.draw(&mut left_frame, &world_to_hmd, &left_projection);
             vr.submit_left_texture(left_buffers.color.get_id() as usize);
 
             right_frame.clear_color_and_depth(clear_color, clear_depth);
-            room.draw2(&mut right_frame, &world_to_hmd, &right_projection);
+            room.draw(&mut right_frame, &world_to_hmd, &right_projection);
             vr.submit_right_texture(right_buffers.color.get_id() as usize);
-
-            target.finish().unwrap();
-
 
             for ev in display.poll_events() {
                 match ev {

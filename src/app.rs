@@ -66,7 +66,7 @@ static IS_WINDOWS:bool = true;
 pub fn view(model: &Model) -> Message {
     let mut target = model.display.draw();
     target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
-    model.room.draw(&mut target, &model.camera);
+    model.room.draw_to_camera(&mut target, &model.camera);
     target.finish().unwrap();
     let mut message_option: Option<Message> = None;
     while message_option.is_none() {

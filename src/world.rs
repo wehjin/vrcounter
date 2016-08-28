@@ -29,7 +29,7 @@ pub struct Room {
 
 impl Room {
 
-    pub fn draw2<T:Surface>(&self, surface: &mut T, view: &[[f32;4];4], projection: &[[f32;4];4]) {
+    pub fn draw<T:Surface>(&self, surface: &mut T, view: &[[f32;4];4], projection: &[[f32;4];4]) {
         let model = [
             [1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
@@ -50,10 +50,10 @@ impl Room {
             .unwrap();
     }
 
-    pub fn draw<T:Surface>(&self, surface: &mut T, camera: &cam::Camera) {
+    pub fn draw_to_camera<T:Surface>(&self, surface: &mut T, camera: &cam::Camera) {
         let view = mat::view_matrix(&camera.eye, &camera.look, &camera.up);
         let perspective = mat::perspective_matrix(surface.get_dimensions(), PI / 3.0);
-        self.draw2(surface, &view, &perspective);
+        self.draw(surface, &view, &perspective);
     }
 
     pub fn for_display(display: &glium::Display) -> Room {
