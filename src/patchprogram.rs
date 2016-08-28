@@ -3,7 +3,7 @@ extern crate glium;
 use mat;
 use cam;
 use std::f32::consts::PI;
-use glium::{Surface, VertexBuffer, Program};
+use glium::{Surface, VertexBuffer, Program, Display};
 use glium::index::{NoIndices, PrimitiveType};
 
 #[derive(Copy, Clone)]
@@ -14,19 +14,19 @@ struct Vertex {
 }
 implement_vertex!(Vertex, position, normal, color);
 
-static RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
-static GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
-
-struct ShapeList {
-    shapes: [Shape; 2],
-    full_count: i32,
+pub struct ShapeList {
+    shapes: Vec<Shape>,
 }
 
 impl ShapeList {
-    fn new() -> Self {
-        let shape1 = Shape::new(-0.5, 0.5, 0.25, -0.25, 0.0, RED, 0);
-        let shape2 = Shape::new(0.25, 0.75, 0.5, 0.0, -0.10, GREEN, 1);
-        ShapeList { shapes: [shape1, shape2], full_count: 2 }
+    pub fn new() -> Self {
+        ShapeList { shapes: Vec::new() }
+    }
+
+    pub fn push(&mut self, shape: Shape) -> u64 {
+        let id = shape.id;
+        self.shapes.push(shape);
+        id
     }
 }
 
@@ -39,7 +39,7 @@ fn get_vertices_for_shape_list(shape_list: &ShapeList) -> Vec<Vertex> {
     vertices
 }
 
-struct Shape {
+pub struct Shape {
     left: f32,
     right: f32,
     top: f32,
@@ -47,18 +47,18 @@ struct Shape {
     near: f32,
     normal: [f32; 3],
     color: [f32; 4],
-    index: i32,
+    id: u64,
 }
 
 impl Shape {
-    fn new(left: f32, right: f32, top: f32, bottom: f32, near: f32, color: [f32; 4], index: i32) -> Self {
+    pub fn new(left: f32, right: f32, top: f32, bottom: f32, near: f32, color: [f32; 4], id: u64) -> Self {
         Shape {
             left: left, right: right,
             top: top, bottom: bottom,
             near: near,
             normal: [0.0, 0.0, -1.0],
             color: color,
-            index: index
+            id: id
         }
     }
 }
@@ -83,8 +83,7 @@ pub struct PatchProgram {
 }
 
 impl PatchProgram {
-    pub fn new(display: &glium::Display) -> Self {
-        let shape_list = ShapeList::new();
+    pub fn new(display: &Display, shape_list: ShapeList) -> Self {
         PatchProgram {
             program: Program::from_source(display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap(),
             vertex_buffer: VertexBuffer::new(display, &get_vertices_for_shape_list(&shape_list)).unwrap(),

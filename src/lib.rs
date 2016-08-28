@@ -20,9 +20,18 @@ use glium::glutin::{Event, ElementState};
 use std::{thread, time};
 use eyebuffers::{EyeBuffers};
 use common::{Error, RenderSize};
-use patchprogram::PatchProgram;
+use patchprogram::{PatchProgram, ShapeList, Shape};
+
+pub const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+pub const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
+pub const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
 
 pub fn main() {
+    let mut shape_list = ShapeList::new();
+    shape_list.push(Shape::new(-0.5, 0.5, 0.25, -0.25, 0.0, RED, 0));
+    shape_list.push(Shape::new(0.25, 0.75, 0.5, 0.0, -0.01, GREEN, 1));
+    shape_list.push(Shape::new(-0.05, 0.05, 0.05, -0.05, 0.01, BLUE, 2));
+
     let vr_option = System::up().ok();
     if vr_option.is_some() {
         let vr: System = vr_option.unwrap();
@@ -56,7 +65,7 @@ pub fn main() {
             .unwrap();
         let right_projection = vr.get_right_projection();
 
-        let patch_program = PatchProgram::new(&display);
+        let patch_program = PatchProgram::new(&display, shape_list);
         let clear_color = (0.05, 0.05, 0.08, 1.0);
         let clear_depth = 1.0;
 
@@ -88,7 +97,7 @@ pub fn main() {
             thread::sleep(sleep_time);
         }
     } else {
-        let mut model = app::Model::init();
+        let mut model = app::Model::init(shape_list);
         loop {
             let message = app::view(&model);
             match app::update(&message, model) {

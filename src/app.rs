@@ -2,7 +2,7 @@ extern crate glium;
 
 use glium::{DisplayBuild, Surface, Display};
 use glium::glutin::{Event, ElementState};
-use patchprogram::PatchProgram;
+use patchprogram::{PatchProgram, ShapeList};
 use cam;
 use std::env;
 
@@ -14,13 +14,13 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn init() -> Self {
+    pub fn init(shape_list: ShapeList) -> Self {
         let display: Display = glium::glutin::WindowBuilder::new()
             .with_title("vr counter")
             .with_depth_buffer(24)
             .build_glium()
             .unwrap();
-        let patch_program = PatchProgram::new(&display);
+        let patch_program = PatchProgram::new(&display, shape_list);
         let camera = cam::Camera::start();
         let is_windows = match env::var("HOME") {
             Ok(val) => {
