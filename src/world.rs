@@ -3,6 +3,7 @@ extern crate glium;
 use mat;
 use cam;
 use std::f32::consts::PI as PI;
+use glium::Surface;
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -27,7 +28,8 @@ pub struct Room {
 }
 
 impl Room {
-    pub fn draw(&self, frame: &mut glium::Frame, camera: &cam::Camera) {
+
+    pub fn draw2(&self, frame: &mut glium::Frame, view: &[[f32;4];4], projection: &[[f32;4];4]) {
         use glium::Surface;
 
         let model = [
@@ -36,8 +38,6 @@ impl Room {
             [0.0, 0.0, 1.0, 0.0],
             [0.0, 1.6, -1.0, 1.0f32],
         ];
-        let view = mat::view_matrix(&camera.eye, &camera.look, &camera.up);
-        let perspective = mat::perspective_matrix(frame.get_dimensions(), PI / 3.0);
         let draw_params = glium::DrawParameters {
             depth: glium::Depth {
                 test: glium::draw_parameters::DepthTest::IfLess,
@@ -47,9 +47,15 @@ impl Room {
             ..Default::default()
         };
         frame.draw(&self.vertex_buffer, &self.indices, &self.program,
-                   &uniform! {model:model, view:view, perspective:perspective},
+                   &uniform! {model:model, view:*view, perspective:*projection},
                    &draw_params)
             .unwrap();
+    }
+
+    pub fn draw(&self, frame: &mut glium::Frame, camera: &cam::Camera) {
+        let view = mat::view_matrix(&camera.eye, &camera.look, &camera.up);
+        let perspective = mat::perspective_matrix(frame.get_dimensions(), PI / 3.0);
+        self.draw2(frame, &view, &perspective);
     }
 
     pub fn for_display(display: &glium::Display) -> Room {

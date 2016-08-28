@@ -8,8 +8,8 @@ pub mod mat;
 pub mod cam;
 pub mod app;
 
-use openvr::tracking::{TrackedDevicePoses, TrackedDevicePose};
-use nalgebra::{Matrix4,Inverse, Row, Column, Transpose};
+use openvr::tracking::{TrackedDevicePose};
+use nalgebra::{Inverse, Transpose};
 
 #[derive(Debug)]
 pub enum Error {
@@ -125,10 +125,11 @@ impl System {
 
     pub fn get_left_projection(&self) -> [[f32;4];4] {
         let raw_projection = self.system.projection_matrix(openvr::Eye::Left, 0.01, 1000.0);
-        let nalg_projection = nmatrix4_from_raw4(&raw_projection);
-        let raw_transform = self.system.eye_to_head_transform(openvr::Eye::Left);
-        let nalg_transform = nmatrix4_from_raw34(&raw_transform);
-        let nalg_combined = nalg_projection * (nalg_transform.inverse().unwrap());
+        let nalg_projection = nmatrix4_from_raw4(&raw_projection).transpose();
+        let raw_eye_to_head = self.system.eye_to_head_transform(openvr::Eye::Left);
+        let nalg_eye_to_head = nmatrix4_from_raw34(&raw_eye_to_head);
+        let nalg_head_to_eye = nalg_eye_to_head.inverse().unwrap();
+        let nalg_combined = nalg_projection * nalg_head_to_eye;
         raw4_from_nmatrix4(&nalg_combined)
     }
 }
