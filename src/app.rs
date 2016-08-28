@@ -4,15 +4,17 @@ use glium::{DisplayBuild, Surface};
 use glium::glutin::{Event, ElementState};
 use world;
 use cam;
+use std::env;
 
 pub struct Model {
     display: glium::Display,
     room: world::Room,
     camera: cam::Camera,
+    is_windows: bool,
 }
 
 impl Model {
-    pub fn init() -> Model {
+    pub fn init() -> Self {
         let display: glium::Display = glium::glutin::WindowBuilder::new()
             .with_title("vrcounter")
             .with_depth_buffer(24)
@@ -20,11 +22,21 @@ impl Model {
             .unwrap();
         let room = world::Room::for_display(&display);
         let camera = cam::Camera::start();
-        Model { display: display, room: room, camera: camera }
+        let is_windows = match env::var("HOME") {
+            Ok(val) => {
+                if val.starts_with("/Users/") {
+                    false
+                } else {
+                    true
+                }
+            },
+            Err(_) => true
+        };
+        Model { display: display, room: room, camera: camera, is_windows: is_windows }
     }
 
-    pub fn with_camera(self, camera: cam::Camera) -> Model {
-        Model { display: self.display, room: self.room, camera: camera }
+    pub fn with_camera(self, camera: cam::Camera) -> Self {
+        Model { display: self.display, room: self.room, camera: camera, is_windows: self.is_windows }
     }
 }
 
@@ -61,8 +73,6 @@ pub fn update(message: &Message, model: Model) -> Option<Model> {
     }
 }
 
-static IS_WINDOWS:bool = true;
-
 pub fn view(model: &Model) -> Message {
     let mut target = model.display.draw();
     target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
@@ -71,7 +81,7 @@ pub fn view(model: &Model) -> Message {
     let mut message_option: Option<Message> = None;
     while message_option.is_none() {
         for glutin_event in model.display.poll_events() {
-            if IS_WINDOWS {
+            if model.is_windows {
                 message_option = match glutin_event {
                     Event::Closed => Some(Message::Quit),
                     Event::KeyboardInput(ElementState::Pressed, 1, _) => Some(Message::Quit),
