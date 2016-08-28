@@ -2,6 +2,7 @@
 extern crate openvr;
 extern crate openvr_sys;
 extern crate nalgebra;
+extern crate image;
 
 pub mod patchprogram;
 pub mod mat;
@@ -23,7 +24,7 @@ use std::{thread, time};
 use eyebuffers::{EyeBuffers};
 use common::{Error, RenderSize};
 use patchprogram::{PatchProgram};
-use shape::{Shape, ShapeList};
+use shape::{Shape, ShapeList, ShapeMask};
 
 pub const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 pub const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
@@ -31,9 +32,9 @@ pub const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
 
 pub fn main() {
     let mut shape_list = ShapeList::new();
-    shape_list.push(Shape::new(-0.5, 0.5, 0.25, -0.25, 0.0, RED, 0));
-    shape_list.push(Shape::new(0.25, 0.75, 0.5, 0.0, -0.01, GREEN, 1));
-    shape_list.push(Shape::new(-0.05, 0.05, 0.05, -0.05, 0.01, BLUE, 2));
+    shape_list.push(Shape::new(-0.5, 0.5, 0.25, -0.25, 0.0, RED, 0, ShapeMask::None));
+    shape_list.push(Shape::new(0.25, 0.75, 0.5, 0.0, -0.01, GREEN, 1, ShapeMask::None));
+    shape_list.push(Shape::new(-0.05, 0.05, 0.05, -0.05, 0.005, BLUE, 2, ShapeMask::Zero));
     if os::is_windows() {
         run_in_vr(shape_list)
     } else {
