@@ -12,6 +12,106 @@ use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose};
 use openvr::common::{TextureBounds};
 use nalgebra::{Inverse, Transpose};
+use glium::{DisplayBuild, Surface, Display, GlObject};
+use glium::framebuffer::{RenderBuffer, DepthRenderBuffer, SimpleFrameBuffer, ToColorAttachment, ToDepthAttachment};
+use glium::glutin::{Event, ElementState};
+use std::{thread, time};
+
+struct EyeBuffers {
+    depth: DepthRenderBuffer,
+    color: RenderBuffer,
+}
+
+impl EyeBuffers {
+    fn new(display: &Display, render_size: &RenderSize) -> Self {
+        let depth_buffer: DepthRenderBuffer = glium::framebuffer::DepthRenderBuffer::new(
+            display,
+            glium::texture::DepthFormat::I24,
+            render_size.width, render_size.height).unwrap();
+        let color_buffer: RenderBuffer = glium::framebuffer::RenderBuffer::new(
+            display,
+            glium::texture::UncompressedFloatFormat::U8U8U8U8,
+            render_size.width, render_size.height).unwrap();
+        EyeBuffers { depth: depth_buffer, color: color_buffer }
+    }
+}
+
+pub fn main() {
+    let vr_option = System::up().ok();
+    if vr_option.is_some() {
+        let vr: System = vr_option.unwrap();
+        let sleep_time = time::Duration::from_millis(15);
+
+        let render_size: RenderSize = vr.get_render_size();
+        println!("{:?}", render_size);
+
+        let can_render = vr.get_can_render();
+        println!("Can render {}", can_render);
+
+        let display: Display = glium::glutin::WindowBuilder::new()
+            .with_title("vrcounter")
+            .with_depth_buffer(24)
+            .build_glium()
+            .unwrap();
+
+        let left_buffers = EyeBuffers::new(&display, &render_size);
+        let mut left_frame = SimpleFrameBuffer::with_depth_buffer(
+            &display,
+            left_buffers.color.to_color_attachment(),
+            left_buffers.depth.to_depth_attachment())
+            .unwrap();
+        let left_projection = vr.get_left_projection();
+
+        let right_buffers = EyeBuffers::new(&display, &render_size);
+        let mut right_frame = SimpleFrameBuffer::with_depth_buffer(
+            &display,
+            right_buffers.color.to_color_attachment(),
+            right_buffers.depth.to_depth_attachment())
+            .unwrap();
+        let right_projection = vr.get_right_projection();
+
+        let room: world::Room = world::Room::for_display(&display);
+        let clear_color = (0.05, 0.05, 0.08, 1.0);
+        let clear_depth = 1.0;
+
+        'render: loop {
+            let poses = vr.await_poses();
+            let world_to_hmd = poses.get_world_to_hmd_matrix();
+            //println!("World to hmd: {:?}", world_to_hmd);
+
+            let mut target = display.draw();
+            target.clear_color_and_depth(clear_color, clear_depth);
+            room.draw(&mut target, &world_to_hmd, &left_projection);
+            target.finish().unwrap();
+
+            left_frame.clear_color_and_depth(clear_color, clear_depth);
+            room.draw(&mut left_frame, &world_to_hmd, &left_projection);
+            vr.submit_left_texture(left_buffers.color.get_id() as usize);
+
+            right_frame.clear_color_and_depth(clear_color, clear_depth);
+            room.draw(&mut right_frame, &world_to_hmd, &right_projection);
+            vr.submit_right_texture(right_buffers.color.get_id() as usize);
+
+            for ev in display.poll_events() {
+                match ev {
+                    glium::glutin::Event::Closed => break 'render,
+                    Event::KeyboardInput(ElementState::Pressed, 1, _) => break 'render,
+                    _ => ()
+                }
+            }
+            thread::sleep(sleep_time);
+        }
+    } else {
+        let mut model = app::Model::init();
+        loop {
+            let message = app::view(&model);
+            match app::update(&message, model) {
+                None => return,
+                Some(next_model) => model = next_model,
+            }
+        }
+    }
+}
 
 #[derive(Debug)]
 pub enum Error {
@@ -38,12 +138,11 @@ pub struct Poses {
 
 impl From<openvr::tracking::TrackedDevicePoses> for Poses {
     fn from(poses: openvr::tracking::TrackedDevicePoses) -> Self {
-        Poses {poses: poses}
+        Poses { poses: poses }
     }
 }
 
 impl Poses {
-
     fn get_hmd_pose(&self) -> &openvr::tracking::TrackedDevicePose {
         self.poses.poses.iter()
             .filter(|&x| match x.device_class() {
@@ -53,8 +152,8 @@ impl Poses {
             .last().unwrap()
     }
 
-    pub fn get_world_to_hmd_matrix(&self) -> [[f32;4];4] {
-        let hmd : &openvr::tracking::TrackedDevicePose = self.get_hmd_pose();
+    pub fn get_world_to_hmd_matrix(&self) -> [[f32; 4]; 4] {
+        let hmd: &openvr::tracking::TrackedDevicePose = self.get_hmd_pose();
         let raw_hmd_to_world = hmd.to_device;
         let nalg_hmd_to_world = nmatrix4_from_steam34(&raw_hmd_to_world);
         let nalg_world_to_hmd = nalg_hmd_to_world.inverse().unwrap();
@@ -63,14 +162,14 @@ impl Poses {
 
     pub fn audit(&self) {
         println!("Count {}", self.poses.count);
-        let poses : [TrackedDevicePose;16] = self.poses.poses;
+        let poses: [TrackedDevicePose; 16] = self.poses.poses;
         let poses_iter = poses.iter().filter(
             |&x| match x.device_class() {
                 openvr::tracking::TrackedDeviceClass::Invalid => false,
                 _ => true
             });
         for it in poses_iter {
-            let pose : &openvr::tracking::TrackedDevicePose = it;
+            let pose: &openvr::tracking::TrackedDevicePose = it;
             println!("Class:{:?}, valid:{}, connected:{}, {:?}", pose.device_class(), pose.is_valid, pose.is_connected, pose);
         }
     }
@@ -101,13 +200,13 @@ impl System {
         Poses::from(self.compositor.wait_get_poses())
     }
 
-    pub fn get_left_projection(&self) -> [[f32;4];4] {
+    pub fn get_left_projection(&self) -> [[f32; 4]; 4] {
         self.get_projection(Eye::Left)
     }
-    pub fn get_right_projection(&self) -> [[f32;4];4] {
+    pub fn get_right_projection(&self) -> [[f32; 4]; 4] {
         self.get_projection(Eye::Right)
     }
-    fn get_projection(&self, eye:Eye) -> [[f32;4];4] {
+    fn get_projection(&self, eye: Eye) -> [[f32; 4]; 4] {
         let raw_projection = self.system.projection_matrix(eye, 0.01, 1000.0);
         let nalg_projection = nmatrix4_from_steam44(&raw_projection);
         let raw_eye_to_head = self.system.eye_to_head_transform(eye);
@@ -124,7 +223,7 @@ impl System {
         self.submit_texture(Eye::Right, texture_id)
     }
     fn submit_texture(&self, eye: Eye, texture_id: usize) {
-        self.compositor.submit(eye, texture_id, TextureBounds::new((0.0,1.0), (0.0, 1.0)));
+        self.compositor.submit(eye, texture_id, TextureBounds::new((0.0, 1.0), (0.0, 1.0)));
     }
 }
 
@@ -134,7 +233,7 @@ impl Drop for System {
     }
 }
 
-fn raw4_from_nmatrix4(m: &nalgebra::Matrix4<f32>) -> [[f32;4];4] {
+fn raw4_from_nmatrix4(m: &nalgebra::Matrix4<f32>) -> [[f32; 4]; 4] {
     [
         [m.m11, m.m21, m.m31, m.m41],
         [m.m12, m.m22, m.m32, m.m42],
@@ -142,14 +241,16 @@ fn raw4_from_nmatrix4(m: &nalgebra::Matrix4<f32>) -> [[f32;4];4] {
         [m.m14, m.m24, m.m34, m.m44],
     ]
 }
-fn nmatrix4_from_steam34(r: &[[f32;4];3]) -> nalgebra::Matrix4<f32>{
+
+fn nmatrix4_from_steam34(r: &[[f32; 4]; 3]) -> nalgebra::Matrix4<f32> {
     nalgebra::Matrix4::new(
         r[0][0], r[1][0], r[2][0], 0.0,
         r[0][1], r[1][1], r[2][1], 0.0,
         r[0][2], r[1][2], r[2][2], 0.0,
         r[0][3], r[1][3], r[2][3], 1.0).transpose()
 }
-fn nmatrix4_from_steam44(r: &[[f32;4];4]) -> nalgebra::Matrix4<f32>{
+
+fn nmatrix4_from_steam44(r: &[[f32; 4]; 4]) -> nalgebra::Matrix4<f32> {
     nalgebra::Matrix4::new(
         r[0][0], r[1][0], r[2][0], r[3][0],
         r[0][1], r[1][1], r[2][1], r[3][1],
