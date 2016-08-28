@@ -2,7 +2,7 @@ extern crate glium;
 
 use glium::{DisplayBuild, Surface, Display};
 use glium::glutin::{Event, ElementState};
-use world::PatchProgram;
+use patchprogram::PatchProgram;
 use cam;
 use std::env;
 

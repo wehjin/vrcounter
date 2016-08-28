@@ -3,7 +3,7 @@ extern crate openvr;
 extern crate openvr_sys;
 extern crate nalgebra;
 
-pub mod world;
+pub mod patchprogram;
 pub mod mat;
 pub mod cam;
 pub mod app;
@@ -20,6 +20,7 @@ use glium::glutin::{Event, ElementState};
 use std::{thread, time};
 use eyebuffers::{EyeBuffers};
 use common::{Error, RenderSize};
+use patchprogram::PatchProgram;
 
 pub fn main() {
     let vr_option = System::up().ok();
@@ -55,7 +56,7 @@ pub fn main() {
             .unwrap();
         let right_projection = vr.get_right_projection();
 
-        let patch_program: world::PatchProgram = world::PatchProgram::new(&display);
+        let patch_program: PatchProgram = PatchProgram::new(&display);
         let clear_color = (0.05, 0.05, 0.08, 1.0);
         let clear_depth = 1.0;
 
