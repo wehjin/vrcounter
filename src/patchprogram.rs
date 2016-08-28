@@ -13,6 +13,28 @@ struct Vertex {
 }
 implement_vertex!(Vertex, position, normal);
 
+struct ShapeList {
+    shapes: [Shape; 2],
+    full_count: i32,
+}
+
+impl ShapeList {
+    fn new() -> Self {
+        let shape1 = Shape::new(-0.5, 0.5, 0.25, -0.25, 0.0, 0);
+        let shape2 = Shape::new(0.25, 0.75, 0.5, 0.0, -0.10, 1);
+        ShapeList { shapes: [shape1, shape2], full_count: 2 }
+    }
+
+    fn to_vertices(&self) -> Vec<Vertex> {
+        let mut vertices = Vec::new();
+        for shape in self.shapes.iter() {
+            let mut shape_vertices = shape.to_vertices();
+            vertices.append(&mut shape_vertices);
+        }
+        vertices
+    }
+}
+
 struct Shape {
     left: f32,
     right: f32,
@@ -20,11 +42,12 @@ struct Shape {
     bottom: f32,
     near: f32,
     normal: [f32; 3],
+    index: i32,
 }
 
 impl Shape {
-    fn new() -> Self {
-        Shape { left: -0.5, right: 0.5, top: 0.25, bottom: -0.25, near: 0.0, normal: [0.0, 0.0, -1.0] }
+    fn new(left: f32, right: f32, top: f32, bottom: f32, near: f32, index: i32) -> Self {
+        Shape { left: left, right: right, top: top, bottom: bottom, near: near, normal: [0.0, 0.0, -1.0], index: index }
     }
 
     fn to_vertices(&self) -> Vec<Vertex> {
@@ -45,10 +68,10 @@ pub struct PatchProgram {
 
 impl PatchProgram {
     pub fn new(display: &glium::Display) -> Self {
-        let shape = Shape::new();
+        let shape_list = ShapeList::new();
         PatchProgram {
             program: Program::from_source(display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap(),
-            vertex_buffer: VertexBuffer::new(display, &shape.to_vertices()).unwrap(),
+            vertex_buffer: VertexBuffer::new(display, &shape_list.to_vertices()).unwrap(),
             indices: NoIndices(PrimitiveType::TrianglesList),
             model_matrix: [
                 [1.0, 0.0, 0.0, 0.0],
@@ -69,7 +92,7 @@ impl PatchProgram {
             ..Default::default()
         };
         surface.draw(&self.vertex_buffer, &self.indices, &self.program,
-                     &uniform! {model:self.model_matrix, view:*view, perspective:*projection},
+                     &uniform! {model: self.model_matrix, view: * view, perspective: * projection},
                      &draw_params)
             .unwrap();
     }
