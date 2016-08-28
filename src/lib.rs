@@ -9,7 +9,7 @@ pub mod cam;
 pub mod app;
 
 use openvr::tracking::{TrackedDevicePoses, TrackedDevicePose};
-use nalgebra::{Matrix4,Inverse, Row, Column};
+use nalgebra::{Matrix4,Inverse, Row, Column, Transpose};
 
 #[derive(Debug)]
 pub enum Error {
@@ -42,7 +42,7 @@ impl From<openvr::tracking::TrackedDevicePoses> for Poses {
 
 impl Poses {
 
-    fn get_hmd(&self) -> &openvr::tracking::TrackedDevicePose {
+    fn get_hmd_pose(&self) -> &openvr::tracking::TrackedDevicePose {
         self.poses.poses.iter()
             .filter(|&x| match x.device_class() {
                 openvr::tracking::TrackedDeviceClass::HMD => true,
@@ -50,6 +50,15 @@ impl Poses {
             })
             .last().unwrap()
     }
+
+    pub fn get_world_to_hmd_matrix(&self) -> [[f32;4];4] {
+        let hmd : &openvr::tracking::TrackedDevicePose = self.get_hmd_pose();
+        let raw_hmd_to_world = hmd.to_device;
+        let nalg_hmd_to_world = nmatrix4_from_raw34(&raw_hmd_to_world);
+        let nalg_world_to_hmd = nalg_hmd_to_world.inverse().unwrap();
+        raw4_from_nmatrix4(&nalg_world_to_hmd)
+    }
+
     pub fn audit(&self) {
         println!("Count {}", self.poses.count);
         let poses : [TrackedDevicePose;16] = self.poses.poses;
@@ -78,9 +87,15 @@ fn raw4_from_nmatrix4(m: &nalgebra::Matrix4<f32>) -> [[f32;4];4] {
         [m.m14, m.m24, m.m34, m.m44],
     ]
 }
-
+fn nmatrix4_from_raw34(r: &[[f32;4];3]) -> nalgebra::Matrix4<f32>{
+    nalgebra::Matrix4::new(
+        r[0][0], r[1][0], r[2][0], 0.0,
+        r[0][1], r[1][1], r[2][1], 0.0,
+        r[0][2], r[1][2], r[2][2], 0.0,
+        r[0][3], r[1][3], r[2][3], 1.0).transpose()
+}
 fn nmatrix4_from_raw4(r: &[[f32;4];4]) -> nalgebra::Matrix4<f32>{
-    Matrix4::new(
+    nalgebra::Matrix4::new(
         r[0][0], r[1][0], r[2][0], r[3][0],
         r[0][1], r[1][1], r[2][1], r[3][1],
         r[0][2], r[1][2], r[2][2], r[3][2],
@@ -112,11 +127,7 @@ impl System {
         let raw_projection = self.system.projection_matrix(openvr::Eye::Left, 0.01, 1000.0);
         let nalg_projection = nmatrix4_from_raw4(&raw_projection);
         let raw_transform = self.system.eye_to_head_transform(openvr::Eye::Left);
-        let nalg_transform = nalgebra::Matrix4::new(
-            raw_transform[0][0], raw_transform[1][0], raw_transform[2][0], 0.0,
-            raw_transform[0][1], raw_transform[1][1], raw_transform[2][1], 0.0,
-            raw_transform[0][2], raw_transform[1][2], raw_transform[2][2], 0.0,
-            raw_transform[0][3], raw_transform[1][3], raw_transform[2][3], 1.0);
+        let nalg_transform = nmatrix4_from_raw34(&raw_transform);
         let nalg_combined = nalg_projection * (nalg_transform.inverse().unwrap());
         raw4_from_nmatrix4(&nalg_combined)
     }
