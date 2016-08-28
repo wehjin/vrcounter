@@ -2,40 +2,64 @@ extern crate glium;
 
 use mat;
 use cam;
-use std::f32::consts::PI as PI;
-use glium::{Surface};
+use std::f32::consts::PI;
+use glium::{Surface, VertexBuffer, Program};
+use glium::index::{NoIndices, PrimitiveType};
 
 #[derive(Copy, Clone)]
 struct Vertex {
     position: [f32; 3],
     normal: [f32; 3],
 }
-
 implement_vertex!(Vertex, position, normal);
 
-fn make_shape() -> Vec<Vertex> {
-    let vertex1 = Vertex { position: [-0.5, -0.25, 0.0], normal: [0.0, 0.0, -1.0] };
-    let vertex2 = Vertex { position: [0.0, 0.25, 0.0], normal: [0.0, 0.0, -1.0] };
-    let vertex3 = Vertex { position: [0.5, -0.25, 0.0], normal: [0.0, 0.0, -1.0] };
-    let shape = vec![vertex1, vertex2, vertex3];
-    return shape;
+struct Shape {
+    left: f32,
+    right: f32,
+    top: f32,
+    bottom: f32,
+    near: f32,
+    normal: [f32; 3],
 }
 
-pub struct Room {
+impl Shape {
+    fn new() -> Self {
+        Shape { left: -0.5, right: 0.5, top: 0.25, bottom: -0.25, near: 0.0, normal: [0.0, 0.0, -1.0] }
+    }
+
+    fn to_vertices(&self) -> Vec<Vertex> {
+        let bottom_left = Vertex { position: [self.left, self.bottom, self.near], normal: self.normal };
+        let bottom_right = Vertex { position: [self.right, self.bottom, self.near], normal: self.normal };
+        let top_left = Vertex { position: [self.left, self.top, self.near], normal: self.normal };
+        let top_right = Vertex { position: [self.right, self.top, self.near], normal: self.normal };
+        vec![bottom_left, top_left, top_right, bottom_left, top_right, bottom_right]
+    }
+}
+
+pub struct PatchProgram {
     program: glium::Program,
-    vertex_buffer: glium::VertexBuffer<Vertex>,
+    vertex_buffer: VertexBuffer<Vertex>,
     indices: glium::index::NoIndices,
+    model_matrix: [[f32; 4]; 4],
 }
 
-impl Room {
+impl PatchProgram {
+    pub fn new(display: &glium::Display) -> Self {
+        let shape = Shape::new();
+        PatchProgram {
+            program: Program::from_source(display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap(),
+            vertex_buffer: VertexBuffer::new(display, &shape.to_vertices()).unwrap(),
+            indices: NoIndices(PrimitiveType::TrianglesList),
+            model_matrix: [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [0.0, 1.6, -1.0, 1.0f32],
+            ],
+        }
+    }
 
-    pub fn draw<T:Surface>(&self, surface: &mut T, view: &[[f32;4];4], projection: &[[f32;4];4]) {
-        let model = [
-            [1.0, 0.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0, 0.0],
-            [0.0, 0.0, 1.0, 0.0],
-            [0.0, 1.6, -1.0, 1.0f32],
-        ];
+    pub fn draw<T: Surface>(&self, surface: &mut T, view: &[[f32; 4]; 4], projection: &[[f32; 4]; 4]) {
         let draw_params = glium::DrawParameters {
             depth: glium::Depth {
                 test: glium::draw_parameters::DepthTest::IfLess,
@@ -45,25 +69,17 @@ impl Room {
             ..Default::default()
         };
         surface.draw(&self.vertex_buffer, &self.indices, &self.program,
-                     &uniform! {model:model, view:*view, perspective:*projection},
+                     &uniform! {model:self.model_matrix, view:*view, perspective:*projection},
                      &draw_params)
             .unwrap();
     }
 
-    pub fn draw_to_camera<T:Surface>(&self, surface: &mut T, camera: &cam::Camera) {
+    pub fn draw_to_camera<T: Surface>(&self, surface: &mut T, camera: &cam::Camera) {
         let view = mat::view_matrix(&camera.eye, &camera.look, &camera.up);
         let perspective = mat::perspective_matrix(surface.get_dimensions(), PI / 3.0);
         self.draw(surface, &view, &perspective);
     }
-
-    pub fn for_display(display: &glium::Display) -> Room {
-        let program = glium::Program::from_source(display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap();
-        let vertex_buffer = glium::VertexBuffer::new(display, &make_shape()).unwrap();
-        let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
-        Room { program: program, vertex_buffer: vertex_buffer, indices: indices }
-    }
 }
-
 
 static VERTEX_SHADER: &'static str = r#"
         #version 140

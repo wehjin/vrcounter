@@ -8,7 +8,7 @@ use std::env;
 
 pub struct Model {
     display: glium::Display,
-    room: world::Room,
+    room: world::PatchProgram,
     camera: cam::Camera,
     is_windows: bool,
 }
@@ -20,7 +20,7 @@ impl Model {
             .with_depth_buffer(24)
             .build_glium()
             .unwrap();
-        let room = world::Room::for_display(&display);
+        let room = world::PatchProgram::new(&display);
         let camera = cam::Camera::start();
         let is_windows = match env::var("HOME") {
             Ok(val) => {

@@ -55,7 +55,7 @@ pub fn main() {
             .unwrap();
         let right_projection = vr.get_right_projection();
 
-        let room: world::Room = world::Room::for_display(&display);
+        let room: world::PatchProgram = world::PatchProgram::new(&display);
         let clear_color = (0.05, 0.05, 0.08, 1.0);
         let clear_depth = 1.0;
 
