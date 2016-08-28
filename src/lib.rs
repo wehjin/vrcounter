@@ -54,7 +54,7 @@ impl Poses {
     pub fn get_world_to_hmd_matrix(&self) -> [[f32;4];4] {
         let hmd : &openvr::tracking::TrackedDevicePose = self.get_hmd_pose();
         let raw_hmd_to_world = hmd.to_device;
-        let nalg_hmd_to_world = nmatrix4_from_raw34(&raw_hmd_to_world);
+        let nalg_hmd_to_world = nmatrix4_from_steam34(&raw_hmd_to_world);
         let nalg_world_to_hmd = nalg_hmd_to_world.inverse().unwrap();
         raw4_from_nmatrix4(&nalg_world_to_hmd)
     }
@@ -87,20 +87,20 @@ fn raw4_from_nmatrix4(m: &nalgebra::Matrix4<f32>) -> [[f32;4];4] {
         [m.m14, m.m24, m.m34, m.m44],
     ]
 }
-fn nmatrix4_from_raw34(r: &[[f32;4];3]) -> nalgebra::Matrix4<f32>{
+fn nmatrix4_from_steam34(r: &[[f32;4];3]) -> nalgebra::Matrix4<f32>{
     nalgebra::Matrix4::new(
         r[0][0], r[1][0], r[2][0], 0.0,
         r[0][1], r[1][1], r[2][1], 0.0,
         r[0][2], r[1][2], r[2][2], 0.0,
         r[0][3], r[1][3], r[2][3], 1.0).transpose()
 }
-fn nmatrix4_from_raw4(r: &[[f32;4];4]) -> nalgebra::Matrix4<f32>{
+fn nmatrix4_from_steam44(r: &[[f32;4];4]) -> nalgebra::Matrix4<f32>{
     nalgebra::Matrix4::new(
         r[0][0], r[1][0], r[2][0], r[3][0],
         r[0][1], r[1][1], r[2][1], r[3][1],
         r[0][2], r[1][2], r[2][2], r[3][2],
         r[0][3], r[1][3], r[2][3], r[3][3],
-    )
+    ).transpose()
 }
 
 impl System {
@@ -125,9 +125,9 @@ impl System {
 
     pub fn get_left_projection(&self) -> [[f32;4];4] {
         let raw_projection = self.system.projection_matrix(openvr::Eye::Left, 0.01, 1000.0);
-        let nalg_projection = nmatrix4_from_raw4(&raw_projection).transpose();
+        let nalg_projection = nmatrix4_from_steam44(&raw_projection);
         let raw_eye_to_head = self.system.eye_to_head_transform(openvr::Eye::Left);
-        let nalg_eye_to_head = nmatrix4_from_raw34(&raw_eye_to_head);
+        let nalg_eye_to_head = nmatrix4_from_steam34(&raw_eye_to_head);
         let nalg_head_to_eye = nalg_eye_to_head.inverse().unwrap();
         let nalg_combined = nalg_projection * nalg_head_to_eye;
         raw4_from_nmatrix4(&nalg_combined)
