@@ -11,7 +11,7 @@ mod eyebuffers;
 mod common;
 
 use openvr::Eye;
-use openvr::tracking::{TrackedDevicePose};
+use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
 use openvr::common::{TextureBounds};
 use nalgebra::{Inverse, Transpose};
 use glium::{DisplayBuild, Surface, Display, GlObject};
@@ -28,7 +28,7 @@ pub fn main() {
         let vr: System = vr_option.unwrap();
         let sleep_time = time::Duration::from_millis(15);
 
-        let render_size: RenderSize = vr.get_render_size();
+        let render_size = vr.get_render_size();
         println!("{:?}", render_size);
 
         let can_render = vr.get_can_render();
@@ -56,7 +56,7 @@ pub fn main() {
             .unwrap();
         let right_projection = vr.get_right_projection();
 
-        let patch_program: PatchProgram = PatchProgram::new(&display);
+        let patch_program = PatchProgram::new(&display);
         let clear_color = (0.05, 0.05, 0.08, 1.0);
         let clear_depth = 1.0;
 
@@ -101,27 +101,27 @@ pub fn main() {
 
 #[derive(Debug)]
 pub struct Poses {
-    poses: openvr::tracking::TrackedDevicePoses
+    poses: TrackedDevicePoses
 }
 
-impl From<openvr::tracking::TrackedDevicePoses> for Poses {
-    fn from(poses: openvr::tracking::TrackedDevicePoses) -> Self {
+impl From<TrackedDevicePoses> for Poses {
+    fn from(poses: TrackedDevicePoses) -> Self {
         Poses { poses: poses }
     }
 }
 
 impl Poses {
-    fn get_hmd_pose(&self) -> &openvr::tracking::TrackedDevicePose {
+    fn get_hmd_pose(&self) -> &TrackedDevicePose {
         self.poses.poses.iter()
             .filter(|&x| match x.device_class() {
-                openvr::tracking::TrackedDeviceClass::HMD => true,
+                TrackedDeviceClass::HMD => true,
                 _ => false
             })
             .last().unwrap()
     }
 
     pub fn get_world_to_hmd_matrix(&self) -> [[f32; 4]; 4] {
-        let hmd: &openvr::tracking::TrackedDevicePose = self.get_hmd_pose();
+        let hmd: &TrackedDevicePose = self.get_hmd_pose();
         let raw_hmd_to_world = hmd.to_device;
         let nalg_hmd_to_world = nmatrix4_from_steam34(&raw_hmd_to_world);
         let nalg_world_to_hmd = nalg_hmd_to_world.inverse().unwrap();
@@ -137,7 +137,7 @@ impl Poses {
                 _ => true
             });
         for it in poses_iter {
-            let pose: &openvr::tracking::TrackedDevicePose = it;
+            let pose: &TrackedDevicePose = it;
             println!("Class:{:?}, valid:{}, connected:{}, {:?}", pose.device_class(), pose.is_valid, pose.is_connected, pose);
         }
     }
