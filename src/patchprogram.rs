@@ -28,15 +28,15 @@ impl ShapeList {
         let shape2 = Shape::new(0.25, 0.75, 0.5, 0.0, -0.10, GREEN, 1);
         ShapeList { shapes: [shape1, shape2], full_count: 2 }
     }
+}
 
-    fn to_vertices(&self) -> Vec<Vertex> {
-        let mut vertices = Vec::new();
-        for shape in self.shapes.iter() {
-            let mut shape_vertices = shape.to_vertices();
-            vertices.append(&mut shape_vertices);
-        }
-        vertices
+fn get_vertices_for_shape_list(shape_list: &ShapeList) -> Vec<Vertex> {
+    let mut vertices = Vec::new();
+    for shape in shape_list.shapes.iter() {
+        let mut shape_vertices = get_vertices_for_shape(shape);
+        vertices.append(&mut shape_vertices);
     }
+    vertices
 }
 
 struct Shape {
@@ -61,18 +61,18 @@ impl Shape {
             index: index
         }
     }
+}
 
-    fn get_vertex_with_position(&self, position: [f32; 3]) -> Vertex {
-        Vertex { position: position, normal: self.normal, color: self.color }
-    }
+fn get_vertex_for_shape(shape: &Shape, position: [f32; 3]) -> Vertex {
+    Vertex { position: position, normal: shape.normal, color: shape.color }
+}
 
-    fn to_vertices(&self) -> Vec<Vertex> {
-        let bottom_left = self.get_vertex_with_position([self.left, self.bottom, self.near]);
-        let bottom_right = self.get_vertex_with_position([self.right, self.bottom, self.near]);
-        let top_left = self.get_vertex_with_position([self.left, self.top, self.near]);
-        let top_right = self.get_vertex_with_position([self.right, self.top, self.near]);
-        vec![bottom_left, top_left, top_right, bottom_left, top_right, bottom_right]
-    }
+fn get_vertices_for_shape(shape: &Shape) -> Vec<Vertex> {
+    let bottom_left = get_vertex_for_shape(shape, [shape.left, shape.bottom, shape.near]);
+    let bottom_right = get_vertex_for_shape(shape, [shape.right, shape.bottom, shape.near]);
+    let top_left = get_vertex_for_shape(shape, [shape.left, shape.top, shape.near]);
+    let top_right = get_vertex_for_shape(shape, [shape.right, shape.top, shape.near]);
+    vec![bottom_left, top_left, top_right, bottom_left, top_right, bottom_right]
 }
 
 pub struct PatchProgram {
@@ -87,7 +87,7 @@ impl PatchProgram {
         let shape_list = ShapeList::new();
         PatchProgram {
             program: Program::from_source(display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap(),
-            vertex_buffer: VertexBuffer::new(display, &shape_list.to_vertices()).unwrap(),
+            vertex_buffer: VertexBuffer::new(display, &get_vertices_for_shape_list(&shape_list)).unwrap(),
             indices: NoIndices(PrimitiveType::TrianglesList),
             model_matrix: [
                 [1.0, 0.0, 0.0, 0.0],
