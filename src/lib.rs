@@ -7,34 +7,19 @@ pub mod world;
 pub mod mat;
 pub mod cam;
 pub mod app;
+mod eyebuffers;
+mod common;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose};
 use openvr::common::{TextureBounds};
 use nalgebra::{Inverse, Transpose};
 use glium::{DisplayBuild, Surface, Display, GlObject};
-use glium::framebuffer::{RenderBuffer, DepthRenderBuffer, SimpleFrameBuffer, ToColorAttachment, ToDepthAttachment};
+use glium::framebuffer::{SimpleFrameBuffer, ToColorAttachment, ToDepthAttachment};
 use glium::glutin::{Event, ElementState};
 use std::{thread, time};
-
-struct EyeBuffers {
-    depth: DepthRenderBuffer,
-    color: RenderBuffer,
-}
-
-impl EyeBuffers {
-    fn new(display: &Display, render_size: &RenderSize) -> Self {
-        let depth_buffer: DepthRenderBuffer = glium::framebuffer::DepthRenderBuffer::new(
-            display,
-            glium::texture::DepthFormat::I24,
-            render_size.width, render_size.height).unwrap();
-        let color_buffer: RenderBuffer = glium::framebuffer::RenderBuffer::new(
-            display,
-            glium::texture::UncompressedFloatFormat::U8U8U8U8,
-            render_size.width, render_size.height).unwrap();
-        EyeBuffers { depth: depth_buffer, color: color_buffer }
-    }
-}
+use eyebuffers::{EyeBuffers};
+use common::{Error, RenderSize};
 
 pub fn main() {
     let vr_option = System::up().ok();
@@ -110,24 +95,6 @@ pub fn main() {
                 Some(next_model) => model = next_model,
             }
         }
-    }
-}
-
-#[derive(Debug)]
-pub enum Error {
-    NoSystem,
-    NoCompositor,
-}
-
-#[derive(Debug)]
-pub struct RenderSize {
-    pub width: u32,
-    pub height: u32
-}
-
-impl From<openvr::common::Size> for RenderSize {
-    fn from(size: openvr::common::Size) -> Self {
-        RenderSize { width: size.width, height: size.height }
     }
 }
 
