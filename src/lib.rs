@@ -14,6 +14,7 @@ mod eyebuffers;
 mod common;
 mod os;
 mod shape;
+mod atlas;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
@@ -31,12 +32,13 @@ use shape::{Shape, ShapeList, ShapeMask};
 pub const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
 pub const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 pub const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
+pub const CYAN: [f32; 4] = [0.0, 1.0, 1.0, 1.0];
 
 pub fn main() {
     let mut shape_list = ShapeList::new();
     shape_list.push(Shape::new(-0.5, 0.5, 0.25, -0.25, 0.0, RED, 0, ShapeMask::None));
     shape_list.push(Shape::new(0.25, 0.75, 0.5, 0.0, -0.01, GREEN, 1, ShapeMask::None));
-    shape_list.push(Shape::new(-0.05, 0.05, 0.05, -0.05, 0.005, BLUE, 2, ShapeMask::Zero));
+    shape_list.push(Shape::new(-0.03, 0.03, 0.03, -0.03, 0.005, CYAN, 2, ShapeMask::Zero));
     if os::is_windows() {
         run_in_vr(shape_list)
     } else {
