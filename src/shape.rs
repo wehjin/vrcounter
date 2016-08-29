@@ -1,6 +1,6 @@
 pub enum ShapeMask {
     None,
-    Zero,
+    Letter(char),
 }
 
 pub struct Shape {

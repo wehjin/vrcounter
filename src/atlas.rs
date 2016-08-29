@@ -32,7 +32,7 @@ impl Atlas {
         let max_pixels_total = max_pixels_side * max_pixels_side;
         let page_height = 64; // power of 2
         let (atlas_width, atlas_height) = (max_pixels_total / page_height, page_height);
-        let mut atlas_data = vec![128u8; atlas_width as usize * atlas_height as usize];
+        let mut atlas_data = vec![0u8; atlas_width as usize * atlas_height as usize];
         let scale = Scale::uniform(page_height as f32);
 
         let v_metrics: VMetrics = font.v_metrics(scale);
@@ -48,7 +48,7 @@ impl Atlas {
             let code_point = CodepointOrGlyphId::from(i_char);
             let glyph: Glyph = font.glyph(code_point).unwrap();
             let scaled_glyph: ScaledGlyph = glyph.scaled(scale);
-            let h_metrics = scaled_glyph.h_metrics();
+            let h_metrics: HMetrics = scaled_glyph.h_metrics();
             println!("H metrics: {:?}", h_metrics);
             let page_right = caret.x + h_metrics.advance_width;
             if page_right >= atlas_width as f32 {

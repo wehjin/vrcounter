@@ -11,7 +11,7 @@ use glium::index::{NoIndices, PrimitiveType};
 use glium::texture::{SrgbTexture2d, RawImage2d};
 use shape::{Shape, ShapeList, ShapeMask};
 use image;
-use atlas::{Atlas, AtlasPage};
+use atlas::{Atlas};
 
 
 #[derive(Copy, Clone)]
@@ -36,7 +36,7 @@ fn get_vertices_for_shape_list(shape_list: &ShapeList, atlas: &Atlas) -> Vec<Ver
 fn get_vertex_for_shape(shape: &Shape, position: [f32; 3], tex_coords: [f32; 2]) -> Vertex {
     let use_texture = match shape.mask {
         ShapeMask::None => 0.0,
-        ShapeMask::Zero => 1.0,
+        ShapeMask::Letter(_) => 1.0,
     };
     Vertex {
         position: position,
@@ -48,7 +48,11 @@ fn get_vertex_for_shape(shape: &Shape, position: [f32; 3], tex_coords: [f32; 2])
 }
 
 fn get_vertices_for_shape(shape: &Shape, atlas: &Atlas) -> Vec<Vertex> {
-    let page_option = atlas.page_map.get(&'E');
+    let page_option = if let ShapeMask::Letter(letter) = shape.mask {
+        atlas.page_map.get(&letter)
+    } else {
+        None
+    };
     let (texture_left, texture_right) = match page_option {
         None => (0.0, 0.0),
         Some(page) => (page.left, page.right),
