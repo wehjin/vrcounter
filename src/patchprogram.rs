@@ -6,16 +6,12 @@ use mat;
 use cam;
 use std::f32::consts::PI;
 use std::io::Cursor;
-use std::borrow::Cow;
 use glium::{Surface, VertexBuffer, Program, Display};
 use glium::index::{NoIndices, PrimitiveType};
-use glium::texture::{SrgbTexture2d, Texture2d, RawImage2d};
+use glium::texture::{SrgbTexture2d, RawImage2d};
 use shape::{Shape, ShapeList, ShapeMask};
 use image;
-use rusttype::{FontCollection, Font, Scale, point, vector, PositionedGlyph};
-use rusttype::gpu_cache::{Cache};
-use rusttype::Rect;
-use atlas::Atlas;
+use atlas::{Atlas, AtlasPage};
 
 
 #[derive(Copy, Clone)]
@@ -52,8 +48,11 @@ fn get_vertex_for_shape(shape: &Shape, position: [f32; 3], tex_coords: [f32; 2])
 }
 
 fn get_vertices_for_shape(shape: &Shape, atlas: &Atlas) -> Vec<Vertex> {
-    let texture_left = atlas.page_position.left;
-    let texture_right = atlas.page_position.right;
+    let page_option = atlas.page_map.get(&'E');
+    let (texture_left, texture_right) = match page_option {
+        None => (0.0, 0.0),
+        Some(page) => (page.left, page.right),
+    };
     let bottom_left = get_vertex_for_shape(shape, [shape.left, shape.bottom, shape.near], [texture_left, 1.0]);
     let bottom_right = get_vertex_for_shape(shape, [shape.right, shape.bottom, shape.near], [texture_right, 1.0]);
     let top_left = get_vertex_for_shape(shape, [shape.left, shape.top, shape.near], [texture_left, 0.0]);
