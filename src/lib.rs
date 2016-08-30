@@ -15,8 +15,8 @@ mod common;
 mod os;
 mod shape;
 mod atlas;
-mod color;
-mod scream;
+pub mod color;
+pub mod scream;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
@@ -30,15 +30,25 @@ use eyebuffers::{EyeBuffers};
 use common::{Error, RenderSize};
 use patchprogram::{PatchProgram};
 use shape::{Shape, ShapeList, ShapeMask};
+use scream::{Scream, ScreamPosition, Viewer};
+
+fn get_shapes() -> Shape {
+    let scream = Scream::create(scream::on_present_color);
+    let mut viewer = Viewer::new();
+    let position = ScreamPosition { left: -0.5, right: -0.4, top: 0.25, bottom: 0.15, near: 0.05 };
+    scream.present(&position, &mut viewer);
+    let patch = viewer.patch_map.get(&27u64).unwrap();
+    Shape::new(patch.position.left, patch.position.right, patch.position.top, patch.position.bottom,
+               patch.position.near, patch.color, patch.id, ShapeMask::Letter(patch.glyph))
+}
 
 pub fn main() {
-    scream::main();
-
     let mut shape_list = ShapeList::new();
     shape_list.push(Shape::new(-0.5, 0.5, 0.25, -0.25, 0.0, color::RED, 0, ShapeMask::None));
     shape_list.push(Shape::new(0.25, 0.75, 0.5, 0.0, -0.01, color::GREEN, 1, ShapeMask::None));
     shape_list.push(Shape::new(-0.06, 0.00, 0.03, -0.03, 0.005, color::CYAN, 2, ShapeMask::Letter('J')));
     shape_list.push(Shape::new(0.00, 0.06, 0.03, -0.03, 0.005, color::YELLOW, 2, ShapeMask::Letter('y')));
+    shape_list.push(get_shapes());
     if os::is_windows() {
         run_in_vr(shape_list)
     } else {
