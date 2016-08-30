@@ -35,7 +35,7 @@ use scream::{Scream, ScreamPosition, Viewer};
 fn get_shapes() -> Shape {
     let scream = Scream::create(scream::on_present_color);
     let mut viewer = Viewer::new();
-    let position = ScreamPosition { left: -0.5, right: -0.4, top: 0.25, bottom: 0.15, near: 0.05 };
+    let position = ScreamPosition { left: -0.485, right: -0.4, top: -0.15, bottom: -0.25, near: 0.05 };
     scream.present(&position, &mut viewer);
     let patch = viewer.patch_map.get(&27u64).unwrap();
     Shape::new(patch.position.left, patch.position.right, patch.position.top, patch.position.bottom,
