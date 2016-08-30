@@ -45,12 +45,12 @@ pub struct ScreamPosition {
     pub near: f32,
 }
 
-pub struct Scream<T: Fn(&ScreamPosition, &mut Viewer) -> Closable> {
+pub struct Scream<T> where T: Fn(&ScreamPosition, &mut Viewer) -> Closable {
     on_present: T
 }
 
-impl<T: Fn(&ScreamPosition, &mut Viewer) -> Closable> Scream<T> {
-    pub fn create(on_present: T) -> Scream<T> {
+impl<T> Scream<T> where T: Fn(&ScreamPosition, &mut Viewer) -> Closable {
+    pub fn create(on_present: T) -> Self {
         Scream {
             on_present: on_present,
         }
@@ -72,9 +72,23 @@ pub fn on_present_color(position: &ScreamPosition, viewer: &mut Viewer) -> Closa
     Closable {}
 }
 
+pub fn present_color(position: &ScreamPosition, viewer: &mut Viewer, color: [f32; 4]) -> Closable {
+    let patch_position = PatchPosition {
+        left: position.left, right: position.right, top: position.top, bottom: position.bottom,
+        near: position.near
+    };
+    let patch = Patch { position: patch_position, color: color, glyph: 'Z', id: 27u64 };
+    viewer.add_patch(patch);
+    Closable {}
+}
+
 #[test]
 fn it_works() {
-    let scream = Scream::create(on_present_color);
+    let color = color::MAGENTA;
+    let closure = |position: &ScreamPosition, viewer: &mut Viewer| -> Closable {
+        present_color(position, viewer, color)
+    };
+    let scream = Scream::create(closure);
     let mut viewer = Viewer::new();
     let position = ScreamPosition { left: -0.5, right: -0.4, top: 0.5, bottom: 0.4, near: 0.05 };
     scream.present(&position, &mut viewer);
