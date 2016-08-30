@@ -15,6 +15,7 @@ mod common;
 mod os;
 mod shape;
 mod atlas;
+mod color;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
@@ -29,19 +30,12 @@ use common::{Error, RenderSize};
 use patchprogram::{PatchProgram};
 use shape::{Shape, ShapeList, ShapeMask};
 
-pub const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
-pub const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
-pub const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
-pub const CYAN: [f32; 4] = [0.0, 1.0, 1.0, 1.0];
-pub const MAGENTA: [f32; 4] = [1.0, 0.0, 1.0, 1.0];
-pub const YELLOW: [f32; 4] = [1.0, 1.0, 0.0, 1.0];
-
 pub fn main() {
     let mut shape_list = ShapeList::new();
-    shape_list.push(Shape::new(-0.5, 0.5, 0.25, -0.25, 0.0, RED, 0, ShapeMask::None));
-    shape_list.push(Shape::new(0.25, 0.75, 0.5, 0.0, -0.01, GREEN, 1, ShapeMask::None));
-    shape_list.push(Shape::new(-0.06, 0.00, 0.03, -0.03, 0.005, CYAN, 2, ShapeMask::Letter('J')));
-    shape_list.push(Shape::new(0.00, 0.06, 0.03, -0.03, 0.005, YELLOW, 2, ShapeMask::Letter('y')));
+    shape_list.push(Shape::new(-0.5, 0.5, 0.25, -0.25, 0.0, color::RED, 0, ShapeMask::None));
+    shape_list.push(Shape::new(0.25, 0.75, 0.5, 0.0, -0.01, color::GREEN, 1, ShapeMask::None));
+    shape_list.push(Shape::new(-0.06, 0.00, 0.03, -0.03, 0.005, color::CYAN, 2, ShapeMask::Letter('J')));
+    shape_list.push(Shape::new(0.00, 0.06, 0.03, -0.03, 0.005, color::YELLOW, 2, ShapeMask::Letter('y')));
     if os::is_windows() {
         run_in_vr(shape_list)
     } else {

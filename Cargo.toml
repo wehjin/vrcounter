@@ -14,6 +14,10 @@ rusttype = "0.2.0"
 unicode-normalization = "^0.1.2"
 
 [lib]
-name = "vrcounterlib"
+name = "vrcounter"
 path = "src/lib.rs"
+
+[[bin]]
+name = "demo"
+path = "src/demo.rs"
 
