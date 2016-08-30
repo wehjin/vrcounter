@@ -27,7 +27,6 @@ impl Atlas {
 
         let font_data = include_bytes!("Arial Unicode.ttf");
         let font: Font = FontCollection::from_bytes(font_data as &[u8]).into_font().unwrap();
-        let glyph_count = 96;
         let max_pixels_side = 512; // power of 2
         let max_pixels_total = max_pixels_side * max_pixels_side;
         let page_height = 64; // power of 2
@@ -38,7 +37,6 @@ impl Atlas {
         let v_metrics: VMetrics = font.v_metrics(scale);
         println!("V metrics: {:?}", v_metrics);
         let mut caret = point(0.0, v_metrics.ascent);
-        let average_page_width = (atlas_width / glyph_count) as usize;
         for i in 32u32..128u32 {
             let i_char = if let Some(c) = char::from_u32(i) {
                 c

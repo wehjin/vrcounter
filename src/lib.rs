@@ -16,6 +16,7 @@ mod os;
 mod shape;
 mod atlas;
 mod color;
+mod scream;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
@@ -31,6 +32,8 @@ use patchprogram::{PatchProgram};
 use shape::{Shape, ShapeList, ShapeMask};
 
 pub fn main() {
+    scream::main();
+
     let mut shape_list = ShapeList::new();
     shape_list.push(Shape::new(-0.5, 0.5, 0.25, -0.25, 0.0, color::RED, 0, ShapeMask::None));
     shape_list.push(Shape::new(0.25, 0.75, 0.5, 0.0, -0.01, color::GREEN, 1, ShapeMask::None));
