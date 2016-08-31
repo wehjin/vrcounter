@@ -91,7 +91,7 @@ impl Scream {
     pub fn join_right(self, width: f32, right_scream: Scream) -> Scream {
         let on_present = move |position: &ScreamPosition, viewer: &mut Viewer| -> Presenting {
             let left_presenting = self.present(position, viewer);
-            let &ScreamPosition { right: right, top: top, bottom: bottom, near: near, .. } = position;
+            let &ScreamPosition { right, top, bottom, near, .. } = position;
             let right_position = ScreamPosition { left: right, right: right + width, top: top, bottom: bottom, near: near };
             let right_presenting = right_scream.present(&right_position, viewer);
             Presenting::double(left_presenting, right_presenting)

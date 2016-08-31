@@ -35,7 +35,7 @@ use scream::{ScreamPosition, Viewer};
 fn get_shapes() -> Vec<Shape> {
     let mut shapes = Vec::new();
     let mut viewer = Viewer::new();
-    let position = ScreamPosition { left: -0.5, right: -0.4, top: -0.15, bottom: -0.25, near: 0.05 };
+    let position = ScreamPosition { left: -0.5, right: -0.4, top: -0.15, bottom: -0.25, near: 0.03 };
     let double_scream = scream::of_color(color::YELLOW).join_right(0.1, scream::of_color(color::MAGENTA));
     double_scream.present(&position, &mut viewer);
     for (_, patch) in &viewer.patch_map {
