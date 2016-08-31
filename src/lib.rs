@@ -32,14 +32,20 @@ use patchprogram::{PatchProgram};
 use shape::{Shape, ShapeList, ShapeMask};
 use scream::{ScreamPosition, Viewer};
 
-fn get_shapes() -> Shape {
-    let scream = scream::of_color(color::YELLOW);
+fn get_shapes() -> Vec<Shape> {
+    let mut shapes = Vec::new();
     let mut viewer = Viewer::new();
-    let position = ScreamPosition { left: -0.485, right: -0.4, top: -0.15, bottom: -0.25, near: 0.05 };
-    scream.present(&position, &mut viewer);
-    let patch = viewer.patch_map.get(&27u64).unwrap();
-    Shape::new(patch.position.left, patch.position.right, patch.position.top, patch.position.bottom,
-               patch.position.near, patch.color, patch.id, ShapeMask::Letter(patch.glyph))
+    let position = ScreamPosition { left: -0.5, right: -0.4, top: -0.15, bottom: -0.25, near: 0.05 };
+    let double_scream = scream::of_color(color::YELLOW).join_right(0.1, scream::of_color(color::MAGENTA));
+    double_scream.present(&position, &mut viewer);
+    for (_, patch) in &viewer.patch_map {
+        let shape = Shape::new(patch.position.left, patch.position.right,
+                               patch.position.top, patch.position.bottom,
+                               patch.position.near, patch.color,
+                               patch.id, ShapeMask::Letter(patch.glyph));
+        shapes.push(shape);
+    }
+    shapes
 }
 
 pub fn main() {
@@ -48,7 +54,10 @@ pub fn main() {
     shape_list.push(Shape::new(0.25, 0.75, 0.5, 0.0, -0.01, color::GREEN, 1, ShapeMask::None));
     shape_list.push(Shape::new(-0.06, 0.00, 0.03, -0.03, 0.005, color::CYAN, 2, ShapeMask::Letter('J')));
     shape_list.push(Shape::new(0.00, 0.06, 0.03, -0.03, 0.005, color::YELLOW, 2, ShapeMask::Letter('y')));
-    shape_list.push(get_shapes());
+    let more_shapes = get_shapes();
+    for shape in more_shapes {
+        shape_list.push(shape);
+    }
     if os::is_windows() {
         run_in_vr(shape_list)
     } else {
