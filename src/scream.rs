@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::char;
-use color;
 
 #[derive(Debug)]
 pub struct PatchPosition {
@@ -45,34 +44,27 @@ pub struct ScreamPosition {
     pub near: f32,
 }
 
-pub struct Scream<T> where T: Fn(&ScreamPosition, &mut Viewer) -> Closable {
-    on_present: T
+pub struct Scream {
+    on_present: Box<Fn(&ScreamPosition, &mut Viewer) -> Closable>
 }
 
-impl<T> Scream<T> where T: Fn(&ScreamPosition, &mut Viewer) -> Closable {
-    pub fn create(on_present: T) -> Self {
-        Scream {
-            on_present: on_present,
-        }
+impl Scream {
+    pub fn create(on_present: Box<Fn(&ScreamPosition, &mut Viewer) -> Closable>) -> Self {
+        Scream { on_present: on_present }
     }
-
     pub fn present(&self, position: &ScreamPosition, viewer: &mut Viewer) -> Closable {
         let on_present = &(self.on_present);
         on_present(position, viewer)
     }
 }
 
-pub fn on_present_color(position: &ScreamPosition, viewer: &mut Viewer) -> Closable {
-    let patch_position = PatchPosition {
-        left: position.left, right: position.right, top: position.top, bottom: position.bottom,
-        near: position.near
-    };
-    let patch = Patch { position: patch_position, color: color::MAGENTA, glyph: 'Z', id: 27u64 };
-    viewer.add_patch(patch);
-    Closable {}
+pub fn of_color(color: [f32; 4]) -> Scream {
+    Scream::create(Box::new(move |position: &ScreamPosition, viewer: &mut Viewer| -> Closable {
+        present_color(position, viewer, color)
+    }))
 }
 
-pub fn present_color(position: &ScreamPosition, viewer: &mut Viewer, color: [f32; 4]) -> Closable {
+fn present_color(position: &ScreamPosition, viewer: &mut Viewer, color: [f32; 4]) -> Closable {
     let patch_position = PatchPosition {
         left: position.left, right: position.right, top: position.top, bottom: position.bottom,
         near: position.near
@@ -83,24 +75,12 @@ pub fn present_color(position: &ScreamPosition, viewer: &mut Viewer, color: [f32
 }
 
 #[test]
-fn it_works() {
-    let color = color::MAGENTA;
-    let closure = |position: &ScreamPosition, viewer: &mut Viewer| -> Closable {
-        present_color(position, viewer, color)
-    };
-    let scream = Scream::create(closure);
+pub fn main() {
+    let scream = of_color(color::MAGENTA);
     let mut viewer = Viewer::new();
     let position = ScreamPosition { left: -0.5, right: -0.4, top: 0.5, bottom: 0.4, near: 0.05 };
     scream.present(&position, &mut viewer);
     println!("Viewer: {:?}", viewer);
     assert_eq!(viewer.patch_map.len(), 1)
-}
-
-pub fn main() {
-    let scream = Scream::create(on_present_color);
-    let mut viewer = Viewer::new();
-    let position = ScreamPosition { left: -0.5, right: -0.4, top: 0.5, bottom: 0.4, near: 0.05 };
-    scream.present(&position, &mut viewer);
-    println!("Viewer: {:?}", viewer);
 }
 

@@ -30,10 +30,10 @@ use eyebuffers::{EyeBuffers};
 use common::{Error, RenderSize};
 use patchprogram::{PatchProgram};
 use shape::{Shape, ShapeList, ShapeMask};
-use scream::{Scream, ScreamPosition, Viewer};
+use scream::{ScreamPosition, Viewer};
 
 fn get_shapes() -> Shape {
-    let scream = Scream::create(scream::on_present_color);
+    let scream = scream::of_color(color::YELLOW);
     let mut viewer = Viewer::new();
     let position = ScreamPosition { left: -0.485, right: -0.4, top: -0.15, bottom: -0.25, near: 0.05 };
     scream.present(&position, &mut viewer);
