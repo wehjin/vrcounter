@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::char;
-use color::*;
-use std::sync::mpsc::{channel, Sender, Receiver};
+use std::sync::mpsc::{channel, Sender};
 use std::thread;
 
 #[derive(Debug, Copy, Clone)]
@@ -40,7 +39,7 @@ impl IdSource {
 enum ViewerMessage {
     AddPatch(Patch),
     RemovePatch(u64),
-    Report,
+    SendReport(Sender<HashMap<u64, Patch>>),
     Stop,
 }
 
@@ -50,14 +49,38 @@ pub struct Viewer {
 }
 
 impl Viewer {
+    pub fn start() -> Self {
+        let (sender, receiver) = channel();
+        let mut patches = HashMap::new();
+        thread::spawn(move || {
+            while let Ok(message) = receiver.recv() {
+                match message {
+                    ViewerMessage::AddPatch(patch) => {
+                        patches.insert(patch.id, patch);
+                    },
+                    ViewerMessage::RemovePatch(id) => {
+                        patches.remove(&id);
+                    },
+                    ViewerMessage::SendReport(report_sender) => {
+                        report_sender.send(patches.clone()).unwrap();
+                    },
+                    ViewerMessage::Stop => {
+                        break;
+                    }
+                }
+            }
+        });
+        Viewer { sender: sender }
+    }
     pub fn add_patch(&self, patch: Patch) {
-        self.sender.send(ViewerMessage::AddPatch(patch));
+        self.sender.send(ViewerMessage::AddPatch(patch)).unwrap();
     }
     pub fn remove_patch(&self, id: u64) {
-        self.sender.send(ViewerMessage::RemovePatch(id));
+        self.sender.send(ViewerMessage::RemovePatch(id)).unwrap();
     }
-    pub fn request_patches(&self, report_receiver: &Receiver<HashMap<u64, Patch>>) -> HashMap<u64, Patch> {
-        self.sender.send(ViewerMessage::Report);
+    pub fn get_report(&self) -> HashMap<u64, Patch> {
+        let (report_sender, report_receiver) = channel();
+        self.sender.send(ViewerMessage::SendReport(report_sender)).unwrap();
         if let Ok(patches) = report_receiver.recv() {
             patches
         } else {
@@ -65,33 +88,8 @@ impl Viewer {
         }
     }
     pub fn stop(&self) {
-        self.sender.send(ViewerMessage::Stop);
+        self.sender.send(ViewerMessage::Stop).unwrap();
     }
-}
-
-pub fn viewer(report_sender: Sender<HashMap<u64, Patch>>) -> Viewer {
-    let (sender, receiver) = channel();
-    let mut patches = HashMap::new();
-    let mut viewer = Viewer { sender: sender };
-    thread::spawn(move || {
-        while let Ok(message) = receiver.recv() {
-            match message {
-                ViewerMessage::AddPatch(patch) => {
-                    patches.insert(patch.id, patch);
-                },
-                ViewerMessage::RemovePatch(id) => {
-                    patches.remove(&id);
-                },
-                ViewerMessage::Report => {
-                    report_sender.send(patches.clone());
-                },
-                ViewerMessage::Stop => {
-                    break;
-                }
-            }
-        }
-    });
-    viewer
 }
 
 #[derive(Debug)]
@@ -133,16 +131,16 @@ pub struct Presenting {
 }
 
 impl Presenting {
-    fn stop(&self) {
+    pub fn stop(&self) {
         (*self.on_stop)();
     }
-    fn create(on_stop: Box<Fn()>) -> Self {
+    pub fn create(on_stop: Box<Fn()>) -> Self {
         Presenting { on_stop: on_stop }
     }
-    fn empty() -> Self {
+    pub fn empty() -> Self {
         Presenting { on_stop: Box::new(move || {}) }
     }
-    fn double(first: Presenting, second: Presenting) -> Self {
+    pub fn double(first: Presenting, second: Presenting) -> Self {
         Presenting {
             on_stop: Box::new(move || {
                 first.stop();

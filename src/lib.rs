@@ -30,19 +30,20 @@ use eyebuffers::{EyeBuffers};
 use common::{Error, RenderSize};
 use patchprogram::{PatchProgram};
 use shape::{Shape, ShapeList, ShapeMask};
-use scream::{ScreamPosition, viewer, IdSource};
-use std::sync::mpsc::channel;
+use scream::{ScreamPosition, Viewer, IdSource};
 
 fn get_shapes() -> Vec<Shape> {
     let mut shapes = Vec::new();
-    let (report_sender, report_receiver) = channel();
-    let viewer = viewer(report_sender);
+    let viewer = Viewer::start();
     let mut id_source = IdSource::new();
     let position = ScreamPosition { left: -0.5, right: -0.4, top: -0.15, bottom: -0.25, near: 0.03 };
-    let double_scream = scream::of_color(color::YELLOW).join_right(0.1, scream::of_color(color::MAGENTA));
-    double_scream.present(&position, &mut id_source, viewer.clone());
+    let scream = scream::of_color(color::YELLOW)
+        .join_right(0.1, scream::of_color(color::MAGENTA)
+            .join_right(0.1, scream::of_color(color::CYAN))
+        );
+    scream.present(&position, &mut id_source, viewer.clone());
 
-    let patch_map = viewer.request_patches(&report_receiver);
+    let patch_map = viewer.get_report();
     for (_, patch) in patch_map {
         let shape = Shape::new(patch.position.left, patch.position.right,
                                patch.position.top, patch.position.bottom,
@@ -164,11 +165,11 @@ impl From<TrackedDevicePoses> for Poses {
 impl Poses {
     fn get_hmd_pose(&self) -> &TrackedDevicePose {
         self.poses.poses.iter()
-            .filter(|&x| match x.device_class() {
-                TrackedDeviceClass::HMD => true,
-                _ => false
-            })
-            .last().unwrap()
+                        .filter(|&x| match x.device_class() {
+                            TrackedDeviceClass::HMD => true,
+                            _ => false
+                        })
+                        .last().unwrap()
     }
 
     pub fn get_world_to_hmd_matrix(&self) -> [[f32; 4]; 4] {
