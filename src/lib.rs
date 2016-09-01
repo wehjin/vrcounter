@@ -30,21 +30,27 @@ use eyebuffers::{EyeBuffers};
 use common::{Error, RenderSize};
 use patchprogram::{PatchProgram};
 use shape::{Shape, ShapeList, ShapeMask};
-use scream::{ScreamPosition, Viewer};
+use scream::{ScreamPosition, viewer, IdSource};
+use std::sync::mpsc::channel;
 
 fn get_shapes() -> Vec<Shape> {
     let mut shapes = Vec::new();
-    let mut viewer = Viewer::new();
+    let (report_sender, report_receiver) = channel();
+    let viewer = viewer(report_sender);
+    let mut id_source = IdSource::new();
     let position = ScreamPosition { left: -0.5, right: -0.4, top: -0.15, bottom: -0.25, near: 0.03 };
     let double_scream = scream::of_color(color::YELLOW).join_right(0.1, scream::of_color(color::MAGENTA));
-    double_scream.present(&position, &mut viewer);
-    for (_, patch) in &viewer.patch_map {
+    double_scream.present(&position, &mut id_source, viewer.clone());
+
+    let patch_map = viewer.request_patches(&report_receiver);
+    for (_, patch) in patch_map {
         let shape = Shape::new(patch.position.left, patch.position.right,
                                patch.position.top, patch.position.bottom,
                                patch.position.near, patch.color,
                                patch.id, ShapeMask::Letter(patch.glyph));
         shapes.push(shape);
     }
+    viewer.stop();
     shapes
 }
 

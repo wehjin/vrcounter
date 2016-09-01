@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 use std::char;
 use color::*;
+use std::sync::mpsc::{channel, Sender, Receiver};
+use std::thread;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct PatchPosition {
     pub left: f32,
     pub right: f32,
@@ -11,7 +13,7 @@ pub struct PatchPosition {
     pub near: f32
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Patch {
     pub position: PatchPosition,
     pub color: [f32; 4],
@@ -20,25 +22,109 @@ pub struct Patch {
 }
 
 #[derive(Debug)]
-pub struct Viewer {
-    pub patch_map: HashMap<u64, Patch>,
+pub struct IdSource {
     global_id: u64,
 }
 
-impl Viewer {
+impl IdSource {
     pub fn new() -> Self {
-        Viewer { patch_map: HashMap::new(), global_id: 1 }
+        IdSource { global_id: 1u64 }
     }
     pub fn next_id(&mut self) -> u64 {
         let id = self.global_id;
-        self.global_id += 1;
+        self.global_id = self.global_id + 1;
         id
     }
-    pub fn add_patch(&mut self, patch: Patch) {
-        self.patch_map.insert(patch.id, patch);
+}
+
+enum ViewerMessage {
+    AddPatch(Patch),
+    RemovePatch(u64),
+    Report,
+    Stop,
+}
+
+#[derive(Clone)]
+pub struct Viewer {
+    sender: Sender<ViewerMessage>,
+}
+
+impl Viewer {
+    pub fn add_patch(&self, patch: Patch) {
+        self.sender.send(ViewerMessage::AddPatch(patch));
     }
-    pub fn remove_patch(&mut self, id: u64) {
-        self.patch_map.remove(&id);
+    pub fn remove_patch(&self, id: u64) {
+        self.sender.send(ViewerMessage::RemovePatch(id));
+    }
+    pub fn request_patches(&self, report_receiver: &Receiver<HashMap<u64, Patch>>) -> HashMap<u64, Patch> {
+        self.sender.send(ViewerMessage::Report);
+        if let Ok(patches) = report_receiver.recv() {
+            patches
+        } else {
+            HashMap::new()
+        }
+    }
+    pub fn stop(&self) {
+        self.sender.send(ViewerMessage::Stop);
+    }
+}
+
+pub fn viewer(report_sender: Sender<HashMap<u64, Patch>>) -> Viewer {
+    let (sender, receiver) = channel();
+    let mut patches = HashMap::new();
+    let mut viewer = Viewer { sender: sender };
+    thread::spawn(move || {
+        while let Ok(message) = receiver.recv() {
+            match message {
+                ViewerMessage::AddPatch(patch) => {
+                    patches.insert(patch.id, patch);
+                },
+                ViewerMessage::RemovePatch(id) => {
+                    patches.remove(&id);
+                },
+                ViewerMessage::Report => {
+                    report_sender.send(patches.clone());
+                },
+                ViewerMessage::Stop => {
+                    break;
+                }
+            }
+        }
+    });
+    viewer
+}
+
+#[derive(Debug)]
+pub struct ScreamPosition {
+    pub left: f32,
+    pub right: f32,
+    pub top: f32,
+    pub bottom: f32,
+    pub near: f32,
+}
+
+pub struct Scream {
+    on_present: Box<Fn(&ScreamPosition, &mut IdSource, Viewer) -> Presenting>
+}
+
+impl Scream {
+    pub fn create(on_present: Box<Fn(&ScreamPosition, &mut IdSource, Viewer) -> Presenting>) -> Self {
+        Scream { on_present: on_present }
+    }
+    pub fn present(&self, position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer) -> Presenting {
+        let on_present = &(self.on_present);
+        on_present(position, id_source, viewer)
+    }
+
+    pub fn join_right(self, width: f32, right_scream: Scream) -> Scream {
+        let on_present = move |position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer| -> Presenting {
+            let left_presenting = self.present(position, id_source, viewer.clone());
+            let &ScreamPosition { right, top, bottom, near, .. } = position;
+            let right_position = ScreamPosition { left: right, right: right + width, top: top, bottom: bottom, near: near };
+            let right_presenting = right_scream.present(&right_position, id_source, viewer.clone());
+            Presenting::double(left_presenting, right_presenting)
+        };
+        Scream::create(Box::new(on_present))
     }
 }
 
@@ -66,57 +152,22 @@ impl Presenting {
     }
 }
 
-#[derive(Debug)]
-pub struct ScreamPosition {
-    pub left: f32,
-    pub right: f32,
-    pub top: f32,
-    pub bottom: f32,
-    pub near: f32,
-}
-
-pub struct Scream {
-    on_present: Box<Fn(&ScreamPosition, &mut Viewer) -> Presenting>
-}
-
-impl Scream {
-    pub fn create(on_present: Box<Fn(&ScreamPosition, &mut Viewer) -> Presenting>) -> Self {
-        Scream { on_present: on_present }
-    }
-    pub fn present(&self, position: &ScreamPosition, viewer: &mut Viewer) -> Presenting {
-        let on_present = &(self.on_present);
-        on_present(position, viewer)
-    }
-
-    pub fn join_right(self, width: f32, right_scream: Scream) -> Scream {
-        let on_present = move |position: &ScreamPosition, viewer: &mut Viewer| -> Presenting {
-            let left_presenting = self.present(position, viewer);
-            let &ScreamPosition { right, top, bottom, near, .. } = position;
-            let right_position = ScreamPosition { left: right, right: right + width, top: top, bottom: bottom, near: near };
-            let right_presenting = right_scream.present(&right_position, viewer);
-            Presenting::double(left_presenting, right_presenting)
-        };
-        Scream::create(Box::new(on_present))
-    }
-}
-
 pub fn of_color(color: [f32; 4]) -> Scream {
-    Scream::create(Box::new(move |position: &ScreamPosition, viewer: &mut Viewer| -> Presenting {
-        present_color(position, viewer, color)
+    Scream::create(Box::new(move |position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer| -> Presenting {
+        present_color(position, id_source, viewer, color)
     }))
 }
 
-fn present_color(position: &ScreamPosition, viewer: &mut Viewer, color: [f32; 4]) -> Presenting {
+fn present_color(position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer, color: [f32; 4]) -> Presenting {
     let patch_position = PatchPosition {
         left: position.left, right: position.right, top: position.top, bottom: position.bottom,
         near: position.near
     };
-    let id = viewer.next_id();
+    let id = id_source.next_id();
     let patch = Patch { position: patch_position, color: color, glyph: 'Z', id: id };
     viewer.add_patch(patch);
     Presenting::create(Box::new(move || {
-        // TODO Remove patch
-        //viewer.remove_patch(id);
+        viewer.remove_patch(id);
     }))
 }
 
