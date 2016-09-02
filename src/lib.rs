@@ -8,9 +8,9 @@ extern crate unicode_normalization;
 
 mod patch_program;
 mod floor_program;
-pub mod mat;
-pub mod cam;
-pub mod app;
+mod mat;
+mod cam;
+mod app;
 mod eyebuffers;
 mod common;
 mod os;
@@ -18,6 +18,7 @@ mod shape;
 mod atlas;
 pub mod color;
 pub mod scream;
+pub mod shout;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};

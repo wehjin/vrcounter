@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::char;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
+use color::{MAGENTA};
 
 #[derive(Debug, Copy, Clone)]
 pub struct PatchPosition {
@@ -171,11 +172,13 @@ fn present_color(position: &ScreamPosition, id_source: &mut IdSource, viewer: Vi
 
 #[test]
 pub fn main() {
-    let scream = of_color(color::MAGENTA);
-    let mut viewer = Viewer::new();
+    let scream = of_color(MAGENTA);
+    let viewer = Viewer::start();
     let position = ScreamPosition { left: -0.5, right: -0.4, top: 0.5, bottom: 0.4, near: 0.05 };
-    scream.present(&position, &mut viewer);
-    println!("Viewer: {:?}", viewer);
-    assert_eq!(viewer.patch_map.len(), 1)
+    let mut id_source = IdSource::new();
+    scream.present(&position, &mut id_source, viewer.clone());
+    let report = viewer.get_report();
+    let report_length = report.len();
+    assert_eq!(report_length, 1)
 }
 
