@@ -2,9 +2,6 @@ extern crate glium;
 extern crate rusttype;
 extern crate unicode_normalization;
 
-use mat;
-use cam;
-use std::f32::consts::PI;
 use std::io::Cursor;
 use glium::{Surface, VertexBuffer, Program, Display};
 use glium::index::{NoIndices, PrimitiveType};
@@ -119,12 +116,6 @@ impl PatchProgram {
                 ..Default::default()
             }
         ).unwrap();
-    }
-
-    pub fn draw_to_camera<T: Surface>(&self, surface: &mut T, camera: &cam::Camera) {
-        let view = mat::view_matrix(&camera.eye, &camera.look, &camera.up);
-        let perspective = mat::perspective_matrix(surface.get_dimensions(), PI / 3.0);
-        self.draw(surface, &view, &perspective);
     }
 }
 

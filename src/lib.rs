@@ -6,7 +6,8 @@ extern crate image;
 extern crate rusttype;
 extern crate unicode_normalization;
 
-pub mod patchprogram;
+mod patch_program;
+mod floor_program;
 pub mod mat;
 pub mod cam;
 pub mod app;
@@ -28,7 +29,8 @@ use glium::glutin::{Event, ElementState};
 use std::{thread, time};
 use eyebuffers::{EyeBuffers};
 use common::{Error, RenderSize};
-use patchprogram::{PatchProgram};
+use patch_program::{PatchProgram};
+use floor_program::{FloorProgram};
 use shape::{Shape, ShapeList, ShapeMask};
 use scream::{ScreamPosition, Viewer, IdSource};
 
@@ -83,6 +85,18 @@ fn run_in_nr(shape_list: ShapeList) {
     }
 }
 
+struct Programs {
+    floor_program: FloorProgram,
+    patch_program: PatchProgram,
+}
+
+impl Programs {
+    fn draw<T: Surface>(&self, surface: &mut T, view: &[[f32; 4]; 4], projection: &[[f32; 4]; 4]) {
+        self.patch_program.draw(surface, view, projection);
+        self.floor_program.draw(surface, view, projection);
+    }
+}
+
 fn run_in_vr(shape_list: ShapeList) {
     let vr_option = System::up().ok();
     if vr_option.is_some() {
@@ -117,7 +131,10 @@ fn run_in_vr(shape_list: ShapeList) {
             .unwrap();
         let right_projection = vr.get_right_projection();
 
-        let patch_program = PatchProgram::new(&display, shape_list);
+        let programs = Programs {
+            patch_program: PatchProgram::new(&display, shape_list),
+            floor_program: FloorProgram::new(&display)
+        };
         let clear_color = (0.05, 0.05, 0.08, 1.0);
         let clear_depth = 1.0;
 
@@ -128,15 +145,15 @@ fn run_in_vr(shape_list: ShapeList) {
 
             let mut target = display.draw();
             target.clear_color_and_depth(clear_color, clear_depth);
-            patch_program.draw(&mut target, &world_to_hmd, &left_projection);
+            programs.draw(&mut target, &world_to_hmd, &left_projection);
             target.finish().unwrap();
 
             left_frame.clear_color_and_depth(clear_color, clear_depth);
-            patch_program.draw(&mut left_frame, &world_to_hmd, &left_projection);
+            programs.draw(&mut left_frame, &world_to_hmd, &left_projection);
             vr.submit_left_texture(left_buffers.color.get_id() as usize);
 
             right_frame.clear_color_and_depth(clear_color, clear_depth);
-            patch_program.draw(&mut right_frame, &world_to_hmd, &right_projection);
+            programs.draw(&mut right_frame, &world_to_hmd, &right_projection);
             vr.submit_right_texture(right_buffers.color.get_id() as usize);
 
             for ev in display.poll_events() {

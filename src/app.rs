@@ -1,33 +1,46 @@
 extern crate glium;
 
 use glium::{DisplayBuild, Surface, Display};
-use glium::glutin::{Event, ElementState};
-use patchprogram::{PatchProgram};
+use glium::glutin::{Event, ElementState, WindowBuilder};
+use patch_program::{PatchProgram};
+use floor_program::{FloorProgram};
 use cam;
 use os;
+use mat;
 use shape::ShapeList;
+use std::f32::consts::PI;
 
 pub struct Model {
     display: Display,
     patch_program: PatchProgram,
+    floor_program: FloorProgram,
     camera: cam::Camera,
     is_windows: bool,
 }
 
 impl Model {
     pub fn init(shape_list: ShapeList) -> Self {
-        let display: Display = glium::glutin::WindowBuilder::new()
-            .with_title("vr counter")
-            .with_depth_buffer(24)
-            .build_glium()
-            .unwrap();
-        let patch_program = PatchProgram::new(&display, shape_list);
-        let camera = cam::Camera::start();
-        Model { display: display, patch_program: patch_program, camera: camera, is_windows: os::is_windows() }
+        let display: Display = WindowBuilder::new().with_title("vr counter")
+                                                   .with_depth_buffer(24)
+                                                   .build_glium()
+                                                   .unwrap();
+        Model {
+            patch_program: PatchProgram::new(&display, shape_list),
+            floor_program: FloorProgram::new(&display),
+            camera: cam::Camera::start(),
+            is_windows: os::is_windows(),
+            display: display,
+        }
     }
 
     pub fn with_camera(self, camera: cam::Camera) -> Self {
-        Model { display: self.display, patch_program: self.patch_program, camera: camera, is_windows: self.is_windows }
+        Model {
+            display: self.display,
+            patch_program: self.patch_program,
+            floor_program: self.floor_program,
+            camera: camera,
+            is_windows: self.is_windows,
+        }
     }
 }
 
@@ -67,7 +80,12 @@ pub fn update(message: &Message, model: Model) -> Option<Model> {
 pub fn view(model: &Model) -> Message {
     let mut target = model.display.draw();
     target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
-    model.patch_program.draw_to_camera(&mut target, &model.camera);
+
+    let camera = &model.camera;
+    let view = mat::view_matrix(&camera.eye, &camera.look, &camera.up);
+    let perspective = mat::perspective_matrix(target.get_dimensions(), PI / 3.0);
+    model.patch_program.draw(&mut target, &view, &perspective);
+    model.floor_program.draw(&mut target, &view, &perspective);
     target.finish().unwrap();
     let mut message_option: Option<Message> = None;
     while message_option.is_none() {
