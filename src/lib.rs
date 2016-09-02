@@ -16,6 +16,7 @@ mod common;
 mod os;
 mod shape;
 mod atlas;
+mod viewer;
 pub mod color;
 pub mod scream;
 pub mod shout;
@@ -33,7 +34,8 @@ use common::{Error, RenderSize};
 use patch_program::{PatchProgram};
 use floor_program::{FloorProgram};
 use shape::{Shape, ShapeList, ShapeMask};
-use scream::{ScreamPosition, Viewer, IdSource};
+use scream::{ScreamPosition};
+use viewer::{Viewer, IdSource};
 
 fn get_shapes() -> Vec<Shape> {
     let mut shapes = Vec::new();

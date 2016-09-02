@@ -1,19 +1,95 @@
-pub struct Shout;
+use viewer::{Viewer, IdSource};
+use std::sync::mpsc::{Sender};
 
-impl Shout {
-    pub fn create() -> Self {
-        Shout {}
+pub enum Message<T, E> {
+    Position {
+        left: f32,
+        right: f32,
+        bottom: f32,
+        top: f32,
+        far: f32,
+        near: f32,
+    },
+    Ok(T),
+    Err(E),
+}
+
+pub struct Shout<T, E> {
+    on_present: Box<Fn(Viewer, Sender<Message<T, E>>, &mut IdSource) -> Shouting>,
+}
+
+impl<T, E> Shout<T, E> {
+    pub fn create(on_present: Box<Fn(Viewer, Sender<Message<T, E>>, &mut IdSource) -> Shouting>) -> Self {
+        Shout { on_present: on_present }
     }
-    pub fn present() -> Shouting {
-        Shouting {}
+    pub fn present(&self, viewer: Viewer, sender: Sender<Message<T, E>>, id_source: &mut IdSource) -> Shouting {
+        let on_present = &(self.on_present);
+        on_present(viewer, sender, id_source)
     }
 }
 
 pub struct Shouting;
 
 impl Shouting {
-    pub fn silence() {}
-    pub fn is_silenced() -> bool {
+    pub fn silence(&self) {}
+    pub fn is_silenced(&self) -> bool {
         false
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Shout, Shouting, Message};
+    use viewer::{Viewer, IdSource, Patch, PatchPosition};
+    use std::sync::mpsc::{Sender, channel};
+    use color;
+
+    #[test]
+    fn it_works() {
+        let on_present = move |viewer: Viewer, sender: Sender<Message<u32, f32>>, id_source: &mut IdSource| -> Shouting {
+            let (left, right, bottom, top, far, near) = (0.0, 10.0, 0.0, 20.0, 0.01, 0.01);
+            let position = PatchPosition { left: left, right: right, bottom: bottom, top: top, near: near };
+            let patch = Patch::of_color(&position, &color::YELLOW, id_source.next_id());
+            viewer.add_patch(patch);
+            sender.send(Message::Position {
+                left: left,
+                right: right,
+                bottom: bottom,
+                top: top,
+                far: far,
+                near: near,
+            }).unwrap();
+            sender.send(Message::Ok(33u32)).unwrap();
+            Shouting {}
+        };
+        let shout = Shout::create(Box::new(on_present));
+
+        let viewer = Viewer::start();
+        let (sender, receiver) = channel();
+        let mut id_source = IdSource::new();
+        let shouting = shout.present(viewer.clone(), sender.clone(), &mut id_source);
+        let received_position = receiver.recv().unwrap();
+        let received_position_match = match received_position {
+            Message::Position {
+                left: 0.0,
+                right: 10.0,
+                bottom: 0.0,
+                top: 20.0,
+                far: 0.01,
+                near: 0.01,
+            } => true,
+            _ => false,
+        };
+        assert!(received_position_match);
+
+        let received_result = receiver.recv().unwrap();
+        let received_result_match = match received_result {
+            Message::Ok(33u32) => true,
+            _ => false,
+        };
+        assert!(received_result_match);
+
+        shouting.silence();
+        viewer.stop();
     }
 }
