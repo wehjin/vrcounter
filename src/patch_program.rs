@@ -69,7 +69,7 @@ pub struct PatchProgram {
     atlas: Atlas
 }
 
-fn load_galaxy(display: &Display) -> SrgbTexture2d {
+pub fn load_galaxy(display: &Display) -> SrgbTexture2d {
     let image = image::load(Cursor::new(&include_bytes!("galaxy.png")[..]), image::PNG).unwrap().to_rgba();
     let image_dimensions = image.dimensions();
     let image = RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);

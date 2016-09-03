@@ -21,6 +21,7 @@ mod viewer;
 pub mod color;
 pub mod scream;
 mod howl;
+mod mist;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
@@ -50,7 +51,7 @@ fn get_shapes() -> Vec<Shape> {
         );
     scream.present(&position, &mut id_source, viewer.clone());
 
-    let howl = howl::create::<(), ()>(color::BLUE);
+    let howl = howl::create_color::<(), ()>(color::BLUE);
     let (sender, receiver) = channel();
     howl.present(viewer.clone(), sender, &mut id_source);
 

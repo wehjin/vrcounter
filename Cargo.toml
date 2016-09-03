@@ -12,7 +12,7 @@ openvr_sys = {git="https://github.com/rust-openvr/rust-openvr-sys", rev="2a2d4bf
 image = "0.10.1"
 rusttype = "0.2.0"
 unicode-normalization = "^0.1.2"
-cage = {git="https://github.com/wehjin/rust-cage", rev="51cb944bef8c12a78e7943e261c1a14cb8574315"}
+cage = {git="https://github.com/wehjin/rust-cage"}
 
 [lib]
 name = "vrcounter"

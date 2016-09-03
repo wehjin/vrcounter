@@ -21,3 +21,30 @@ impl Howling {
         }
     }
 }
+
+pub enum Message<T, E> {
+    Position {
+        left: f32,
+        right: f32,
+        bottom: f32,
+        top: f32,
+        far: f32,
+        near: f32,
+    },
+    Ok(T),
+    Err(E),
+}
+
+pub struct Howl<T, E> {
+    on_present: Box<Fn(Viewer, Sender<Message<T, E>>, &mut IdSource) -> Howling>,
+}
+
+impl<T, E> Howl<T, E> {
+    pub fn create(on_present: Box<Fn(Viewer, Sender<Message<T, E>>, &mut IdSource) -> Howling>) -> Self {
+        Howl { on_present: on_present }
+    }
+    pub fn present(&self, viewer: Viewer, sender: Sender<Message<T, E>>, id_source: &mut IdSource) -> Howling {
+        let on_present = &(self.on_present);
+        on_present(viewer, sender, id_source)
+    }
+}
