@@ -3,22 +3,6 @@ use std::thread;
 use std::collections::HashMap;
 use patch::*;
 
-#[derive(Debug)]
-pub struct IdSource {
-    global_id: u64,
-}
-
-impl IdSource {
-    pub fn new() -> Self {
-        IdSource { global_id: 1u64 }
-    }
-    pub fn next_id(&mut self) -> u64 {
-        let id = self.global_id;
-        self.global_id = self.global_id + 1;
-        id
-    }
-}
-
 enum Message {
     AddPatch(Patch),
     RemovePatch(u64),
@@ -27,11 +11,11 @@ enum Message {
 }
 
 #[derive(Clone)]
-pub struct Viewer {
+pub struct ActiveViewer {
     sender: Sender<Message>,
 }
 
-impl Viewer {
+impl ActiveViewer {
     pub fn start() -> Self {
         let (sender, receiver) = channel();
         let mut patches = HashMap::new();
@@ -53,7 +37,7 @@ impl Viewer {
                 }
             }
         });
-        Viewer { sender: sender }
+        ActiveViewer { sender: sender }
     }
     pub fn add_patch(&self, patch: Patch) {
         self.sender.send(Message::AddPatch(patch)).unwrap();
@@ -71,6 +55,6 @@ impl Viewer {
         }
     }
     pub fn stop(&self) {
-        self.sender.send(Message::Stop).unwrap();
+        self.sender.send(Message::Stop).unwrap_or(());
     }
 }

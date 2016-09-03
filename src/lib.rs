@@ -33,17 +33,17 @@ use glium::framebuffer::{SimpleFrameBuffer, ToColorAttachment, ToDepthAttachment
 use glium::glutin::{Event, ElementState};
 use std::{thread, time};
 use eyebuffers::{EyeBuffers};
-use common::{Error, RenderSize};
+use common::{Error, RenderSize, IdSource};
 use patch_program::{PatchProgram};
 use floor_program::{FloorProgram};
 use shape::{Shape, ShapeList, ShapeMask};
 use scream::{ScreamPosition};
-use viewer::{Viewer, IdSource};
+use viewer::{ActiveViewer};
 use std::sync::mpsc::{channel};
 
 fn get_shapes() -> Vec<Shape> {
     let mut shapes = Vec::new();
-    let viewer = Viewer::start();
+    let viewer = ActiveViewer::start();
     let mut id_source = IdSource::new();
     let position = ScreamPosition { left: -0.5, right: -0.4, top: -0.15, bottom: -0.25, near: 0.03 };
     let scream = scream::of_color(color::YELLOW)

@@ -1,5 +1,6 @@
 use std::sync::mpsc::{Sender};
-use viewer::{Viewer, IdSource};
+use viewer::{ActiveViewer};
+use common::IdSource;
 
 pub struct Howling {
     is_silenced: bool,
@@ -35,14 +36,14 @@ pub enum Message<T, E> {
 }
 
 pub struct Howl<T, E> {
-    on_present: Box<Fn(Viewer, Sender<Message<T, E>>, &mut IdSource) -> Howling>,
+    on_present: Box<Fn(ActiveViewer, Sender<Message<T, E>>, &mut IdSource) -> Howling>,
 }
 
 impl<T, E> Howl<T, E> {
-    pub fn create(on_present: Box<Fn(Viewer, Sender<Message<T, E>>, &mut IdSource) -> Howling>) -> Self {
+    pub fn create(on_present: Box<Fn(ActiveViewer, Sender<Message<T, E>>, &mut IdSource) -> Howling>) -> Self {
         Howl { on_present: on_present }
     }
-    pub fn present(&self, viewer: Viewer, sender: Sender<Message<T, E>>, id_source: &mut IdSource) -> Howling {
+    pub fn present(&self, viewer: ActiveViewer, sender: Sender<Message<T, E>>, id_source: &mut IdSource) -> Howling {
         let on_present = &(self.on_present);
         on_present(viewer, sender, id_source)
     }

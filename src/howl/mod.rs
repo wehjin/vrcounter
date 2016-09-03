@@ -1,14 +1,15 @@
 mod core;
 
 use std::sync::mpsc::{Sender};
-use viewer::{Viewer, IdSource};
+use viewer::{ActiveViewer};
+use common::IdSource;
 use patch::{PatchPosition, Patch};
 use color;
 use howl::core::{Howling, Message, Howl};
 
 pub fn create_color<T, E>(color: [f32; 4], ) -> Howl<T, E> {
     let (left, right, bottom, top, far, near) = (-0.70, -0.50, -0.10, 0.10, 0.10, 0.10);
-    Howl::create(Box::new(move |viewer: Viewer, sender: Sender<Message<T, E>>, id_source: &mut IdSource| -> Howling {
+    Howl::create(Box::new(move |viewer: ActiveViewer, sender: Sender<Message<T, E>>, id_source: &mut IdSource| -> Howling {
         let position = PatchPosition { left: left, right: right, bottom: bottom, top: top, near: near };
         let id = id_source.next_id();
         let patch = Patch::of_color(&position, &color, id);
