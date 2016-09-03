@@ -1,7 +1,5 @@
 Backlog
 * Draw controllers
-* Draw floor
 * Draw play-area
-* Draw screen
-* Draw boxes
-
+* Draw sky
+* Add Position
