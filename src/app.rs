@@ -1,19 +1,17 @@
 extern crate glium;
 
-use glium::{DisplayBuild, Surface, Display};
+use glium::{DisplayBuild, Display, Surface};
 use glium::glutin::{Event, ElementState, WindowBuilder};
-use patch_program::{PatchProgram};
 use cam;
 use os;
 use mat;
-use shape::ShapeList;
 use std::f32::consts::PI;
 use programs::Programs;
+use shape::ShapeList;
 
 pub struct Model {
     display: Display,
     programs: Programs,
-    patch_program: PatchProgram,
     camera: cam::Camera,
     is_windows: bool,
 }
@@ -25,8 +23,7 @@ impl Model {
                                                    .build_glium()
                                                    .unwrap();
         Model {
-            programs: Programs::new(&display),
-            patch_program: PatchProgram::new(&display, shape_list),
+            programs: Programs::init(&display, shape_list),
             camera: cam::Camera::start(),
             is_windows: os::is_windows(),
             display: display,
@@ -37,7 +34,6 @@ impl Model {
         Model {
             display: self.display,
             programs: self.programs,
-            patch_program: self.patch_program,
             camera: camera,
             is_windows: self.is_windows,
         }
@@ -85,7 +81,6 @@ pub fn view(model: &Model) -> Message {
     let view = mat::view_matrix(&camera.eye, &camera.look, &camera.up);
     let perspective = mat::perspective_matrix(target.get_dimensions(), PI / 3.0);
     model.programs.draw(&mut target, &view, &perspective);
-    model.patch_program.draw(&mut target, &view, &perspective);
     target.finish().unwrap();
     let mut message_option: Option<Message> = None;
     while message_option.is_none() {
