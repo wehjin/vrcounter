@@ -1,7 +1,6 @@
 use std::sync::mpsc::{Sender};
 use viewer::{Viewer, IdSource, Patch, PatchPosition};
 use color;
-use howl::core::{Howling};
 
 pub struct Howling {
     is_silenced: bool,
