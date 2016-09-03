@@ -12,15 +12,15 @@ enum Message {
 
 #[derive(Clone)]
 pub struct ActiveViewer {
-    sender: Sender<Message>,
+    command_tx: Sender<Message>,
 }
 
 impl ActiveViewer {
     pub fn start() -> Self {
-        let (sender, receiver) = channel();
+        let (tx, rx) = channel();
         let mut patches = HashMap::new();
         thread::spawn(move || {
-            while let Ok(message) = receiver.recv() {
+            while let Ok(message) = rx.recv() {
                 match message {
                     Message::AddPatch(patch) => {
                         patches.insert(patch.id, patch);
@@ -28,8 +28,8 @@ impl ActiveViewer {
                     Message::RemovePatch(id) => {
                         patches.remove(&id);
                     },
-                    Message::SendReport(report_sender) => {
-                        report_sender.send(patches.clone()).unwrap();
+                    Message::SendReport(report_tx) => {
+                        report_tx.send(patches.clone()).unwrap();
                     },
                     Message::Stop => {
                         break;
@@ -37,24 +37,39 @@ impl ActiveViewer {
                 }
             }
         });
-        ActiveViewer { sender: sender }
+        ActiveViewer { command_tx: tx }
     }
     pub fn add_patch(&self, patch: Patch) {
-        self.sender.send(Message::AddPatch(patch)).unwrap();
+        self.command_tx.send(Message::AddPatch(patch)).unwrap();
     }
     pub fn remove_patch(&self, id: u64) {
-        self.sender.send(Message::RemovePatch(id)).unwrap();
+        self.command_tx.send(Message::RemovePatch(id)).unwrap();
     }
     pub fn get_report(&self) -> HashMap<u64, Patch> {
-        let (report_sender, report_receiver) = channel();
-        self.sender.send(Message::SendReport(report_sender)).unwrap();
-        if let Ok(patches) = report_receiver.recv() {
+        let (report_tx, report_rx) = channel();
+        self.command_tx.send(Message::SendReport(report_tx)).unwrap();
+        if let Ok(patches) = report_rx.recv() {
             patches
         } else {
             HashMap::new()
         }
     }
     pub fn stop(&self) {
-        self.sender.send(Message::Stop).unwrap_or(());
+        self.command_tx.send(Message::Stop).unwrap_or(());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn add_patch() {
+        let viewer = ActiveViewer::start();
+        let patch = Patch::new(1, -1.0, 1.0, -1.0, 1.0, 0.0, color::MAGENTA, Sigil::Fill);
+        viewer.add_patch(self, patch);
+        let report = viewer.get_report();
+        viewer.stop();
+        assert!(report.contains_key(1));
     }
 }
