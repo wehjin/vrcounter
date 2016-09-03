@@ -1,4 +1,4 @@
-use cage::{Cage, Offset};
+use cage::{Cage};
 use std::sync::mpsc::{channel, Sender, Receiver};
 use std::cell::{Cell};
 

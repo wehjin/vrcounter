@@ -22,6 +22,7 @@ pub mod color;
 pub mod scream;
 mod howl;
 mod mist;
+mod patch;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};

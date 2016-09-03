@@ -1,7 +1,8 @@
 mod core;
 
 use std::sync::mpsc::{Sender};
-use viewer::{Viewer, IdSource, Patch, PatchPosition};
+use viewer::{Viewer, IdSource};
+use patch::{PatchPosition, Patch};
 use color;
 use howl::core::{Howling, Message, Howl};
 

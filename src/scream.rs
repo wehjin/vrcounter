@@ -1,4 +1,5 @@
-use viewer::{Viewer, Patch, PatchPosition, IdSource};
+use viewer::{Viewer, IdSource};
+use patch::{Patch, PatchPosition};
 use color::MAGENTA;
 
 #[derive(Debug)]
