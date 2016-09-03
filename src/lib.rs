@@ -19,7 +19,7 @@ mod atlas;
 mod viewer;
 pub mod color;
 pub mod scream;
-pub mod shout;
+pub mod howl;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
@@ -36,7 +36,6 @@ use floor_program::{FloorProgram};
 use shape::{Shape, ShapeList, ShapeMask};
 use scream::{ScreamPosition};
 use viewer::{Viewer, IdSource};
-use shout::create;
 use std::sync::mpsc::{channel};
 
 fn get_shapes() -> Vec<Shape> {
@@ -50,9 +49,9 @@ fn get_shapes() -> Vec<Shape> {
         );
     scream.present(&position, &mut id_source, viewer.clone());
 
-    let shout = shout::create::<i32, i32>(color::BLUE);
-    let (shout_sender, shout_receiver) = channel();
-    shout.present(viewer.clone(), shout_sender, &mut id_source);
+    let howl = howl::create::<(), ()>(color::BLUE);
+    let (sender, _) = channel();
+    howl.present(viewer.clone(), sender, &mut id_source);
 
     let patch_map = viewer.get_report();
     for (_, patch) in patch_map {
