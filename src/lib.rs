@@ -10,6 +10,7 @@ extern crate cage;
 mod patch_program;
 mod floor_program;
 mod mist_program;
+mod programs;
 mod mat;
 mod cam;
 mod app;
@@ -43,7 +44,7 @@ use scream::{ScreamPosition};
 use viewer::{ActiveViewer};
 use std::sync::mpsc::{channel};
 use howl::Message as HowlMessage;
-use cage::{Cage, Frame, Offset};
+use cage::{Cage, Frame};
 
 fn get_shapes() -> Vec<Shape> {
     let mut shapes = Vec::new();
