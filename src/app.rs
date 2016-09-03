@@ -4,16 +4,19 @@ use glium::{DisplayBuild, Surface, Display};
 use glium::glutin::{Event, ElementState, WindowBuilder};
 use patch_program::{PatchProgram};
 use floor_program::{FloorProgram};
+use mist_program::{MistProgram};
 use cam;
 use os;
 use mat;
 use shape::ShapeList;
 use std::f32::consts::PI;
+use cage::{Cage, Frame, Offset};
 
 pub struct Model {
     display: Display,
     patch_program: PatchProgram,
     floor_program: FloorProgram,
+    mist_program: MistProgram,
     camera: cam::Camera,
     is_windows: bool,
 }
@@ -24,9 +27,11 @@ impl Model {
                                                    .with_depth_buffer(24)
                                                    .build_glium()
                                                    .unwrap();
+        let cage = Cage::from((Frame::default(), Offset::default()));
         Model {
             patch_program: PatchProgram::new(&display, shape_list),
             floor_program: FloorProgram::new(&display),
+            mist_program: MistProgram::new(&display, &cage),
             camera: cam::Camera::start(),
             is_windows: os::is_windows(),
             display: display,
@@ -38,6 +43,7 @@ impl Model {
             display: self.display,
             patch_program: self.patch_program,
             floor_program: self.floor_program,
+            mist_program: self.mist_program,
             camera: camera,
             is_windows: self.is_windows,
         }
@@ -86,6 +92,7 @@ pub fn view(model: &Model) -> Message {
     let perspective = mat::perspective_matrix(target.get_dimensions(), PI / 3.0);
     model.patch_program.draw(&mut target, &view, &perspective);
     model.floor_program.draw(&mut target, &view, &perspective);
+    model.mist_program.draw(&mut target, &view, &perspective);
     target.finish().unwrap();
     let mut message_option: Option<Message> = None;
     while message_option.is_none() {

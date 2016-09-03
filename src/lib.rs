@@ -9,6 +9,7 @@ extern crate cage;
 
 mod patch_program;
 mod floor_program;
+mod mist_program;
 mod mat;
 mod cam;
 mod app;
