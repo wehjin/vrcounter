@@ -2,6 +2,7 @@ use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::collections::HashMap;
 use patch::*;
+use mist::{Mist, Message as MistMessage};
 
 enum Message {
     AddPatch(Patch),
@@ -54,6 +55,7 @@ impl ActiveViewer {
             HashMap::new()
         }
     }
+
     pub fn stop(&self) {
         self.command_tx.send(Message::Stop).unwrap_or(());
     }

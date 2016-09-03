@@ -8,16 +8,16 @@ pub enum Message {
 }
 
 #[derive(Clone, Debug)]
-pub struct Mist<T: From<Message>> {
+pub struct Mist {
     id: u64,
     cage: Cage,
-    on_message: Sender<T>,
+    on_message: Sender<Message>,
     lifted: Cell<bool>
 }
 
-impl<T> Mist<T> where T: From<Message> {
-    pub fn new(id: u64, cage: Cage) -> (Self, Receiver<T>) {
-        let (sender, receiver) = channel::<T>();
+impl Mist {
+    pub fn new(id: u64, cage: Cage) -> (Self, Receiver<Message>) {
+        let (sender, receiver) = channel::<Message>();
         let mist = Mist { id: id, cage: cage, on_message: sender, lifted: Cell::new(false) };
         (mist, receiver)
     }
@@ -25,7 +25,7 @@ impl<T> Mist<T> where T: From<Message> {
         if self.lifted.get() || !self.cage.contains(x, y, z) {
             false
         } else {
-            let message = T::from(Message::In(self.id, x, y, z));
+            let message = Message::In(self.id, x, y, z);
             if self.on_message.send(message).is_err() {
                 self.lifted.set(false);
                 false
@@ -45,7 +45,7 @@ mod tests {
     #[test]
     fn mist_touch() {
         let cage: Cage = Default::default();
-        let (mist, receiver): (Mist<Message>, Receiver<Message>) = Mist::new(1, cage);
+        let (mist, receiver): (Mist, Receiver<Message>) = Mist::new(1, cage);
         let touched = mist.touch(0.0, 0.0, 0.0);
         assert!(touched);
         let message = receiver.recv().unwrap();
