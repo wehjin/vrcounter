@@ -1,5 +1,6 @@
-use viewer::{Viewer, IdSource};
 use std::sync::mpsc::{Sender};
+use viewer::{Viewer, IdSource, Patch, PatchPosition};
+use color;
 
 pub enum Message<T, E> {
     Position {
@@ -33,7 +34,6 @@ pub struct Shouting {
     on_silence: Box<Fn()>,
 }
 
-
 impl Shouting {
     pub fn new(on_silence: Box<Fn()>) -> Self {
         Shouting { is_silenced: false, on_silence: on_silence }
@@ -49,6 +49,20 @@ impl Shouting {
     }
 }
 
+pub fn create<T, E>(color: [f32; 4], ) -> Shout<T, E> {
+    let (left, right, bottom, top, far, near) = (-0.70, -0.50, -0.10, 0.10, 0.10, 0.10);
+    Shout::create(Box::new(move |viewer: Viewer, sender: Sender<Message<T, E>>, id_source: &mut IdSource| -> Shouting {
+        let position = PatchPosition { left: left, right: right, bottom: bottom, top: top, near: near };
+        let id = id_source.next_id();
+        let patch = Patch::of_color(&position, &color, id);
+        viewer.add_patch(patch);
+        sender.send(Message::Position {
+            left: left, right: right, bottom: bottom, top: top, far: far, near: near
+        }).unwrap();
+        Shouting::new(Box::new(move || { viewer.remove_patch(id); }))
+    }))
+}
+
 #[cfg(test)]
 mod tests {
     use super::{Shout, Shouting, Message};
@@ -58,27 +72,6 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let on_present = move |viewer: Viewer, sender: Sender<Message<u32, f32>>, id_source: &mut IdSource| -> Shouting {
-            let (left, right, bottom, top, far, near) = (0.0, 10.0, 0.0, 20.0, 0.01, 0.01);
-            let position = PatchPosition { left: left, right: right, bottom: bottom, top: top, near: near };
-            let id = id_source.next_id();
-            let patch = Patch::of_color(&position, &color::YELLOW, id);
-            viewer.add_patch(patch);
-            sender.send(Message::Position {
-                left: left,
-                right: right,
-                bottom: bottom,
-                top: top,
-                far: far,
-                near: near,
-            }).unwrap();
-            sender.send(Message::Ok(33u32)).unwrap();
-            Shouting::new(Box::new(move || {
-                viewer.remove_patch(id);
-            }))
-        };
-        let shout = Shout::create(Box::new(on_present));
-
         let viewer = Viewer::start();
         let (sender, receiver) = channel();
         let mut id_source = IdSource::new();

@@ -40,7 +40,7 @@ impl Patch {
         Patch {
             position: position.clone(),
             color: color.clone(),
-            glyph: 'X',
+            glyph: '\u{0}',
             id: id
         }
     }

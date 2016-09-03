@@ -36,6 +36,8 @@ use floor_program::{FloorProgram};
 use shape::{Shape, ShapeList, ShapeMask};
 use scream::{ScreamPosition};
 use viewer::{Viewer, IdSource};
+use shout::create;
+use std::sync::mpsc::{channel};
 
 fn get_shapes() -> Vec<Shape> {
     let mut shapes = Vec::new();
@@ -48,12 +50,17 @@ fn get_shapes() -> Vec<Shape> {
         );
     scream.present(&position, &mut id_source, viewer.clone());
 
+    let shout = shout::create::<i32, i32>(color::BLUE);
+    let (shout_sender, shout_receiver) = channel();
+    shout.present(viewer.clone(), shout_sender, &mut id_source);
+
     let patch_map = viewer.get_report();
     for (_, patch) in patch_map {
+        let mask = if patch.glyph == '\u{0}' { ShapeMask::None } else { ShapeMask::Letter(patch.glyph) };
         let shape = Shape::new(patch.position.left, patch.position.right,
                                patch.position.top, patch.position.bottom,
                                patch.position.near, patch.color,
-                               patch.id, ShapeMask::Letter(patch.glyph));
+                               patch.id, mask);
         shapes.push(shape);
     }
     viewer.stop();
