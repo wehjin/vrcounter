@@ -28,12 +28,24 @@ impl<T, E> Shout<T, E> {
     }
 }
 
-pub struct Shouting;
+pub struct Shouting {
+    is_silenced: bool,
+    on_silence: Box<Fn()>,
+}
+
 
 impl Shouting {
-    pub fn silence(&self) {}
+    pub fn new(on_silence: Box<Fn()>) -> Self {
+        Shouting { is_silenced: false, on_silence: on_silence }
+    }
     pub fn is_silenced(&self) -> bool {
-        false
+        self.is_silenced
+    }
+    pub fn silence(&mut self) {
+        if self.is_silenced {} else {
+            self.is_silenced = true;
+            (&self.on_silence)();
+        }
     }
 }
 
@@ -49,7 +61,8 @@ mod tests {
         let on_present = move |viewer: Viewer, sender: Sender<Message<u32, f32>>, id_source: &mut IdSource| -> Shouting {
             let (left, right, bottom, top, far, near) = (0.0, 10.0, 0.0, 20.0, 0.01, 0.01);
             let position = PatchPosition { left: left, right: right, bottom: bottom, top: top, near: near };
-            let patch = Patch::of_color(&position, &color::YELLOW, id_source.next_id());
+            let id = id_source.next_id();
+            let patch = Patch::of_color(&position, &color::YELLOW, id);
             viewer.add_patch(patch);
             sender.send(Message::Position {
                 left: left,
@@ -60,14 +73,16 @@ mod tests {
                 near: near,
             }).unwrap();
             sender.send(Message::Ok(33u32)).unwrap();
-            Shouting {}
+            Shouting::new(Box::new(move || {
+                viewer.remove_patch(id);
+            }))
         };
         let shout = Shout::create(Box::new(on_present));
 
         let viewer = Viewer::start();
         let (sender, receiver) = channel();
         let mut id_source = IdSource::new();
-        let shouting = shout.present(viewer.clone(), sender.clone(), &mut id_source);
+        let mut shouting = shout.present(viewer.clone(), sender.clone(), &mut id_source);
         let received_position = receiver.recv().unwrap();
         let received_position_match = match received_position {
             Message::Position {
@@ -88,7 +103,6 @@ mod tests {
             _ => false,
         };
         assert!(received_result_match);
-
         shouting.silence();
         viewer.stop();
     }
