@@ -7,6 +7,7 @@ pub enum Message {
     Out,
 }
 
+#[derive(Clone, Debug)]
 pub struct Mist<T: From<Message>> {
     id: u64,
     cage: Cage,

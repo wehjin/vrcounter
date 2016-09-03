@@ -45,7 +45,7 @@ impl ActiveViewer {
     pub fn remove_patch(&self, id: u64) {
         self.command_tx.send(Message::RemovePatch(id)).unwrap();
     }
-    pub fn get_report(&self) -> HashMap<u64, Patch> {
+    pub fn get_patch_report(&self) -> HashMap<u64, Patch> {
         let (report_tx, report_rx) = channel();
         self.command_tx.send(Message::SendReport(report_tx)).unwrap();
         if let Ok(patches) = report_rx.recv() {
@@ -62,14 +62,16 @@ impl ActiveViewer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use patch::{Sigil, Patch};
+    use color::MAGENTA;
 
     #[test]
     fn add_patch() {
         let viewer = ActiveViewer::start();
-        let patch = Patch::new(1, -1.0, 1.0, -1.0, 1.0, 0.0, color::MAGENTA, Sigil::Fill);
-        viewer.add_patch(self, patch);
-        let report = viewer.get_report();
+        let patch = Patch::new(1, -1.0, 1.0, -1.0, 1.0, 0.0, MAGENTA, Sigil::Fill);
+        viewer.add_patch(patch);
+        let report = viewer.get_patch_report();
         viewer.stop();
-        assert!(report.contains_key(1));
+        assert!(report.contains_key(&1));
     }
 }

@@ -53,10 +53,10 @@ fn get_shapes() -> Vec<Shape> {
     scream.present(&position, &mut id_source, viewer.clone());
 
     let howl = howl::create_color::<(), ()>(color::BLUE);
-    let (sender, receiver) = channel();
-    howl.present(viewer.clone(), sender, &mut id_source);
+    let (message_tx, message_rx) = channel();
+    howl.present(viewer.clone(), message_tx, &mut id_source);
 
-    let patch_map = viewer.get_report();
+    let patch_map = viewer.get_patch_report();
     for (_, patch) in patch_map {
         let mask = if patch.glyph == '\u{0}' { ShapeMask::None } else { ShapeMask::Letter(patch.glyph) };
         let shape = Shape::new(patch.position.left, patch.position.right,
