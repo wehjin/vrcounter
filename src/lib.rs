@@ -37,11 +37,13 @@ use eyebuffers::{EyeBuffers};
 use common::{Error, RenderSize, IdSource};
 use patch_program::{PatchProgram};
 use floor_program::{FloorProgram};
+use mist_program::{MistProgram};
 use shape::{Shape, ShapeList, ShapeMask};
 use scream::{ScreamPosition};
 use viewer::{ActiveViewer};
 use std::sync::mpsc::{channel};
 use howl::Message as HowlMessage;
+use cage::{Cage, Frame, Offset};
 
 fn get_shapes() -> Vec<Shape> {
     let mut shapes = Vec::new();
@@ -109,12 +111,14 @@ fn run_in_nr(shape_list: ShapeList) {
 struct Programs {
     floor_program: FloorProgram,
     patch_program: PatchProgram,
+    mist_program: MistProgram,
 }
 
 impl Programs {
     fn draw<T: Surface>(&self, surface: &mut T, view: &[[f32; 4]; 4], projection: &[[f32; 4]; 4]) {
         self.patch_program.draw(surface, view, projection);
         self.floor_program.draw(surface, view, projection);
+        self.mist_program.draw(surface, view, projection);
     }
 }
 
@@ -154,7 +158,8 @@ fn run_in_vr(shape_list: ShapeList) {
 
         let programs = Programs {
             patch_program: PatchProgram::new(&display, shape_list),
-            floor_program: FloorProgram::new(&display)
+            floor_program: FloorProgram::new(&display),
+            mist_program: MistProgram::new(&display, &Cage::from(Frame::default())),
         };
         let clear_color = (0.05, 0.05, 0.08, 1.0);
         let clear_depth = 1.0;
