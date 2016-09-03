@@ -40,6 +40,7 @@ use shape::{Shape, ShapeList, ShapeMask};
 use scream::{ScreamPosition};
 use viewer::{ActiveViewer};
 use std::sync::mpsc::{channel};
+use howl::Message as HowlMessage;
 
 fn get_shapes() -> Vec<Shape> {
     let mut shapes = Vec::new();
@@ -55,6 +56,13 @@ fn get_shapes() -> Vec<Shape> {
     let howl = howl::create_color::<(), ()>(color::BLUE);
     let (message_tx, message_rx) = channel();
     howl.present(viewer.clone(), message_tx, &mut id_source);
+    let howl_message = message_rx.recv().unwrap();
+    match howl_message {
+        HowlMessage::Position { .. } => {
+            println!("Howl position")
+        },
+        _ => println!("Other message")
+    }
 
     let patch_map = viewer.get_patch_report();
     for (_, patch) in patch_map {

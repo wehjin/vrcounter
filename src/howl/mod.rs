@@ -4,8 +4,7 @@ use std::sync::mpsc::{Sender};
 use viewer::{ActiveViewer};
 use common::IdSource;
 use patch::{PatchPosition, Patch};
-use color;
-use howl::core::{Howling, Message, Howl};
+pub use howl::core::{Howling, Message, Howl};
 
 pub fn create_color<T, E>(color: [f32; 4], ) -> Howl<T, E> {
     let (left, right, bottom, top, far, near) = (-0.70, -0.50, -0.10, 0.10, 0.10, 0.10);

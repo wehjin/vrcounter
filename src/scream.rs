@@ -1,7 +1,6 @@
 use viewer::{ActiveViewer};
 use patch::{Patch, PatchPosition};
 use common::{IdSource};
-use color::MAGENTA;
 
 #[derive(Debug)]
 pub struct ScreamPosition {
@@ -82,7 +81,8 @@ fn present_color(position: &ScreamPosition, id_source: &mut IdSource, viewer: Ac
 
 #[test]
 pub fn main() {
-    let scream = of_color(MAGENTA);
+    use color;
+    let scream = of_color(color::MAGENTA);
     let viewer = ActiveViewer::start();
     let position = ScreamPosition { left: -0.5, right: -0.4, top: 0.5, bottom: 0.4, near: 0.05 };
     let mut id_source = IdSource::new();

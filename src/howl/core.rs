@@ -2,6 +2,19 @@ use std::sync::mpsc::{Sender};
 use viewer::{ActiveViewer};
 use common::IdSource;
 
+pub enum Message<T, E> {
+    Position {
+        left: f32,
+        right: f32,
+        bottom: f32,
+        top: f32,
+        far: f32,
+        near: f32,
+    },
+    Ok(T),
+    Err(E),
+}
+
 pub struct Howling {
     is_silenced: bool,
     on_silence: Box<Fn()>,
@@ -20,19 +33,6 @@ impl Howling {
             (&self.on_silence)();
         }
     }
-}
-
-pub enum Message<T, E> {
-    Position {
-        left: f32,
-        right: f32,
-        bottom: f32,
-        top: f32,
-        far: f32,
-        near: f32,
-    },
-    Ok(T),
-    Err(E),
 }
 
 pub struct Howl<T, E> {

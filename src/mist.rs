@@ -9,8 +9,8 @@ pub enum Message {
 
 #[derive(Clone, Debug)]
 pub struct Mist {
-    id: u64,
-    cage: Cage,
+    pub id: u64,
+    pub cage: Cage,
     on_message: Sender<Message>,
     lifted: Cell<bool>
 }
@@ -39,7 +39,7 @@ impl Mist {
 #[cfg(test)]
 mod tests {
     use cage::{Cage};
-    use std::sync::mpsc::{channel, Receiver};
+    use std::sync::mpsc::{Receiver};
     use super::*;
 
     #[test]

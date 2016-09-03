@@ -2,12 +2,15 @@ use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::collections::HashMap;
 use patch::*;
-use mist::{Mist, Message as MistMessage};
+use mist::{Mist};
 
 enum Message {
     AddPatch(Patch),
     RemovePatch(u64),
-    SendReport(Sender<HashMap<u64, Patch>>),
+    SendPatchReport(Sender<HashMap<u64, Patch>>),
+    AddMist(Mist),
+    RemoveMist(u64),
+    SendMistReport(Sender<HashMap<u64, Mist>>),
     Stop,
 }
 
@@ -20,6 +23,7 @@ impl ActiveViewer {
     pub fn start() -> Self {
         let (tx, rx) = channel();
         let mut patches = HashMap::new();
+        let mut mists = HashMap::new();
         thread::spawn(move || {
             while let Ok(message) = rx.recv() {
                 match message {
@@ -29,8 +33,17 @@ impl ActiveViewer {
                     Message::RemovePatch(id) => {
                         patches.remove(&id);
                     },
-                    Message::SendReport(report_tx) => {
+                    Message::SendPatchReport(report_tx) => {
                         report_tx.send(patches.clone()).unwrap();
+                    },
+                    Message::AddMist(mist) => {
+                        mists.insert(mist.id, mist);
+                    },
+                    Message::RemoveMist(id) => {
+                        mists.remove(&id);
+                    },
+                    Message::SendMistReport(report_tx) => {
+                        report_tx.send(mists.clone()).unwrap();
                     },
                     Message::Stop => {
                         break;
@@ -40,6 +53,18 @@ impl ActiveViewer {
         });
         ActiveViewer { command_tx: tx }
     }
+    pub fn add_mist(&self, mist: Mist) {
+        self.command_tx.send(Message::AddMist(mist)).unwrap();
+    }
+
+    pub fn remove_mist(&self, id: u64) {
+        self.command_tx.send(Message::RemoveMist(id)).unwrap();
+    }
+    pub fn get_mist_report(&self) -> HashMap<u64, Mist> {
+        let (report_tx, report_rx) = channel();
+        self.command_tx.send(Message::SendMistReport(report_tx)).unwrap();
+        if let Ok(report) = report_rx.recv() { report } else { HashMap::new() }
+    }
     pub fn add_patch(&self, patch: Patch) {
         self.command_tx.send(Message::AddPatch(patch)).unwrap();
     }
@@ -48,14 +73,9 @@ impl ActiveViewer {
     }
     pub fn get_patch_report(&self) -> HashMap<u64, Patch> {
         let (report_tx, report_rx) = channel();
-        self.command_tx.send(Message::SendReport(report_tx)).unwrap();
-        if let Ok(patches) = report_rx.recv() {
-            patches
-        } else {
-            HashMap::new()
-        }
+        self.command_tx.send(Message::SendPatchReport(report_tx)).unwrap();
+        if let Ok(report) = report_rx.recv() { report } else { HashMap::new() }
     }
-
     pub fn stop(&self) {
         self.command_tx.send(Message::Stop).unwrap_or(());
     }
@@ -66,6 +86,8 @@ mod tests {
     use super::*;
     use patch::{Sigil, Patch};
     use color::MAGENTA;
+    use mist::{Mist};
+    use cage::{Cage};
 
     #[test]
     fn add_patch() {
@@ -75,5 +97,15 @@ mod tests {
         let report = viewer.get_patch_report();
         viewer.stop();
         assert!(report.contains_key(&1));
+    }
+
+    #[test]
+    fn add_mist() {
+        let viewer = ActiveViewer::start();
+        let (mist, mist_rx) = Mist::new(2, Cage::from((0.0, 0.1, 0.0, 0.1, 0.0, 0.1)));
+        viewer.add_mist(mist);
+        let report = viewer.get_mist_report();
+        viewer.stop();
+        assert!(report.contains_key(&2));
     }
 }
