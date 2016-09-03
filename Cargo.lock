@@ -2,6 +2,7 @@
 name = "vrcounter"
 version = "0.1.0"
 dependencies = [
+ "cage 0.1.0 (git+https://github.com/wehjin/rust-cage?rev=51cb944bef8c12a78e7943e261c1a14cb8574315)",
  "glium 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.10.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.15 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -73,6 +74,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "byteorder"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "cage"
+version = "0.1.0"
+source = "git+https://github.com/wehjin/rust-cage?rev=51cb944bef8c12a78e7943e261c1a14cb8574315#51cb944bef8c12a78e7943e261c1a14cb8574315"
 
 [[package]]
 name = "cfg-if"

@@ -5,6 +5,7 @@ extern crate nalgebra;
 extern crate image;
 extern crate rusttype;
 extern crate unicode_normalization;
+extern crate cage;
 
 mod patch_program;
 mod floor_program;
@@ -19,7 +20,7 @@ mod atlas;
 mod viewer;
 pub mod color;
 pub mod scream;
-pub mod howl;
+mod howl;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
