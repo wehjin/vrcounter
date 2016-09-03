@@ -19,7 +19,7 @@ impl IdSource {
     }
 }
 
-enum ViewerMessage {
+enum Message {
     AddPatch(Patch),
     RemovePatch(u64),
     SendReport(Sender<HashMap<u64, Patch>>),
@@ -28,7 +28,7 @@ enum ViewerMessage {
 
 #[derive(Clone)]
 pub struct Viewer {
-    sender: Sender<ViewerMessage>,
+    sender: Sender<Message>,
 }
 
 impl Viewer {
@@ -38,16 +38,16 @@ impl Viewer {
         thread::spawn(move || {
             while let Ok(message) = receiver.recv() {
                 match message {
-                    ViewerMessage::AddPatch(patch) => {
+                    Message::AddPatch(patch) => {
                         patches.insert(patch.id, patch);
                     },
-                    ViewerMessage::RemovePatch(id) => {
+                    Message::RemovePatch(id) => {
                         patches.remove(&id);
                     },
-                    ViewerMessage::SendReport(report_sender) => {
+                    Message::SendReport(report_sender) => {
                         report_sender.send(patches.clone()).unwrap();
                     },
-                    ViewerMessage::Stop => {
+                    Message::Stop => {
                         break;
                     }
                 }
@@ -56,14 +56,14 @@ impl Viewer {
         Viewer { sender: sender }
     }
     pub fn add_patch(&self, patch: Patch) {
-        self.sender.send(ViewerMessage::AddPatch(patch)).unwrap();
+        self.sender.send(Message::AddPatch(patch)).unwrap();
     }
     pub fn remove_patch(&self, id: u64) {
-        self.sender.send(ViewerMessage::RemovePatch(id)).unwrap();
+        self.sender.send(Message::RemovePatch(id)).unwrap();
     }
     pub fn get_report(&self) -> HashMap<u64, Patch> {
         let (report_sender, report_receiver) = channel();
-        self.sender.send(ViewerMessage::SendReport(report_sender)).unwrap();
+        self.sender.send(Message::SendReport(report_sender)).unwrap();
         if let Ok(patches) = report_receiver.recv() {
             patches
         } else {
@@ -71,6 +71,6 @@ impl Viewer {
         }
     }
     pub fn stop(&self) {
-        self.sender.send(ViewerMessage::Stop).unwrap();
+        self.sender.send(Message::Stop).unwrap();
     }
 }
