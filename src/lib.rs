@@ -50,7 +50,7 @@ fn get_shapes() -> Vec<Shape> {
     scream.present(&position, &mut id_source, viewer.clone());
 
     let howl = howl::create::<(), ()>(color::BLUE);
-    let (sender, _) = channel();
+    let (sender, receiver) = channel();
     howl.present(viewer.clone(), sender, &mut id_source);
 
     let patch_map = viewer.get_report();
