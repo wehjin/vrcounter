@@ -1,19 +1,19 @@
 extern crate glium;
 
 use glium::{DisplayBuild, Display, Surface};
-use glium::glutin::{Event, ElementState, WindowBuilder};
+use glium::glutin::{WindowBuilder};
 use cam;
-use os;
 use mat;
 use std::f32::consts::PI;
 use programs::Programs;
 use shape::ShapeList;
+use keymap::{Keymap, Key};
 
 pub struct Model {
     display: Display,
     programs: Programs,
     camera: cam::Camera,
-    is_windows: bool,
+    keymap: Keymap,
 }
 
 impl Model {
@@ -25,8 +25,8 @@ impl Model {
         Model {
             programs: Programs::init(&display, shape_list),
             camera: cam::Camera::start(),
-            is_windows: os::is_windows(),
             display: display,
+            keymap: Keymap::init(),
         }
     }
 
@@ -35,7 +35,7 @@ impl Model {
             display: self.display,
             programs: self.programs,
             camera: camera,
-            is_windows: self.is_windows,
+            keymap: Keymap::init(),
         }
     }
 }
@@ -85,45 +85,26 @@ pub fn view(model: &Model) -> Message {
     let mut message_option: Option<Message> = None;
     while message_option.is_none() {
         for glutin_event in model.display.poll_events() {
-            if model.is_windows {
-                message_option = match glutin_event {
-                    Event::Closed => Some(Message::Quit),
-                    Event::KeyboardInput(ElementState::Pressed, 1, _) => Some(Message::Quit),
-                    Event::KeyboardInput(ElementState::Pressed, 52, _) => Some(Message::Reset),
-                    Event::KeyboardInput(ElementState::Pressed, 30, _) => Some(Message::Move(Direction::Left)),
-                    Event::KeyboardInput(ElementState::Pressed, 32, _) => Some(Message::Move(Direction::Right)),
-                    Event::KeyboardInput(ElementState::Pressed, 17, _) => Some(Message::Move(Direction::Up)),
-                    Event::KeyboardInput(ElementState::Pressed, 31, _) => Some(Message::Move(Direction::Down)),
-                    Event::KeyboardInput(ElementState::Pressed, 16, _) => Some(Message::Move(Direction::Far)),
-                    Event::KeyboardInput(ElementState::Pressed, 18, _) => Some(Message::Move(Direction::Near)),
-                    Event::KeyboardInput(ElementState::Pressed, code, _) => {
-                        println!("{}", code);
-                        None
-                    },
-                    _ => None
-                };
-            } else {
-                message_option = match glutin_event {
-                    Event::Closed => Some(Message::Quit),
-                    Event::KeyboardInput(ElementState::Pressed, 53, _) => Some(Message::Quit),
-                    Event::KeyboardInput(ElementState::Pressed, 47, _) => Some(Message::Reset),
-                    Event::KeyboardInput(ElementState::Pressed, 1, _) => Some(Message::Move(Direction::Down)),
-                    Event::KeyboardInput(ElementState::Pressed, 13, _) => Some(Message::Move(Direction::Up)),
-                    Event::KeyboardInput(ElementState::Pressed, 0, _) => Some(Message::Move(Direction::Left)),
-                    Event::KeyboardInput(ElementState::Pressed, 2, _) => Some(Message::Move(Direction::Right)),
-                    Event::KeyboardInput(ElementState::Pressed, 12, _) => Some(Message::Move(Direction::Far)),
-                    Event::KeyboardInput(ElementState::Pressed, 14, _) => Some(Message::Move(Direction::Near)),
-                    Event::KeyboardInput(ElementState::Pressed, code, _) => {
-                        println!("{}", code);
-                        None
-                    },
-                    _ => None
-                };
-            }
-            if message_option.is_some() {
-                break;
+            if let Some(key) = model.keymap.key_for_event(&glutin_event) {
+                message_option = message_option_from_key(key);
+                if message_option.is_some() {
+                    break;
+                }
             }
         }
     }
     return message_option.unwrap();
+}
+
+fn message_option_from_key(key: Key) -> Option<Message> {
+    match key {
+        Key::LookUp => Some(Message::Move(Direction::Up)),
+        Key::LookDown => Some(Message::Move(Direction::Down)),
+        Key::LookRight => Some(Message::Move(Direction::Right)),
+        Key::LookLeft => Some(Message::Move(Direction::Left)),
+        Key::LookFar => Some(Message::Move(Direction::Far)),
+        Key::LookNear => Some(Message::Move(Direction::Near)),
+        Key::ResetLook => Some(Message::Reset),
+        Key::Quit => Some(Message::Quit),
+    }
 }

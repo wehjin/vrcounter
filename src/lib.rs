@@ -7,6 +7,7 @@ extern crate rusttype;
 extern crate unicode_normalization;
 extern crate cage;
 
+mod keymap;
 mod patch_program;
 mod floor_program;
 mod mist_program;
