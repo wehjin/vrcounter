@@ -4,19 +4,8 @@ use glium::{DisplayBuild, Display, Surface};
 use glium::glutin::{WindowBuilder};
 use cam::Camera;
 use programs::Programs;
-use shape::ShapeList;
 use keymap::{Keymap, Key};
-
-pub fn run(shape_list: ShapeList) {
-    let mut model = Model::init(shape_list);
-    loop {
-        let message = view(&model);
-        match update(&message, model) {
-            None => return,
-            Some(next_model) => model = next_model,
-        }
-    }
-}
+use app_model::AppModel;
 
 pub struct Model {
     display: Display,
@@ -26,13 +15,13 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn init(shape_list: ShapeList) -> Self {
+    pub fn init(app_model: AppModel) -> Self {
         let display: Display = WindowBuilder::new().with_title("vr counter")
                                                    .with_depth_buffer(24)
                                                    .build_glium()
                                                    .unwrap();
         Model {
-            programs: Programs::init(&display, shape_list),
+            programs: Programs::init(&display, app_model.shape_list),
             display: display,
             keymap: Keymap::init(),
             camera: Camera::start(),
@@ -91,6 +80,17 @@ pub fn view(model: &Model) -> Message {
         }
     }
     return message_option.unwrap();
+}
+
+pub fn run(app_model: AppModel) {
+    let mut model = Model::init(app_model);
+    loop {
+        let message = view(&model);
+        match update(&message, model) {
+            None => return,
+            Some(next_model) => model = next_model,
+        }
+    }
 }
 
 fn message_option_from_key(key: Key) -> Option<Message> {
