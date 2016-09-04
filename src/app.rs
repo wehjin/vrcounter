@@ -38,15 +38,6 @@ impl Model {
     }
 }
 
-pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-    Near,
-    Far
-}
-
 pub enum Message {
     Quit,
     Move(Direction),
@@ -102,4 +93,13 @@ fn message_option_from_key(key: Key) -> Option<Message> {
         Key::ResetLook => Some(Message::Reset),
         Key::Quit => Some(Message::Quit),
     }
+}
+
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+    Near,
+    Far
 }
