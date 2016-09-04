@@ -3,7 +3,7 @@ mod core;
 use std::sync::mpsc::{Sender};
 use viewer::{ActiveViewer};
 use common::IdSource;
-use patch::{PatchPosition, Patch};
+use patch::{Patch};
 pub use patch::Sigil;
 pub use howl::core::{Howling, Message, Howl};
 

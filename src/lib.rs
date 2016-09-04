@@ -88,7 +88,7 @@ fn run_in_vr(app_model: AppModel) {
             .unwrap();
         let right_projection = vr.get_right_projection();
 
-        let programs = Programs::init(&display);
+        let programs = Programs::init(&display, app_model.viewer);
         let clear_color = (0.05, 0.05, 0.08, 1.0);
         let clear_depth = 1.0;
 
@@ -98,15 +98,15 @@ fn run_in_vr(app_model: AppModel) {
 
             let mut target = display.draw();
             target.clear_color_and_depth(clear_color, clear_depth);
-            programs.draw(&app_model.viewer, &display, &mut target, &world_to_hmd, &left_projection);
+            programs.draw(&display, &mut target, &world_to_hmd, &left_projection);
             target.finish().unwrap();
 
             left_frame.clear_color_and_depth(clear_color, clear_depth);
-            programs.draw(&app_model.viewer, &display, &mut left_frame, &world_to_hmd, &left_projection);
+            programs.draw(&display, &mut left_frame, &world_to_hmd, &left_projection);
             vr.submit_left_texture(left_buffers.color.get_id() as usize);
 
             right_frame.clear_color_and_depth(clear_color, clear_depth);
-            programs.draw(&app_model.viewer, &display, &mut right_frame, &world_to_hmd, &right_projection);
+            programs.draw(&display, &mut right_frame, &world_to_hmd, &right_projection);
             vr.submit_right_texture(right_buffers.color.get_id() as usize);
 
             for ev in display.poll_events() {

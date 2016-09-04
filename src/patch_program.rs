@@ -77,6 +77,7 @@ pub struct PatchProgram {
     indices: glium::index::NoIndices,
     model_matrix: [[f32; 4]; 4],
     atlas: Atlas,
+    viewer: ActiveViewer,
 }
 
 pub fn load_galaxy(display: &Display) -> SrgbTexture2d {
@@ -87,7 +88,7 @@ pub fn load_galaxy(display: &Display) -> SrgbTexture2d {
 }
 
 impl PatchProgram {
-    pub fn new(display: &Display) -> Self {
+    pub fn new(display: &Display, viewer: ActiveViewer) -> Self {
         let atlas = Atlas::new(display);
         PatchProgram {
             program: Program::from_source(display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap(),
@@ -99,17 +100,18 @@ impl PatchProgram {
                 [0.0, 1.6, -1.0, 1.0f32],
             ],
             atlas: atlas,
+            viewer: viewer,
         }
     }
 
-    pub fn draw<T: Surface>(&self, viewer: &ActiveViewer, display: &Display, surface: &mut T, view: &[[f32; 4]; 4], projection: &[[f32; 4]; 4]) {
+    pub fn draw<T: Surface>(&self, display: &Display, surface: &mut T, view: &[[f32; 4]; 4], projection: &[[f32; 4]; 4]) {
         let uniforms = uniform! {
             model: self.model_matrix, view: ( *view), perspective: ( * projection),
             tex: self.atlas.texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest)
         };
 
         let mut shape_list = ShapeList::new();
-        for shape in get_shapes(viewer) {
+        for shape in get_shapes(&self.viewer) {
             shape_list.push(shape);
         }
         let vertex_buffer = VertexBuffer::new(

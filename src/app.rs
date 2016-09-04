@@ -13,7 +13,6 @@ pub struct Model {
     programs: Programs,
     keymap: Keymap,
     camera: Camera,
-    viewer: ActiveViewer,
 }
 
 impl Model {
@@ -23,11 +22,10 @@ impl Model {
                                                    .build_glium()
                                                    .unwrap();
         Model {
-            programs: Programs::init(&display),
+            programs: Programs::init(&display, app_model.viewer),
             display: display,
             keymap: Keymap::init(),
             camera: Camera::start(),
-            viewer: app_model.viewer,
         }
     }
 
@@ -37,7 +35,6 @@ impl Model {
             programs: self.programs,
             keymap: self.keymap,
             camera: camera,
-            viewer: self.viewer,
         }
     }
 }
@@ -70,7 +67,7 @@ pub fn view(model: &Model) -> Message {
     let mut target = model.display.draw();
     target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
     let (view, perspective) = model.camera.get_view_and_projection(&target);
-    model.programs.draw(&model.viewer, &model.display, &mut target, &view, &perspective);
+    model.programs.draw(&model.display, &mut target, &view, &perspective);
     target.finish().unwrap();
     let mut message_option: Option<Message> = None;
     while message_option.is_none() {
