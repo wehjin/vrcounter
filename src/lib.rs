@@ -57,75 +57,77 @@ pub fn main() {
 
 fn run_in_vr(app_model: AppModel) {
     let vr_option = System::up().ok();
-    if vr_option.is_some() {
-        let vr: System = vr_option.unwrap();
-        let sleep_time = time::Duration::from_millis(15);
+    if vr_option.is_none() {
+        return;
+    }
 
-        let render_size = vr.get_render_size();
-        println!("{:?}", render_size);
+    let vr: System = vr_option.unwrap();
+    let sleep_time = time::Duration::from_millis(15);
 
-        let can_render = vr.get_can_render();
-        println!("Can render {}", can_render);
+    let render_size = vr.get_render_size();
+    println!("{:?}", render_size);
 
-        let display: Rc<Display> = Rc::new(WindowBuilder::new()
-            .with_title("vrcounter")
-            .with_depth_buffer(24)
-            .build_glium()
-            .unwrap());
-        let left_buffers = {
-            EyeBuffers::new(display.borrow(), &render_size)
-        };
-        let mut left_frame = {
-            SimpleFrameBuffer::with_depth_buffer(
-                display.borrow() as &Display,
-                left_buffers.color.to_color_attachment(),
-                left_buffers.depth.to_depth_attachment())
-                .unwrap()
-        };
-        let left_projection = vr.get_left_projection();
+    let can_render = vr.get_can_render();
+    println!("Can render {}", can_render);
 
-        let right_buffers = {
-            EyeBuffers::new(display.borrow(), &render_size)
-        };
-        let mut right_frame = {
-            SimpleFrameBuffer::with_depth_buffer(
-                display.borrow() as &Display,
-                right_buffers.color.to_color_attachment(),
-                right_buffers.depth.to_depth_attachment())
-                .unwrap()
-        };
-        let right_projection = vr.get_right_projection();
+    let display: Rc<Display> = Rc::new(WindowBuilder::new()
+        .with_title("vrcounter")
+        .with_depth_buffer(24)
+        .build_glium()
+        .unwrap());
+    let left_buffers = {
+        EyeBuffers::new(display.borrow(), &render_size)
+    };
+    let mut left_frame = {
+        SimpleFrameBuffer::with_depth_buffer(
+            display.borrow() as &Display,
+            left_buffers.color.to_color_attachment(),
+            left_buffers.depth.to_depth_attachment())
+            .unwrap()
+    };
+    let left_projection = vr.get_left_projection();
 
-        let programs = Programs::init(display.clone(), app_model.viewer);
-        let clear_color = (0.05, 0.05, 0.08, 1.0);
-        let clear_depth = 1.0;
+    let right_buffers = {
+        EyeBuffers::new(display.borrow(), &render_size)
+    };
+    let mut right_frame = {
+        SimpleFrameBuffer::with_depth_buffer(
+            display.borrow() as &Display,
+            right_buffers.color.to_color_attachment(),
+            right_buffers.depth.to_depth_attachment())
+            .unwrap()
+    };
+    let right_projection = vr.get_right_projection();
 
-        'render: loop {
-            let poses = vr.await_poses();
-            let world_to_hmd = poses.get_world_to_hmd_matrix();
+    let programs = Programs::init(display.clone(), app_model.viewer);
+    let clear_color = (0.05, 0.05, 0.08, 1.0);
+    let clear_depth = 1.0;
 
-            let mut target = display.draw();
-            target.clear_color_and_depth(clear_color, clear_depth);
-            programs.draw(&mut target, &world_to_hmd, &left_projection);
-            target.finish().unwrap();
+    'render: loop {
+        let poses = vr.await_poses();
+        let world_to_hmd = poses.get_world_to_hmd_matrix();
 
-            left_frame.clear_color_and_depth(clear_color, clear_depth);
-            programs.draw(&mut left_frame, &world_to_hmd, &left_projection);
-            vr.submit_left_texture(left_buffers.color.get_id() as usize);
+        let mut target = display.draw();
+        target.clear_color_and_depth(clear_color, clear_depth);
+        programs.draw(&mut target, &world_to_hmd, &left_projection);
+        target.finish().unwrap();
 
-            right_frame.clear_color_and_depth(clear_color, clear_depth);
-            programs.draw(&mut right_frame, &world_to_hmd, &right_projection);
-            vr.submit_right_texture(right_buffers.color.get_id() as usize);
+        left_frame.clear_color_and_depth(clear_color, clear_depth);
+        programs.draw(&mut left_frame, &world_to_hmd, &left_projection);
+        vr.submit_left_texture(left_buffers.color.get_id() as usize);
 
-            for ev in display.poll_events() {
-                match ev {
-                    glium::glutin::Event::Closed => break 'render,
-                    Event::KeyboardInput(ElementState::Pressed, 1, _) => break 'render,
-                    _ => ()
-                }
+        right_frame.clear_color_and_depth(clear_color, clear_depth);
+        programs.draw(&mut right_frame, &world_to_hmd, &right_projection);
+        vr.submit_right_texture(right_buffers.color.get_id() as usize);
+
+        for ev in display.poll_events() {
+            match ev {
+                glium::glutin::Event::Closed => break 'render,
+                Event::KeyboardInput(ElementState::Pressed, 1, _) => break 'render,
+                _ => ()
             }
-            thread::sleep(sleep_time);
         }
+        thread::sleep(sleep_time);
     }
 }
 
