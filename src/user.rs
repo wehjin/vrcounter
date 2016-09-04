@@ -5,11 +5,11 @@ use glium::glutin::{WindowBuilder};
 use cam::Camera;
 use programs::Programs;
 use keymap::{Keymap, Key};
-use app::Model as AppModel;
 use std::rc::Rc;
+use viewer::ActiveViewer;
 
-pub fn run(app_model: AppModel) {
-    let mut model = Model::init(app_model);
+pub fn run(viewer: ActiveViewer) {
+    let mut model = Model::init(viewer);
     loop {
         let message = view(&model);
         match update(&message, model) {
@@ -27,14 +27,14 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn init(app_model: AppModel) -> Self {
+    pub fn init(viewer: ActiveViewer) -> Self {
         let display: Rc<Display> = Rc::new(WindowBuilder::new().with_title("vr counter")
                                                                .with_depth_buffer(24)
                                                                .build_glium()
                                                                .unwrap());
         Model {
             display: display.clone(),
-            programs: Programs::init(display, app_model.viewer),
+            programs: Programs::init(display, viewer),
             keymap: Keymap::init(),
             camera: Camera::start(),
         }

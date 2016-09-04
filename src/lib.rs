@@ -38,7 +38,6 @@ use glium::glutin::{Event, ElementState, WindowBuilder};
 use std::{thread, time};
 use eyebuffers::{EyeBuffers};
 use programs::Programs;
-use app::Model;
 use viewer::ActiveViewer;
 use common::{Error, RenderSize};
 use std::rc::Rc;
@@ -46,16 +45,16 @@ use std::borrow::Borrow;
 
 pub fn main() {
     let viewer = ActiveViewer::start();
-    let app_model = Model::init(viewer.clone());
+    app::start(viewer.clone());
     if os::is_windows() {
-        run_in_vr(app_model)
+        run_in_vr(viewer.clone());
     } else {
-        user::run(app_model)
+        user::run(viewer.clone());
     }
     viewer.stop();
 }
 
-fn run_in_vr(app_model: Model) {
+fn run_in_vr(viewer: ActiveViewer) {
     let vr_option = System::up().ok();
     if vr_option.is_none() {
         return;
@@ -99,7 +98,7 @@ fn run_in_vr(app_model: Model) {
     };
     let right_projection = vr.get_right_projection();
 
-    let programs = Programs::init(display.clone(), app_model.viewer);
+    let programs = Programs::init(display.clone(), viewer);
     let clear_color = (0.05, 0.05, 0.08, 1.0);
     let clear_depth = 1.0;
 

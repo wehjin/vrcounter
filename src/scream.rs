@@ -47,9 +47,6 @@ impl Presenting {
     pub fn create(on_stop: Box<Fn()>) -> Self {
         Presenting { on_stop: on_stop }
     }
-    pub fn empty() -> Self {
-        Presenting { on_stop: Box::new(move || {}) }
-    }
     pub fn double(first: Presenting, second: Presenting) -> Self {
         Presenting {
             on_stop: Box::new(move || {
