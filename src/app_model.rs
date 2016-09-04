@@ -1,4 +1,3 @@
-use shape::{Shape, ShapeList, ShapeMask};
 use color::{GREEN, RED, BLUE, CYAN, YELLOW, MAGENTA};
 use viewer::{ActiveViewer};
 use common::{IdSource};
@@ -10,7 +9,6 @@ use std::sync::mpsc::{channel};
 
 pub struct AppModel {
     pub viewer: ActiveViewer,
-    pub shape_list: ShapeList,
 }
 
 impl AppModel {
@@ -33,30 +31,8 @@ impl AppModel {
             .join_right(0.1, scream::of_color(MAGENTA).join_right(0.1, scream::of_color(CYAN)));
         scream.present(&position, &mut id_source, viewer.clone());
 
-        let mut shape_list = ShapeList::new();
-        for shape in get_shapes(viewer.clone()) {
-            shape_list.push(shape);
-        }
-
         AppModel {
             viewer: viewer,
-            shape_list: shape_list,
         }
     }
-}
-
-fn get_shapes(viewer: ActiveViewer) -> Vec<Shape> {
-    let patch_map = viewer.get_patch_report();
-    let mut shapes = Vec::new();
-    for (_, patch) in patch_map {
-        let mask = if patch.glyph == '\u{0}' { ShapeMask::None } else { ShapeMask::Letter(patch.glyph) };
-        let shape = Shape::new(
-            patch.position.left, patch.position.right,
-            patch.position.top, patch.position.bottom,
-            patch.position.near, patch.color,
-            patch.id, mask
-        );
-        shapes.push(shape);
-    }
-    shapes
 }

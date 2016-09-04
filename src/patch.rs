@@ -33,12 +33,4 @@ impl Patch {
             },
         }
     }
-    pub fn of_color(position: &PatchPosition, color: &[f32; 4], id: u64) -> Self {
-        Patch {
-            position: position.clone(),
-            color: color.clone(),
-            glyph: '\u{0}',
-            id: id
-        }
-    }
 }

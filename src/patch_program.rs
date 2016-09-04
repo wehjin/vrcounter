@@ -9,6 +9,7 @@ use glium::texture::{SrgbTexture2d, RawImage2d};
 use shape::{Shape, ShapeList, ShapeMask};
 use image;
 use atlas::{Atlas};
+use viewer::ActiveViewer;
 
 
 #[derive(Copy, Clone)]
@@ -73,10 +74,9 @@ fn get_vertices_for_shape(shape: &Shape, atlas: &Atlas) -> Vec<Vertex> {
 
 pub struct PatchProgram {
     program: glium::Program,
-    vertex_buffer: VertexBuffer<Vertex>,
     indices: glium::index::NoIndices,
     model_matrix: [[f32; 4]; 4],
-    atlas: Atlas
+    atlas: Atlas,
 }
 
 pub fn load_galaxy(display: &Display) -> SrgbTexture2d {
@@ -87,14 +87,10 @@ pub fn load_galaxy(display: &Display) -> SrgbTexture2d {
 }
 
 impl PatchProgram {
-    pub fn new(display: &Display, shape_list: ShapeList) -> Self {
+    pub fn new(display: &Display) -> Self {
         let atlas = Atlas::new(display);
         PatchProgram {
             program: Program::from_source(display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap(),
-            vertex_buffer: VertexBuffer::new(
-                display,
-                &get_vertices_for_shape_list(&shape_list, &atlas)
-            ).unwrap(),
             indices: NoIndices(PrimitiveType::TrianglesList),
             model_matrix: [
                 [1.0, 0.0, 0.0, 0.0],
@@ -106,13 +102,23 @@ impl PatchProgram {
         }
     }
 
-    pub fn draw<T: Surface>(&self, surface: &mut T, view: &[[f32; 4]; 4], projection: &[[f32; 4]; 4]) {
+    pub fn draw<T: Surface>(&self, viewer: &ActiveViewer, display: &Display, surface: &mut T, view: &[[f32; 4]; 4], projection: &[[f32; 4]; 4]) {
         let uniforms = uniform! {
             model: self.model_matrix, view: ( *view), perspective: ( * projection),
             tex: self.atlas.texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest)
         };
+
+        let mut shape_list = ShapeList::new();
+        for shape in get_shapes(viewer) {
+            shape_list.push(shape);
+        }
+        let vertex_buffer = VertexBuffer::new(
+            display,
+            &get_vertices_for_shape_list(&shape_list, &self.atlas)
+        ).unwrap();
+
         surface.draw(
-            &self.vertex_buffer,
+            &vertex_buffer,
             &self.indices,
             &self.program,
             &uniforms,
@@ -127,6 +133,22 @@ impl PatchProgram {
             }
         ).unwrap();
     }
+}
+
+fn get_shapes(viewer: &ActiveViewer) -> Vec<Shape> {
+    let patch_map = viewer.get_patch_report();
+    let mut shapes = Vec::new();
+    for (_, patch) in patch_map {
+        let mask = if patch.glyph == '\u{0}' { ShapeMask::None } else { ShapeMask::Letter(patch.glyph) };
+        let shape = Shape::new(
+            patch.position.left, patch.position.right,
+            patch.position.top, patch.position.bottom,
+            patch.position.near, patch.color,
+            patch.id, mask
+        );
+        shapes.push(shape);
+    }
+    shapes
 }
 
 static VERTEX_SHADER: &'static str = r#"
