@@ -28,10 +28,11 @@ impl Howling {
         self.is_silenced
     }
     pub fn silence(&mut self) {
-        if self.is_silenced {} else {
-            self.is_silenced = true;
-            (&self.on_silence)();
+        if self.is_silenced() {
+            return;
         }
+        self.is_silenced = true;
+        (&self.on_silence)();
     }
 }
 
