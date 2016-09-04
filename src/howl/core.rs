@@ -2,6 +2,7 @@ use std::sync::mpsc::{Sender};
 use viewer::{ActiveViewer};
 use common::IdSource;
 
+#[derive(Copy, Clone, Debug)]
 pub enum Message<T, E> {
     Position {
         left: f32,

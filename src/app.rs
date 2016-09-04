@@ -4,25 +4,35 @@ use common::{IdSource};
 use scream;
 use scream::{ScreamPosition};
 use howl;
-use howl::{Sigil, Howling};
+use howl::{Sigil, Howling, Message as HowlMessage};
 use scream::{Screaming};
-use std::sync::mpsc::{channel, Sender};
+use std::sync::mpsc::{channel, Sender, Receiver};
 use std::thread;
 
 pub enum Message {
     Stop,
 }
 
+struct Model {
+    howlings: Vec<Howling>,
+    screamings: Vec<Screaming>,
+    howl_message_receiver: Receiver<HowlMessage<(), ()>>,
+}
+
 pub fn start(viewer: ActiveViewer) -> Sender<Message> {
     let (tx, rx) = channel();
     thread::spawn(move || {
         let model = init(viewer.clone());
-        while let Ok(msg) = rx.recv() {
-            match msg {
-                Message::Stop => {
+        loop {
+            match rx.recv() {
+                Ok(msg) => match msg {
+                    Message::Stop => { break; },
+                },
+                Err(err) => {
+                    println!("ERROR: {:?}", err);
                     break;
-                }
-            }
+                },
+            };
         }
         finish(model);
     });
@@ -33,9 +43,9 @@ pub fn stop(agent: Sender<Message>) {
     agent.send(Message::Stop).unwrap_or(())
 }
 
-fn init(viewer: ActiveViewer) -> (Vec<Howling>, Vec<Screaming>) {
+fn init(viewer: ActiveViewer) -> Model {
     let mut id_source = IdSource::new();
-    let (message_tx, message_rx) = channel();
+    let (howl_message_sender, howl_message_receiver) = channel();
     let howls = [
         howl::start::<(), ()>(BLUE, Sigil::Fill, (-0.70, -0.50, -0.10, 0.10, 0.10, 0.10)),
         howl::start::<(), ()>(RED, Sigil::Fill, (-0.5, 0.5, -0.25, 0.25, 0.0, 0.0)),
@@ -45,7 +55,7 @@ fn init(viewer: ActiveViewer) -> (Vec<Howling>, Vec<Screaming>) {
     ];
     let mut howlings = Vec::new();
     for howl in howls.iter() {
-        let howling = howl.present(viewer.clone(), message_tx.clone(), &mut id_source);
+        let howling = howl.present(viewer.clone(), howl_message_sender.clone(), &mut id_source);
         howlings.push(howling);
     }
 
@@ -56,14 +66,18 @@ fn init(viewer: ActiveViewer) -> (Vec<Howling>, Vec<Screaming>) {
     let screaming = scream.present(&position, &mut id_source, viewer.clone());
     screamings.push(screaming);
 
-    (howlings, screamings)
+    Model {
+        howlings: howlings,
+        screamings: screamings,
+        howl_message_receiver: howl_message_receiver
+    }
 }
 
-fn finish((mut howlings, mut screamings): (Vec<Howling>, Vec<Screaming>)) {
-    for howling in &mut howlings {
+fn finish(mut model: Model) {
+    for howling in &mut model.howlings {
         howling.silence();
     }
-    for screaming in &mut screamings {
+    for screaming in &mut model.screamings {
         screaming.silence();
     }
 }
