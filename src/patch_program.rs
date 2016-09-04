@@ -2,12 +2,9 @@ extern crate glium;
 extern crate rusttype;
 extern crate unicode_normalization;
 
-use std::io::Cursor;
 use glium::{Surface, VertexBuffer, Program, Display};
 use glium::index::{NoIndices, PrimitiveType};
-use glium::texture::{SrgbTexture2d, RawImage2d};
 use shape::{Shape, ShapeList, ShapeMask};
-use image;
 use atlas::{Atlas};
 use viewer::ActiveViewer;
 use std::rc::Rc;
@@ -81,13 +78,6 @@ pub struct PatchProgram {
     viewer: ActiveViewer,
     display: Rc<Display>,
 }
-
-//pub fn load_galaxy(display: &Display) -> SrgbTexture2d {
-//    let image = image::load(Cursor::new(&include_bytes!("galaxy.png")[..]), image::PNG).unwrap().to_rgba();
-//    let image_dimensions = image.dimensions();
-//    let image = RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
-//    SrgbTexture2d::new(display, image).unwrap()
-//}
 
 impl PatchProgram {
     pub fn new(display: Rc<Display>, viewer: ActiveViewer) -> Self {
@@ -210,3 +200,13 @@ static FRAGMENT_SHADER: &'static str = r#"
             }
         }
     "#;
+
+//use image;
+//use glium::texture::{SrgbTexture2d, RawImage2d};
+//pub fn load_galaxy(display: &Display) -> SrgbTexture2d {
+//    let image = image::load(Cursor::new(&include_bytes!("galaxy.png")[..]), image::PNG).unwrap().to_rgba();
+//    let image_dimensions = image.dimensions();
+//    let image = RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
+//    SrgbTexture2d::new(display, image).unwrap()
+//}
+

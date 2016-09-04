@@ -14,7 +14,7 @@ mod mist_program;
 mod programs;
 mod mat;
 mod cam;
-mod app;
+mod user;
 mod eyebuffers;
 mod common;
 mod os;
@@ -50,7 +50,7 @@ pub fn main() {
     if os::is_windows() {
         run_in_vr(app_model)
     } else {
-        app::run(app_model)
+        user::run(app_model)
     }
     viewer.stop();
 }
