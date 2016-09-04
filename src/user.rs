@@ -5,8 +5,19 @@ use glium::glutin::{WindowBuilder};
 use cam::Camera;
 use programs::Programs;
 use keymap::{Keymap, Key};
-use app_model::AppModel;
+use app::AppModel;
 use std::rc::Rc;
+
+pub fn run(app_model: AppModel) {
+    let mut model = Model::init(app_model);
+    loop {
+        let message = view(&model);
+        match update(&message, model) {
+            None => return,
+            Some(next_model) => model = next_model,
+        }
+    }
+}
 
 pub struct Model {
     display: Rc<Display>,
@@ -81,17 +92,6 @@ pub fn view(model: &Model) -> Message {
         }
     }
     return message_option.unwrap();
-}
-
-pub fn run(app_model: AppModel) {
-    let mut model = Model::init(app_model);
-    loop {
-        let message = view(&model);
-        match update(&message, model) {
-            None => return,
-            Some(next_model) => model = next_model,
-        }
-    }
 }
 
 fn message_option_from_key(key: Key) -> Option<Message> {

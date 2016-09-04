@@ -26,7 +26,7 @@ mod scream;
 mod howl;
 mod mist;
 mod patch;
-mod app_model;
+mod app;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
@@ -38,7 +38,7 @@ use glium::glutin::{Event, ElementState, WindowBuilder};
 use std::{thread, time};
 use eyebuffers::{EyeBuffers};
 use programs::Programs;
-use app_model::AppModel;
+use app::AppModel;
 use viewer::ActiveViewer;
 use common::{Error, RenderSize};
 use std::rc::Rc;
