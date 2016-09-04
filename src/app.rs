@@ -5,9 +5,10 @@ use scream;
 use scream::{ScreamPosition};
 use howl;
 use howl::Sigil;
-use std::sync::mpsc::{channel};
+use std::sync::mpsc::{channel, Sender};
+use std::thread;
 
-pub fn start(viewer: ActiveViewer) {
+fn init(viewer: ActiveViewer) {
     let mut id_source = IdSource::new();
     let (message_tx, message_rx) = channel();
     let howls = [
@@ -25,4 +26,27 @@ pub fn start(viewer: ActiveViewer) {
     let scream = scream::of_color(YELLOW)
         .join_right(0.1, scream::of_color(MAGENTA).join_right(0.1, scream::of_color(CYAN)));
     scream.present(&position, &mut id_source, viewer.clone());
+}
+
+pub enum Message {
+    Stop,
+}
+
+pub fn start(viewer: ActiveViewer) -> Sender<Message> {
+    let (tx, rx) = channel();
+    thread::spawn(move || {
+        init(viewer.clone());
+        while let Ok(msg) = rx.recv() {
+            match msg {
+                Message::Stop => {
+                    break;
+                }
+            }
+        }
+    });
+    tx
+}
+
+pub fn stop(agent: Sender<Message>) {
+    agent.send(Message::Stop).unwrap_or(())
 }

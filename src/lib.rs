@@ -45,12 +45,13 @@ use std::borrow::Borrow;
 
 pub fn main() {
     let viewer = ActiveViewer::start();
-    app::start(viewer.clone());
+    let app = app::start(viewer.clone());
     if os::is_windows() {
         run_in_vr(viewer.clone());
     } else {
         user::run(viewer.clone());
     }
+    app::stop(app);
     viewer.stop();
 }
 
