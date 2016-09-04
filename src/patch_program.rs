@@ -10,7 +10,8 @@ use shape::{Shape, ShapeList, ShapeMask};
 use image;
 use atlas::{Atlas};
 use viewer::ActiveViewer;
-
+use std::rc::Rc;
+use std::borrow::Borrow;
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -78,20 +79,28 @@ pub struct PatchProgram {
     model_matrix: [[f32; 4]; 4],
     atlas: Atlas,
     viewer: ActiveViewer,
+    display: Rc<Display>,
 }
 
-pub fn load_galaxy(display: &Display) -> SrgbTexture2d {
-    let image = image::load(Cursor::new(&include_bytes!("galaxy.png")[..]), image::PNG).unwrap().to_rgba();
-    let image_dimensions = image.dimensions();
-    let image = RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
-    SrgbTexture2d::new(display, image).unwrap()
-}
+//pub fn load_galaxy(display: &Display) -> SrgbTexture2d {
+//    let image = image::load(Cursor::new(&include_bytes!("galaxy.png")[..]), image::PNG).unwrap().to_rgba();
+//    let image_dimensions = image.dimensions();
+//    let image = RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
+//    SrgbTexture2d::new(display, image).unwrap()
+//}
 
 impl PatchProgram {
-    pub fn new(display: &Display, viewer: ActiveViewer) -> Self {
-        let atlas = Atlas::new(display);
+    pub fn new(display: Rc<Display>, viewer: ActiveViewer) -> Self {
+        let program = {
+            let display_ref: &Display = display.borrow();
+            Program::from_source(display_ref, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap()
+        };
+        let atlas = {
+            let display_ref: &Display = display.borrow();
+            Atlas::new(display_ref)
+        };
         PatchProgram {
-            program: Program::from_source(display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap(),
+            program: program,
             indices: NoIndices(PrimitiveType::TrianglesList),
             model_matrix: [
                 [1.0, 0.0, 0.0, 0.0],
@@ -101,10 +110,11 @@ impl PatchProgram {
             ],
             atlas: atlas,
             viewer: viewer,
+            display: display,
         }
     }
 
-    pub fn draw<T: Surface>(&self, display: &Display, surface: &mut T, view: &[[f32; 4]; 4], projection: &[[f32; 4]; 4]) {
+    pub fn draw<T: Surface>(&self, surface: &mut T, view: &[[f32; 4]; 4], projection: &[[f32; 4]; 4]) {
         let uniforms = uniform! {
             model: self.model_matrix, view: ( *view), perspective: ( * projection),
             tex: self.atlas.texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest)
@@ -114,6 +124,7 @@ impl PatchProgram {
         for shape in get_shapes(&self.viewer) {
             shape_list.push(shape);
         }
+        let display: &Display = self.display.borrow();
         let vertex_buffer = VertexBuffer::new(
             display,
             &get_vertices_for_shape_list(&shape_list, &self.atlas)

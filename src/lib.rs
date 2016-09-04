@@ -34,14 +34,15 @@ use openvr::common::{TextureBounds};
 use nalgebra::{Inverse, Transpose};
 use glium::{DisplayBuild, Surface, Display, GlObject};
 use glium::framebuffer::{SimpleFrameBuffer, ToColorAttachment, ToDepthAttachment};
-use glium::glutin::{Event, ElementState};
+use glium::glutin::{Event, ElementState, WindowBuilder};
 use std::{thread, time};
 use eyebuffers::{EyeBuffers};
 use programs::Programs;
 use app_model::AppModel;
 use viewer::ActiveViewer;
 use common::{Error, RenderSize};
-
+use std::rc::Rc;
+use std::borrow::Borrow;
 
 pub fn main() {
     let viewer = ActiveViewer::start();
@@ -66,29 +67,36 @@ fn run_in_vr(app_model: AppModel) {
         let can_render = vr.get_can_render();
         println!("Can render {}", can_render);
 
-        let display: Display = glium::glutin::WindowBuilder::new()
+        let display: Rc<Display> = Rc::new(WindowBuilder::new()
             .with_title("vrcounter")
             .with_depth_buffer(24)
             .build_glium()
-            .unwrap();
-
-        let left_buffers = EyeBuffers::new(&display, &render_size);
-        let mut left_frame = SimpleFrameBuffer::with_depth_buffer(
-            &display,
-            left_buffers.color.to_color_attachment(),
-            left_buffers.depth.to_depth_attachment())
-            .unwrap();
+            .unwrap());
+        let left_buffers = {
+            EyeBuffers::new(display.borrow(), &render_size)
+        };
+        let mut left_frame = {
+            SimpleFrameBuffer::with_depth_buffer(
+                display.borrow() as &Display,
+                left_buffers.color.to_color_attachment(),
+                left_buffers.depth.to_depth_attachment())
+                .unwrap()
+        };
         let left_projection = vr.get_left_projection();
 
-        let right_buffers = EyeBuffers::new(&display, &render_size);
-        let mut right_frame = SimpleFrameBuffer::with_depth_buffer(
-            &display,
-            right_buffers.color.to_color_attachment(),
-            right_buffers.depth.to_depth_attachment())
-            .unwrap();
+        let right_buffers = {
+            EyeBuffers::new(display.borrow(), &render_size)
+        };
+        let mut right_frame = {
+            SimpleFrameBuffer::with_depth_buffer(
+                display.borrow() as &Display,
+                right_buffers.color.to_color_attachment(),
+                right_buffers.depth.to_depth_attachment())
+                .unwrap()
+        };
         let right_projection = vr.get_right_projection();
 
-        let programs = Programs::init(&display, app_model.viewer);
+        let programs = Programs::init(display.clone(), app_model.viewer);
         let clear_color = (0.05, 0.05, 0.08, 1.0);
         let clear_depth = 1.0;
 
@@ -98,15 +106,15 @@ fn run_in_vr(app_model: AppModel) {
 
             let mut target = display.draw();
             target.clear_color_and_depth(clear_color, clear_depth);
-            programs.draw(&display, &mut target, &world_to_hmd, &left_projection);
+            programs.draw(&mut target, &world_to_hmd, &left_projection);
             target.finish().unwrap();
 
             left_frame.clear_color_and_depth(clear_color, clear_depth);
-            programs.draw(&display, &mut left_frame, &world_to_hmd, &left_projection);
+            programs.draw(&mut left_frame, &world_to_hmd, &left_projection);
             vr.submit_left_texture(left_buffers.color.get_id() as usize);
 
             right_frame.clear_color_and_depth(clear_color, clear_depth);
-            programs.draw(&display, &mut right_frame, &world_to_hmd, &right_projection);
+            programs.draw(&mut right_frame, &world_to_hmd, &right_projection);
             vr.submit_right_texture(right_buffers.color.get_id() as usize);
 
             for ev in display.poll_events() {

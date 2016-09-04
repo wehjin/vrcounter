@@ -6,10 +6,10 @@ use cam::Camera;
 use programs::Programs;
 use keymap::{Keymap, Key};
 use app_model::AppModel;
-use viewer::ActiveViewer;
+use std::rc::Rc;
 
 pub struct Model {
-    display: Display,
+    display: Rc<Display>,
     programs: Programs,
     keymap: Keymap,
     camera: Camera,
@@ -17,13 +17,13 @@ pub struct Model {
 
 impl Model {
     pub fn init(app_model: AppModel) -> Self {
-        let display: Display = WindowBuilder::new().with_title("vr counter")
-                                                   .with_depth_buffer(24)
-                                                   .build_glium()
-                                                   .unwrap();
+        let display: Rc<Display> = Rc::new(WindowBuilder::new().with_title("vr counter")
+                                                               .with_depth_buffer(24)
+                                                               .build_glium()
+                                                               .unwrap());
         Model {
-            programs: Programs::init(&display, app_model.viewer),
-            display: display,
+            display: display.clone(),
+            programs: Programs::init(display, app_model.viewer),
             keymap: Keymap::init(),
             camera: Camera::start(),
         }
@@ -67,7 +67,7 @@ pub fn view(model: &Model) -> Message {
     let mut target = model.display.draw();
     target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
     let (view, perspective) = model.camera.get_view_and_projection(&target);
-    model.programs.draw(&model.display, &mut target, &view, &perspective);
+    model.programs.draw(&mut target, &view, &perspective);
     target.finish().unwrap();
     let mut message_option: Option<Message> = None;
     while message_option.is_none() {
