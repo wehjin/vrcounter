@@ -7,6 +7,7 @@ pub struct PatchPosition {
     pub near: f32
 }
 
+#[derive(Copy, Clone)]
 pub enum Sigil {
     Fill,
     Letter(char),

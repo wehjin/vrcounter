@@ -24,8 +24,18 @@ implement_vertex!(Vertex, position, normal, color, tex_coords, use_texture);
 fn get_vertices_for_shape_list(shape_list: &ShapeList, atlas: &Atlas) -> Vec<Vertex> {
     let mut vertices = Vec::new();
     for shape in shape_list.shapes.iter() {
-        let mut shape_vertices = get_vertices_for_shape(shape, atlas);
-        vertices.append(&mut shape_vertices);
+        let it: &Shape = shape;
+        if let ShapeMask::None = it.mask {
+            let mut shape_vertices = get_vertices_for_shape(shape, atlas);
+            vertices.append(&mut shape_vertices);
+        }
+    }
+    for shape in shape_list.shapes.iter() {
+        let it: &Shape = shape;
+        if let ShapeMask::Letter(_) = it.mask {
+            let mut shape_vertices = get_vertices_for_shape(shape, atlas);
+            vertices.append(&mut shape_vertices);
+        }
     }
     vertices
 }

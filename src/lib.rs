@@ -39,16 +39,19 @@ use std::{thread, time};
 use eyebuffers::{EyeBuffers};
 use programs::Programs;
 use app_model::AppModel;
+use viewer::ActiveViewer;
 use common::{Error, RenderSize};
 
 
 pub fn main() {
-    let app_model = AppModel::init();
+    let viewer = ActiveViewer::start();
+    let app_model = AppModel::init(viewer.clone());
     if os::is_windows() {
         run_in_vr(app_model)
     } else {
         app::run(app_model)
     }
+    viewer.stop();
 }
 
 fn run_in_vr(app_model: AppModel) {
