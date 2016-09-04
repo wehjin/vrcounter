@@ -7,11 +7,11 @@ use howl;
 use howl::Sigil;
 use std::sync::mpsc::{channel};
 
-pub struct AppModel {
+pub struct Model {
     pub viewer: ActiveViewer,
 }
 
-impl AppModel {
+impl Model {
     pub fn init(viewer: ActiveViewer) -> Self {
         let mut id_source = IdSource::new();
         let (message_tx, message_rx) = channel();
@@ -31,7 +31,7 @@ impl AppModel {
             .join_right(0.1, scream::of_color(MAGENTA).join_right(0.1, scream::of_color(CYAN)));
         scream.present(&position, &mut id_source, viewer.clone());
 
-        AppModel {
+        Model {
             viewer: viewer,
         }
     }

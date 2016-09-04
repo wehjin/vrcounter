@@ -38,7 +38,7 @@ use glium::glutin::{Event, ElementState, WindowBuilder};
 use std::{thread, time};
 use eyebuffers::{EyeBuffers};
 use programs::Programs;
-use app::AppModel;
+use app::Model;
 use viewer::ActiveViewer;
 use common::{Error, RenderSize};
 use std::rc::Rc;
@@ -46,7 +46,7 @@ use std::borrow::Borrow;
 
 pub fn main() {
     let viewer = ActiveViewer::start();
-    let app_model = AppModel::init(viewer.clone());
+    let app_model = Model::init(viewer.clone());
     if os::is_windows() {
         run_in_vr(app_model)
     } else {
@@ -55,7 +55,7 @@ pub fn main() {
     viewer.stop();
 }
 
-fn run_in_vr(app_model: AppModel) {
+fn run_in_vr(app_model: Model) {
     let vr_option = System::up().ok();
     if vr_option.is_none() {
         return;

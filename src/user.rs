@@ -5,7 +5,7 @@ use glium::glutin::{WindowBuilder};
 use cam::Camera;
 use programs::Programs;
 use keymap::{Keymap, Key};
-use app::AppModel;
+use app::Model as AppModel;
 use std::rc::Rc;
 
 pub fn run(app_model: AppModel) {
