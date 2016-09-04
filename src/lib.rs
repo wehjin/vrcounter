@@ -95,18 +95,7 @@ pub fn main() {
     if os::is_windows() {
         run_in_vr(shape_list)
     } else {
-        run_in_nr(shape_list)
-    }
-}
-
-fn run_in_nr(shape_list: ShapeList) {
-    let mut model = app::Model::init(shape_list);
-    loop {
-        let message = app::view(&model);
-        match app::update(&message, model) {
-            None => return,
-            Some(next_model) => model = next_model,
-        }
+        app::run(shape_list)
     }
 }
 

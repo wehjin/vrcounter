@@ -7,6 +7,17 @@ use programs::Programs;
 use shape::ShapeList;
 use keymap::{Keymap, Key};
 
+pub fn run(shape_list: ShapeList) {
+    let mut model = Model::init(shape_list);
+    loop {
+        let message = view(&model);
+        match update(&message, model) {
+            None => return,
+            Some(next_model) => model = next_model,
+        }
+    }
+}
+
 pub struct Model {
     display: Display,
     programs: Programs,
