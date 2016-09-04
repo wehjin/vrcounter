@@ -2,9 +2,7 @@ extern crate glium;
 
 use glium::{DisplayBuild, Display, Surface};
 use glium::glutin::{WindowBuilder};
-use cam;
-use mat;
-use std::f32::consts::PI;
+use cam::Camera;
 use programs::Programs;
 use shape::ShapeList;
 use keymap::{Keymap, Key};
@@ -12,8 +10,8 @@ use keymap::{Keymap, Key};
 pub struct Model {
     display: Display,
     programs: Programs,
-    camera: cam::Camera,
     keymap: Keymap,
+    camera: Camera,
 }
 
 impl Model {
@@ -24,18 +22,18 @@ impl Model {
                                                    .unwrap();
         Model {
             programs: Programs::init(&display, shape_list),
-            camera: cam::Camera::start(),
             display: display,
             keymap: Keymap::init(),
+            camera: Camera::start(),
         }
     }
 
-    pub fn with_camera(self, camera: cam::Camera) -> Self {
+    pub fn with_camera(self, camera: Camera) -> Self {
         Model {
             display: self.display,
             programs: self.programs,
+            keymap: self.keymap,
             camera: camera,
-            keymap: Keymap::init(),
         }
     }
 }
@@ -58,15 +56,15 @@ pub enum Message {
 pub fn update(message: &Message, model: Model) -> Option<Model> {
     match *message {
         Message::Quit => None,
-        Message::Reset => Some(model.with_camera(cam::Camera::start())),
+        Message::Reset => Some(model.with_camera(Camera::start())),
         Message::Move(ref direction) => {
             let camera = match *direction {
-                Direction::Up => model.camera.up(),
-                Direction::Down => model.camera.down(),
-                Direction::Left => model.camera.left(),
-                Direction::Right => model.camera.right(),
-                Direction::Near => model.camera.near(),
-                Direction::Far => model.camera.far(),
+                Direction::Up => model.camera.move_up(),
+                Direction::Down => model.camera.move_down(),
+                Direction::Left => model.camera.move_left(),
+                Direction::Right => model.camera.move_right(),
+                Direction::Near => model.camera.move_near(),
+                Direction::Far => model.camera.move_far(),
             };
             Some(model.with_camera(camera))
         }
@@ -76,10 +74,7 @@ pub fn update(message: &Message, model: Model) -> Option<Model> {
 pub fn view(model: &Model) -> Message {
     let mut target = model.display.draw();
     target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
-
-    let camera = &model.camera;
-    let view = mat::view_matrix(&camera.eye, &camera.look, &camera.up);
-    let perspective = mat::perspective_matrix(target.get_dimensions(), PI / 3.0);
+    let (view, perspective) = model.camera.get_view_and_projection(&target);
     model.programs.draw(&mut target, &view, &perspective);
     target.finish().unwrap();
     let mut message_option: Option<Message> = None;
