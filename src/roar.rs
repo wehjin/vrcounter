@@ -5,17 +5,20 @@ use patch::Patch;
 use mist::Mist;
 use common::IdSource;
 use std::any::Any;
+use std::cell::RefCell;
+use std::borrow::BorrowMut;
+use std::ops::Deref;
 
 pub struct Roar<Mod, Msg, Out> {
     init: Rc<Fn() -> Mod>,
-    update: Rc<Fn(Mod) -> Report<Mod, Out>>,
+    update: Rc<Fn(Msg, &Mod) -> Report<Mod, Out>>,
     view: Rc<Fn(&Mod) -> Vision<Msg>>,
 }
 
 impl<Mod, Msg, Out> Roar<Mod, Msg, Out> {
     pub fn create(
         init: Rc<Fn() -> Mod>,
-        update: Rc<Fn(Mod) -> Report<Mod, Out>>,
+        update: Rc<Fn(Msg, &Mod) -> Report<Mod, Out>>,
         view: Rc<Fn(&Mod) -> Vision<Msg>>
     ) -> Self {
         Roar { init: init, update: update, view: view }
@@ -27,35 +30,71 @@ pub enum DemonResult {
     Remove,
 }
 
-pub struct DemonVision {
-    patches: HashMap<u64, Patch>,
-    mists: HashMap<u64, Mist>,
+pub trait DemonVision {
+    fn patches(&self) -> &HashMap<u64, Patch>;
+    fn mists(&self) -> &HashMap<u64, Mist>;
 }
 
 pub trait Demon {
     fn id(&self) -> u64;
-    fn watch(&self) -> DemonVision;
-    fn poke(&self, vision_message: VisionMessage) -> DemonResult;
+    fn see(&self) -> Box<DemonVision>;
+    fn poke(&mut self, vision_message: VisionMessage) -> DemonResult;
 }
 
 pub struct Demonoid<Mod, Msg, Out> {
     id: u64,
     model: Mod,
-    update: Rc<Fn(Mod) -> Report<Mod, Out>>,
+    update: Rc<Fn(Msg, &Mod) -> Report<Mod, Out>>,
     view: Rc<Fn(&Mod) -> Vision<Msg>>,
+    vision_message_adapter: RefCell<Option<Rc<Fn(VisionMessage) -> Msg>>>,
 }
 
-impl<Mod, Msg, Out> Demon for Demonoid<Mod, Msg, Out> {
+impl<Mod, Msg, Out> Demonoid<Mod, Msg, Out> {
+    fn get_vision_adapter_option(&self) -> Option<Rc<Fn(VisionMessage) -> Msg>> {
+        (*(self.vision_message_adapter.borrow())).clone()
+    }
+    fn set_vision_adapter_option(&self, option: Option<Rc<Fn(VisionMessage) -> Msg>>) {
+        *self.vision_message_adapter.borrow_mut() = option;
+    }
+    fn get_vision_and_save_vision_message_adapter(&self) -> Vision<Msg> {
+        let vision: Vision<Msg> = (*(self.view))(&self.model);
+        self.set_vision_adapter_option(Option::Some(vision.vision_message_adapter.clone()));
+        vision
+    }
+    fn get_message_from_vision_message(&self, vision_message: VisionMessage) -> Msg {
+        if let Option::None = self.get_vision_adapter_option() {
+            self.get_vision_and_save_vision_message_adapter();
+        }
+        let vision_adapter_ref: Rc<Fn(VisionMessage) -> Msg> = self.get_vision_adapter_option().unwrap();
+        (*vision_adapter_ref)(vision_message)
+    }
+}
+
+impl<Mod, Msg: 'static, Out> Demon for Demonoid<Mod, Msg, Out> {
     fn id(&self) -> u64 {
         self.id
     }
 
-    fn watch(&self) -> DemonVision {
-        DemonVision { patches: HashMap::new(), mists: HashMap::new() }
+    fn see(&self) -> Box<DemonVision> {
+        let vision = self.get_vision_and_save_vision_message_adapter();
+        Box::new(vision)
     }
 
-    fn poke(&self, vision_message: VisionMessage) -> DemonResult {
-        DemonResult::Remain
+    fn poke(&mut self, vision_message: VisionMessage) -> DemonResult {
+        let message = self.get_message_from_vision_message(vision_message);
+        let report: Report<Mod, Out> = (*(self.update))(message, &self.model);
+        match report {
+            Report::Outcome(outcome) => DemonResult::Remove,
+            Report::Model(model) => {
+                self.model = model;
+                self.set_vision_adapter_option(Option::None);
+                DemonResult::Remain
+            },
+            Report::Error => {
+                println!("Error while poking demon");
+                DemonResult::Remove
+            },
+        }
     }
 }
 
@@ -73,7 +112,13 @@ impl Summoner {
     ) -> u64 {
         let model = ((*roar).init)();
         let id = id_source.next_id();
-        let demon = Demonoid { id: id, model: model, update: roar.update.clone(), view: roar.view.clone() };
+        let demon = Demonoid {
+            id: id,
+            model: model,
+            update: roar.update.clone(),
+            view: roar.view.clone(),
+            vision_message_adapter: RefCell::new(Option::None),
+        };
         self.demons.insert(id, Box::new(demon));
         id
     }
@@ -84,9 +129,19 @@ pub enum VisionMessage {
 }
 
 pub struct Vision<Msg> {
-    adapt_message: Box<Fn(VisionMessage) -> Msg>,
+    vision_message_adapter: Rc<Fn(VisionMessage) -> Msg>,
     patches: HashMap<u64, Patch>,
     mists: HashMap<u64, Mist>,
+}
+
+impl<Msg> DemonVision for Vision<Msg> {
+    fn patches(&self) -> &HashMap<u64, Patch> {
+        &self.patches
+    }
+
+    fn mists(&self) -> &HashMap<u64, Mist> {
+        &self.mists
+    }
 }
 
 pub enum Report<Mod, Out> {
