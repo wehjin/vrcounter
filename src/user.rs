@@ -7,9 +7,12 @@ use programs::Programs;
 use keymap::{Keymap, Key};
 use std::rc::Rc;
 use viewer::ActiveViewer;
+use app::{Message as AppMessage};
+use std::sync::mpsc::Sender;
+use std::time::{Instant, Duration};
 
-pub fn run(viewer: ActiveViewer) {
-    let mut model = Model::init(viewer);
+pub fn run(viewer: ActiveViewer, app: Sender<AppMessage>) {
+    let mut model = init(viewer, app);
     loop {
         let message = view(&model);
         match update(&message, model) {
@@ -24,28 +27,17 @@ pub struct Model {
     programs: Programs,
     keymap: Keymap,
     camera: Camera,
+    app: Sender<AppMessage>,
 }
 
 impl Model {
-    pub fn init(viewer: ActiveViewer) -> Self {
-        let display: Rc<Display> = Rc::new(WindowBuilder::new().with_title("vr counter")
-                                                               .with_depth_buffer(24)
-                                                               .build_glium()
-                                                               .unwrap());
-        Model {
-            display: display.clone(),
-            programs: Programs::init(display, viewer),
-            keymap: Keymap::init(),
-            camera: Camera::start(),
-        }
-    }
-
     pub fn with_camera(self, camera: Camera) -> Self {
         Model {
             display: self.display,
             programs: self.programs,
             keymap: self.keymap,
             camera: camera,
+            app: self.app,
         }
     }
 }
@@ -54,6 +46,21 @@ pub enum Message {
     Quit,
     Move(Direction),
     Reset,
+    Timeout,
+}
+
+pub fn init(viewer: ActiveViewer, app: Sender<AppMessage>) -> Model {
+    let display: Rc<Display> = Rc::new(WindowBuilder::new().with_title("vr counter")
+                                                           .with_depth_buffer(24)
+                                                           .build_glium()
+                                                           .unwrap());
+    Model {
+        display: display.clone(),
+        programs: Programs::init(display, viewer),
+        keymap: Keymap::init(),
+        camera: Camera::start(),
+        app: app,
+    }
 }
 
 pub fn update(message: &Message, model: Model) -> Option<Model> {
@@ -70,6 +77,10 @@ pub fn update(message: &Message, model: Model) -> Option<Model> {
                 Direction::Far => model.camera.move_far(),
             };
             Some(model.with_camera(camera))
+        },
+        Message::Timeout => {
+            model.app.send(AppMessage::Frame).unwrap_or(());
+            Some(model)
         }
     }
 }
@@ -80,6 +91,10 @@ pub fn view(model: &Model) -> Message {
     let (view, perspective) = model.camera.get_view_and_projection(&target);
     model.programs.draw(&mut target, &view, &perspective);
     target.finish().unwrap();
+
+    let frame_instant = Instant::now();
+    let frame_duration = Duration::from_millis(32);
+
     let mut message_option: Option<Message> = None;
     while message_option.is_none() {
         for glutin_event in model.display.poll_events() {
@@ -89,6 +104,9 @@ pub fn view(model: &Model) -> Message {
                     break;
                 }
             }
+        }
+        if Instant::now().duration_since(frame_instant) > frame_duration {
+            message_option = Some(Message::Timeout);
         }
     }
     return message_option.unwrap();

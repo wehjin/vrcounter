@@ -9,7 +9,7 @@ use scream::{Screaming};
 use std::sync::mpsc::{channel, Sender, Receiver};
 use std::thread;
 use std::collections::HashMap;
-use summoner::{Summoner, Demon, DemonVision, Report};
+use summoner::{Summoner, DemonVision, Report};
 use roar;
 use color;
 use std::boxed::Box;
@@ -63,7 +63,9 @@ pub fn start(viewer: ActiveViewer) -> Sender<Message> {
                             view(&model, &viewer);
                         }
                         Report::Unchanged => (),
-                        Report::Outcome(Outcome::Done) => { break; }
+                        Report::Outcome(Outcome::Done) => {
+                            break;
+                        }
                         Report::Error => {
                             println!("ERROR: from Report");
                             break;

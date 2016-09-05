@@ -53,7 +53,7 @@ pub fn main() {
     if os::is_windows() {
         run_in_vr(viewer.clone());
     } else {
-        user::run(viewer.clone());
+        user::run(viewer.clone(), app.clone());
     }
     app::stop(app);
     viewer.stop();
