@@ -12,6 +12,9 @@ impl Beat {
         let fade_out = fade_in + duration;
         Beat { id: id, fade_in: fade_in, fade_out: fade_out }
     }
+    pub fn until_instant(id: u64, instant: Instant) -> Self {
+        Beat { id: id, fade_in: Instant::now(), fade_out: instant }
+    }
     pub fn id(&self) -> u64 {
         self.id
     }
@@ -19,7 +22,6 @@ impl Beat {
         instant >= &self.fade_in && instant < &self.fade_out
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -31,5 +33,13 @@ mod tests {
         let beat = Beat::new(1, Duration::from_millis(1000));
         assert_eq!(1, beat.id());
         assert!(beat.contains(&Instant::now()));
+    }
+
+    #[test]
+    fn until_instant() {
+        let beat = Beat::until_instant(1, Instant::now() + Duration::from_millis(1000));
+        assert_eq!(1, beat.id());
+        assert!(beat.contains(&Instant::now()));
+        assert!(!beat.contains(&(Instant::now() + Duration::from_millis(5000))));
     }
 }
