@@ -30,6 +30,7 @@ mod app;
 mod vision;
 mod summoner;
 mod roar;
+mod beat;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
