@@ -31,18 +31,20 @@ pub enum Outcome {
     Done,
 }
 
+fn view(model: &Model, viewer: &ActiveViewer) {
+    let demon_box: &Box<Demon> = model.summoner.demons.get(&model.roaring).unwrap();
+    let demon_vision_box: Box<DemonVision> = (*demon_box).see();
+    let demon_patches: &HashMap<u64, Patch> = (*demon_vision_box).patches();
+    for (id, patch) in demon_patches.iter() {
+        viewer.add_patch(*patch);
+    }
+}
+
 pub fn start(viewer: ActiveViewer) -> Sender<Message> {
     let (tx, rx) = channel();
     thread::spawn(move || {
         let model = init(viewer.clone());
-        {
-            let demon_box: &Box<Demon> = model.summoner.demons.get(&model.roaring).unwrap();
-            let demon_vision_box: Box<DemonVision> = (*demon_box).see();
-            let demon_patches: &HashMap<u64, Patch> = (*demon_vision_box).patches();
-            for (id, patch) in demon_patches.iter() {
-                viewer.add_patch(*patch);
-            }
-        }
+        view(&model, &viewer);
         loop {
             match rx.recv() {
                 Ok(msg) => match msg {

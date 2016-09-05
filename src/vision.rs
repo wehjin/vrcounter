@@ -33,7 +33,7 @@ impl<Msg> Vision<Msg> {
     }
     pub fn find_beats(&self, instant: &Instant) -> Vec<&Beat> {
         let mut beats = Vec::new();
-        for (id, beat) in &self.beats {
+        for (_, beat) in &self.beats {
             if beat.contains(instant) {
                 beats.push(beat);
             }
