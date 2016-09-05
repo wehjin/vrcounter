@@ -13,7 +13,11 @@ pub struct Roar<Mod, Msg, Out> {
 }
 
 impl<Mod, Msg, Out> Roar<Mod, Msg, Out> {
-    pub fn create(init: Rc<Fn() -> Mod>, update: Rc<Fn(Mod) -> Report<Mod, Out>>, view: Rc<Fn(&Mod) -> Vision<Msg>>) -> Self {
+    pub fn create(
+        init: Rc<Fn() -> Mod>,
+        update: Rc<Fn(Mod) -> Report<Mod, Out>>,
+        view: Rc<Fn(&Mod) -> Vision<Msg>>
+    ) -> Self {
         Roar { init: init, update: update, view: view }
     }
 }
@@ -23,13 +27,20 @@ pub enum DemonResult {
     Remove,
 }
 
+pub struct DemonVision {
+    patches: HashMap<u64, Patch>,
+    mists: HashMap<u64, Mist>,
+}
+
 pub trait Demon {
     fn id(&self) -> u64;
-    fn send(&self, vision_message: VisionMessage) -> DemonResult;
+    fn watch(&self) -> DemonVision;
+    fn poke(&self, vision_message: VisionMessage) -> DemonResult;
 }
 
 pub struct Demonoid<Mod, Msg, Out> {
     id: u64,
+    model: Mod,
     update: Rc<Fn(Mod) -> Report<Mod, Out>>,
     view: Rc<Fn(&Mod) -> Vision<Msg>>,
 }
@@ -39,7 +50,11 @@ impl<Mod, Msg, Out> Demon for Demonoid<Mod, Msg, Out> {
         self.id
     }
 
-    fn send(&self, vision_message: VisionMessage) -> DemonResult {
+    fn watch(&self) -> DemonVision {
+        DemonVision { patches: HashMap::new(), mists: HashMap::new() }
+    }
+
+    fn poke(&self, vision_message: VisionMessage) -> DemonResult {
         DemonResult::Remain
     }
 }
@@ -50,11 +65,15 @@ pub struct Summoner {
 }
 
 impl Summoner {
-    pub fn summon<Msg, SubMod: 'static, SubMsg: 'static, SubOut: 'static>(&mut self, id_source: &mut IdSource, roar: &Roar<SubMod, SubMsg, SubOut>, adapt_report: Box<Fn(SubOut) -> Msg>) -> u64 {
+    pub fn summon<Msg, SubMod: 'static, SubMsg: 'static, SubOut: 'static>(
+        &mut self,
+        id_source: &mut IdSource,
+        roar: &Roar<SubMod, SubMsg, SubOut>,
+        adapt_report: Box<Fn(SubOut) -> Msg>
+    ) -> u64 {
         let model = ((*roar).init)();
-        let vision = ((*roar).view)(&model);
         let id = id_source.next_id();
-        let demon = Demonoid { id: id, update: roar.update.clone(), view: roar.view.clone() };
+        let demon = Demonoid { id: id, model: model, update: roar.update.clone(), view: roar.view.clone() };
         self.demons.insert(id, Box::new(demon));
         id
     }
