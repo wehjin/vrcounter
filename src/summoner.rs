@@ -89,15 +89,18 @@ impl<Mod, Msg: 'static, Out> Demon for Demonoid<Mod, Msg, Out> {
 
 
 pub struct Summoner {
-    demons: HashMap<u64, Box<Demon>>,
+    pub demons: HashMap<u64, Box<Demon>>,
 }
 
 impl Summoner {
+    pub fn new() -> Self {
+        Summoner { demons: HashMap::new() }
+    }
     pub fn summon<Msg, SubMod: 'static, SubMsg: 'static, SubOut: 'static>(
         &mut self,
         id_source: &mut IdSource,
         roar: &Roar<SubMod, SubMsg, SubOut>,
-        adapt_report: Box<Fn(SubOut) -> Msg>
+        outcome_adapter: Box<Fn(SubOut) -> Msg>
     ) -> u64 {
         let model = ((*roar).init)();
         let id = id_source.next_id();

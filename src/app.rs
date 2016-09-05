@@ -8,6 +8,12 @@ use howl::{Sigil, Howling, Message as HowlMessage};
 use scream::{Screaming};
 use std::sync::mpsc::{channel, Sender, Receiver};
 use std::thread;
+use std::collections::HashMap;
+use summoner::{Summoner, Demon, DemonVision};
+use roar;
+use color;
+use std::boxed::Box;
+use patch::Patch;
 
 pub enum Message {
     Stop,
@@ -17,12 +23,26 @@ struct Model {
     howlings: Vec<Howling>,
     screamings: Vec<Screaming>,
     howl_message_receiver: Receiver<HowlMessage<(), ()>>,
+    summoner: Summoner,
+    roaring: u64,
+}
+
+pub enum Outcome {
+    Done,
 }
 
 pub fn start(viewer: ActiveViewer) -> Sender<Message> {
     let (tx, rx) = channel();
     thread::spawn(move || {
         let model = init(viewer.clone());
+        {
+            let demon_box: &Box<Demon> = model.summoner.demons.get(&model.roaring).unwrap();
+            let demon_vision_box: Box<DemonVision> = (*demon_box).see();
+            let demon_patches: &HashMap<u64, Patch> = (*demon_vision_box).patches();
+            for (id, patch) in demon_patches.iter() {
+                viewer.add_patch(*patch);
+            }
+        }
         loop {
             match rx.recv() {
                 Ok(msg) => match msg {
@@ -66,10 +86,18 @@ fn init(viewer: ActiveViewer) -> Model {
     let screaming = scream.present(&position, &mut id_source, viewer.clone());
     screamings.push(screaming);
 
+    let mut summoner = Summoner::new();
+    let roar = roar::color::from(vec![color::GREEN, color::RED, color::BLUE, color::CYAN, color::MAGENTA, color::YELLOW]);
+    let roaring = summoner.summon(&mut id_source, &roar, Box::new(move |outcome: roar::color::Outcome| -> Outcome {
+        Outcome::Done
+    }));
+
     Model {
         howlings: howlings,
         screamings: screamings,
-        howl_message_receiver: howl_message_receiver
+        howl_message_receiver: howl_message_receiver,
+        summoner: summoner,
+        roaring: roaring,
     }
 }
 

@@ -41,7 +41,9 @@ pub mod color {
         IncrementIndex,
     }
 
-    pub enum Outcome {}
+    pub enum Outcome {
+        Done,
+    }
 
     pub fn from(colors: Vec<[f32; 4]>) -> Roar<Model, Message, Outcome> {
         let init_colors = Rc::new(colors);
@@ -65,7 +67,7 @@ pub mod color {
                         VisionMessage::Tick => Message::IncrementIndex,
                     }
                 }));
-            let patch = Patch::new(15674u64, -0.25, 0.25, -0.25, 0.25, 0.25, model.colors[model.index].clone(), Sigil::Fill);
+            let patch = Patch::new(15674u64, 0.55, 0.65, -0.35, -0.25, 0.25, model.colors[model.index].clone(), Sigil::Fill);
             vision.add_patch(patch);
             vision
         };
