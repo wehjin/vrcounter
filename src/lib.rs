@@ -46,12 +46,15 @@ use viewer::ActiveViewer;
 use common::{Error, RenderSize};
 use std::rc::Rc;
 use std::borrow::Borrow;
+use app::{Message as AppMessage};
+use std::sync::mpsc::{Sender};
+use std::time::{Instant, Duration};
 
 pub fn main() {
     let viewer = ActiveViewer::start();
     let app = app::start(viewer.clone());
     if os::is_windows() {
-        run_in_vr(viewer.clone());
+        run_in_vr(viewer.clone(), app.clone());
     } else {
         user::run(viewer.clone(), app.clone());
     }
@@ -59,14 +62,13 @@ pub fn main() {
     viewer.stop();
 }
 
-fn run_in_vr(viewer: ActiveViewer) {
+fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
     let vr_option = System::up().ok();
     if vr_option.is_none() {
         return;
     }
 
     let vr: System = vr_option.unwrap();
-    let sleep_time = time::Duration::from_millis(15);
 
     let render_size = vr.get_render_size();
     println!("{:?}", render_size);
@@ -107,6 +109,10 @@ fn run_in_vr(viewer: ActiveViewer) {
     let clear_color = (0.05, 0.05, 0.08, 1.0);
     let clear_depth = 1.0;
 
+    let mut frame_instant = Instant::now();
+    let frame_duration = Duration::from_millis(300);
+    let sleep_time = time::Duration::from_millis(16);
+
     'render: loop {
         let poses = vr.await_poses();
         let world_to_hmd = poses.get_world_to_hmd_matrix();
@@ -131,7 +137,12 @@ fn run_in_vr(viewer: ActiveViewer) {
                 _ => ()
             }
         }
-        thread::sleep(sleep_time);
+        if Instant::now().duration_since(frame_instant) > frame_duration {
+            frame_instant = Instant::now();
+            app.send(AppMessage::Frame).unwrap_or(());
+        } else {
+            thread::sleep(sleep_time);
+        }
     }
 }
 
@@ -149,11 +160,11 @@ impl From<TrackedDevicePoses> for Poses {
 impl Poses {
     fn get_hmd_pose(&self) -> &TrackedDevicePose {
         self.poses.poses.iter()
-                        .filter(|&x| match x.device_class() {
-                            TrackedDeviceClass::HMD => true,
-                            _ => false
-                        })
-                        .last().unwrap()
+            .filter(|&x| match x.device_class() {
+                TrackedDeviceClass::HMD => true,
+                _ => false
+            })
+            .last().unwrap()
     }
 
     pub fn get_world_to_hmd_matrix(&self) -> [[f32; 4]; 4] {

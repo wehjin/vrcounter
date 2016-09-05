@@ -52,7 +52,7 @@ pub mod color {
             Model {
                 colors: init_colors.clone(),
                 index: 0,
-                end_instant: Instant::now() + Duration::from_secs(10),
+                end_instant: Instant::now() + Duration::from_secs(30),
             }
         };
         let update = move |message: Message, model: &Model| -> Report<Model, Outcome> {
