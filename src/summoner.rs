@@ -9,6 +9,7 @@ use std::cell::RefCell;
 use std::borrow::BorrowMut;
 use std::ops::Deref;
 use roar::Roar;
+use vision::{Vision, VisionMessage};
 
 pub enum DemonResult {
     Keep,
@@ -113,28 +114,6 @@ impl Summoner {
         };
         self.demons.insert(id, Box::new(demon));
         id
-    }
-}
-
-pub enum VisionMessage {
-    Tick,
-}
-
-pub struct Vision<Msg> {
-    vision_message_adapter: Rc<Fn(VisionMessage) -> Msg>,
-    patches: HashMap<u64, Patch>,
-    mists: HashMap<u64, Mist>,
-}
-
-impl<Msg> Vision<Msg> {
-    pub fn new(vision_message_adapter: Rc<Fn(VisionMessage) -> Msg>) -> Self {
-        Vision {
-            vision_message_adapter: vision_message_adapter.clone(),
-            patches: HashMap::new(), mists: HashMap::new()
-        }
-    }
-    pub fn add_patch(&mut self, patch: Patch) {
-        self.patches.insert(patch.id, patch);
     }
 }
 

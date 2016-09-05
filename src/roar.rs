@@ -8,7 +8,8 @@ use std::any::Any;
 use std::cell::RefCell;
 use std::borrow::BorrowMut;
 use std::ops::Deref;
-use summoner::{Report, Vision};
+use summoner::{Report};
+use vision::Vision;
 
 pub struct Roar<Mod, Msg, Out> {
     pub init: Rc<Fn() -> Mod>,
@@ -29,7 +30,8 @@ impl<Mod, Msg, Out> Roar<Mod, Msg, Out> {
 pub mod color {
     use super::*;
     use std::rc::Rc;
-    use summoner::{Report, Vision, VisionMessage};
+    use vision::{Vision, VisionMessage};
+    use summoner::{Report};
     use patch::{Sigil, Patch};
 
     pub struct Model {

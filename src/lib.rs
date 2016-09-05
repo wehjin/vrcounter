@@ -27,6 +27,7 @@ mod howl;
 mod mist;
 mod patch;
 mod app;
+mod vision;
 mod summoner;
 mod roar;
 
