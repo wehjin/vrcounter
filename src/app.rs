@@ -9,7 +9,7 @@ use scream::{Screaming};
 use std::sync::mpsc::{channel, Sender, Receiver};
 use std::thread;
 use std::collections::HashMap;
-use summoner::{Summoner, Demon, DemonVision};
+use summoner::{Summoner, Demon, DemonVision, Report};
 use roar;
 use color;
 use std::boxed::Box;
@@ -17,12 +17,12 @@ use patch::Patch;
 
 pub enum Message {
     Stop,
+    Frame,
 }
 
 struct Model {
     howlings: Vec<Howling>,
     screamings: Vec<Screaming>,
-    howl_message_receiver: Receiver<HowlMessage<(), ()>>,
     summoner: Summoner,
     roaring: u64,
 }
@@ -42,16 +42,34 @@ fn view(model: &Model, viewer: &ActiveViewer) {
     }
 }
 
+fn update(message: Message, model: &Model) -> Report<Model, Outcome> {
+    match message {
+        Message::Stop => Report::Outcome(Outcome::Done),
+        Message::Frame => Report::Unchanged,
+    }
+}
+
 pub fn start(viewer: ActiveViewer) -> Sender<Message> {
     let (tx, rx) = channel();
     thread::spawn(move || {
-        let model = init(viewer.clone());
+        let mut model = init(viewer.clone());
         view(&model, &viewer);
         loop {
             match rx.recv() {
-                Ok(msg) => match msg {
-                    Message::Stop => { break; },
-                },
+                Ok(message) => {
+                    match update(message, &model) {
+                        Report::Model(next_model) => {
+                            model = next_model;
+                            view(&model, &viewer);
+                        }
+                        Report::Unchanged => (),
+                        Report::Outcome(Outcome::Done) => { break; }
+                        Report::Error => {
+                            println!("ERROR: from Report");
+                            break;
+                        }
+                    }
+                }
                 Err(err) => {
                     println!("ERROR: {:?}", err);
                     break;
@@ -99,7 +117,6 @@ fn init(viewer: ActiveViewer) -> Model {
     Model {
         howlings: howlings,
         screamings: screamings,
-        howl_message_receiver: howl_message_receiver,
         summoner: summoner,
         roaring: roaring,
     }
