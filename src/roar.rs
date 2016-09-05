@@ -34,10 +34,12 @@ pub mod color {
         pub end_instant: Instant,
     }
 
+    #[derive(Clone)]
     pub enum Message {
         IncrementIndex,
     }
 
+    #[derive(Clone)]
     pub enum Outcome {
         Done,
     }

@@ -19,13 +19,14 @@ pub trait DemonVision {
 }
 
 pub trait Demon {
+    fn clone_and_box(&self) -> Box<Demon>;
     fn id(&self) -> u64;
     fn see(&self) -> Box<DemonVision>;
     fn poke(&mut self, vision_message: VisionMessage) -> DemonResult;
 }
 
 #[derive(Clone)]
-pub struct Demonoid<Mod: Clone, Msg, Out> {
+pub struct Demonoid<Mod: Clone, Msg: Clone, Out: Clone> {
     id: u64,
     model: Mod,
     update: Rc<Fn(Msg, &Mod) -> Report<Mod, Out>>,
@@ -33,7 +34,7 @@ pub struct Demonoid<Mod: Clone, Msg, Out> {
     vision_message_adapter: RefCell<Option<Rc<Fn(VisionMessage) -> Msg>>>,
 }
 
-impl<Mod: Clone, Msg, Out> Demonoid<Mod, Msg, Out> {
+impl<Mod: Clone, Msg: Clone, Out: Clone> Demonoid<Mod, Msg, Out> {
     fn get_vision_adapter_option(&self) -> Option<Rc<Fn(VisionMessage) -> Msg>> {
         (*(self.vision_message_adapter.borrow())).clone()
     }
@@ -54,7 +55,12 @@ impl<Mod: Clone, Msg, Out> Demonoid<Mod, Msg, Out> {
     }
 }
 
-impl<Mod: Clone, Msg: 'static, Out> Demon for Demonoid<Mod, Msg, Out> {
+impl<Mod: 'static + Clone, Msg: 'static + Clone, Out: 'static + Clone> Demon for Demonoid<Mod, Msg, Out> {
+    fn clone_and_box(&self) -> Box<Demon> {
+        let demonoid: Demonoid<Mod, Msg, Out> = (*self).clone();
+        Box::new(demonoid)
+    }
+
     fn id(&self) -> u64 {
         self.id
     }
@@ -86,7 +92,14 @@ impl<Mod: Clone, Msg: 'static, Out> Demon for Demonoid<Mod, Msg, Out> {
     }
 }
 
+impl Clone for Box<Demon> {
+    fn clone(&self) -> Self {
+        self.clone_and_box()
+    }
+}
 
+
+#[derive(Clone)]
 pub struct Summoner {
     pub demons: HashMap<u64, Box<Demon>>,
 }
@@ -102,7 +115,7 @@ impl Summoner {
         }
         demon_boxes
     }
-    pub fn summon<Msg, SubMod: 'static + Clone, SubMsg: 'static, SubOut: 'static>(
+    pub fn summon<Msg, SubMod: 'static + Clone, SubMsg: 'static + Clone, SubOut: 'static + Clone>(
         &mut self,
         id_source: &mut IdSource,
         roar: &Roar<SubMod, SubMsg, SubOut>,
