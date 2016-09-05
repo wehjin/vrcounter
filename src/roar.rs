@@ -2,13 +2,13 @@ use std::rc::Rc;
 use summoner::{Report};
 use vision::Vision;
 
-pub struct Roar<Mod, Msg, Out> {
+pub struct Roar<Mod: Clone, Msg, Out> {
     pub init: Rc<Fn() -> Mod>,
     pub update: Rc<Fn(Msg, &Mod) -> Report<Mod, Out>>,
     pub view: Rc<Fn(&Mod) -> Vision<Msg>>,
 }
 
-impl<Mod, Msg, Out> Roar<Mod, Msg, Out> {
+impl<Mod: Clone, Msg, Out> Roar<Mod, Msg, Out> {
     pub fn create(
         init: Rc<Fn() -> Mod>,
         update: Rc<Fn(Msg, &Mod) -> Report<Mod, Out>>,
@@ -27,6 +27,7 @@ pub mod color {
     use std::rc::Rc;
     use std::time::{Instant, Duration};
 
+    #[derive(Clone)]
     pub struct Model {
         pub colors: Rc<Vec<[f32; 4]>>,
         pub index: usize,

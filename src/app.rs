@@ -45,7 +45,13 @@ fn view(model: &Model, viewer: &ActiveViewer) {
 fn update(message: Message, model: &Model) -> Report<Model, Outcome> {
     match message {
         Message::Stop => Report::Outcome(Outcome::Done),
-        Message::Frame => Report::Unchanged,
+        Message::Frame => {
+            let demon_boxes = model.summoner.get_demon_boxes();
+
+
+
+            Report::Unchanged
+        },
     }
 }
 

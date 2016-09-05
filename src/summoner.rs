@@ -24,7 +24,8 @@ pub trait Demon {
     fn poke(&mut self, vision_message: VisionMessage) -> DemonResult;
 }
 
-pub struct Demonoid<Mod, Msg, Out> {
+#[derive(Clone)]
+pub struct Demonoid<Mod: Clone, Msg, Out> {
     id: u64,
     model: Mod,
     update: Rc<Fn(Msg, &Mod) -> Report<Mod, Out>>,
@@ -32,7 +33,7 @@ pub struct Demonoid<Mod, Msg, Out> {
     vision_message_adapter: RefCell<Option<Rc<Fn(VisionMessage) -> Msg>>>,
 }
 
-impl<Mod, Msg, Out> Demonoid<Mod, Msg, Out> {
+impl<Mod: Clone, Msg, Out> Demonoid<Mod, Msg, Out> {
     fn get_vision_adapter_option(&self) -> Option<Rc<Fn(VisionMessage) -> Msg>> {
         (*(self.vision_message_adapter.borrow())).clone()
     }
@@ -53,7 +54,7 @@ impl<Mod, Msg, Out> Demonoid<Mod, Msg, Out> {
     }
 }
 
-impl<Mod, Msg: 'static, Out> Demon for Demonoid<Mod, Msg, Out> {
+impl<Mod: Clone, Msg: 'static, Out> Demon for Demonoid<Mod, Msg, Out> {
     fn id(&self) -> u64 {
         self.id
     }
@@ -101,7 +102,7 @@ impl Summoner {
         }
         demon_boxes
     }
-    pub fn summon<Msg, SubMod: 'static, SubMsg: 'static, SubOut: 'static>(
+    pub fn summon<Msg, SubMod: 'static + Clone, SubMsg: 'static, SubOut: 'static>(
         &mut self,
         id_source: &mut IdSource,
         roar: &Roar<SubMod, SubMsg, SubOut>,
