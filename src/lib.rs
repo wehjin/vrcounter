@@ -27,6 +27,7 @@ mod howl;
 mod mist;
 mod patch;
 mod app;
+mod summoner;
 mod roar;
 
 use openvr::Eye;
