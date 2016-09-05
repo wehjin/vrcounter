@@ -5,6 +5,7 @@ use patch::Patch;
 use mist::Mist;
 use beat::Beat;
 
+#[derive(Copy, Clone)]
 pub enum VisionMessage {
     Tick,
 }

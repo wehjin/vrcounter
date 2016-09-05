@@ -14,6 +14,7 @@ use roar;
 use color;
 use std::boxed::Box;
 use patch::Patch;
+use vision::VisionMessage;
 
 pub enum Message {
     Stop,
@@ -42,13 +43,17 @@ fn view(model: &Model, viewer: &ActiveViewer) {
     }
 }
 
-fn update(message: Message, model: &Model) -> Report<Model, Outcome> {
+fn update(message: Message, mut model: Model) -> Option<Model> {
     match message {
-        Message::Stop => Report::Outcome(Outcome::Done),
+        Message::Stop => {
+            finish(model);
+            None
+        },
         Message::Frame => {
-            let mut summoner = model.summoner.clone();
-            //let demon_boxes = model.summoner.get_demon_boxes();
-            Report::Unchanged
+            let mut summoner: Summoner = model.summoner.clone();
+            summoner.update(VisionMessage::Tick);
+            model.summoner = summoner;
+            Some(model)
         },
     }
 }
@@ -61,28 +66,23 @@ pub fn start(viewer: ActiveViewer) -> Sender<Message> {
         loop {
             match rx.recv() {
                 Ok(message) => {
-                    match update(message, &model) {
-                        Report::Model(next_model) => {
+                    match update(message, model) {
+                        Option::None => {
+                            break;
+                        },
+                        Option::Some(next_model) => {
                             model = next_model;
                             view(&model, &viewer);
-                        }
-                        Report::Unchanged => (),
-                        Report::Outcome(Outcome::Done) => {
-                            break;
-                        }
-                        Report::Error => {
-                            println!("ERROR: from Report");
-                            break;
                         }
                     }
                 }
                 Err(err) => {
                     println!("ERROR: {:?}", err);
+                    finish(model);
                     break;
                 },
             };
         }
-        finish(model);
     });
     tx
 }

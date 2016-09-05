@@ -7,6 +7,7 @@ use common::IdSource;
 use std::cell::RefCell;
 use roar::Roar;
 use vision::{Vision, VisionMessage};
+use std::time::Instant;
 
 pub enum DemonResult {
     Keep,
@@ -46,12 +47,20 @@ impl<Mod: Clone, Msg: Clone, Out: Clone> Demonoid<Mod, Msg, Out> {
         self.set_vision_adapter_option(Option::Some(vision.vision_message_adapter.clone()));
         vision
     }
-    fn get_message_from_vision_message(&self, vision_message: VisionMessage) -> Msg {
-        if let Option::None = self.get_vision_adapter_option() {
-            self.get_vision_and_save_vision_message_adapter();
+    fn get_message_from_vision_message(&self, vision_message: VisionMessage) -> Option<Msg> {
+        match vision_message {
+            VisionMessage::Tick => {
+                let vision = self.get_vision_and_save_vision_message_adapter();
+                let beats = vision.find_beats(&Instant::now());
+                if beats.len() > 0 {
+                    let vision_message_adapter = self.get_vision_adapter_option().unwrap();
+                    let message = (*vision_message_adapter)(vision_message);
+                    Some(message)
+                } else {
+                    None
+                }
+            },
         }
-        let vision_adapter_ref: Rc<Fn(VisionMessage) -> Msg> = self.get_vision_adapter_option().unwrap();
-        (*vision_adapter_ref)(vision_message)
     }
 }
 
@@ -71,23 +80,29 @@ impl<Mod: 'static + Clone, Msg: 'static + Clone, Out: 'static + Clone> Demon for
     }
 
     fn poke(&mut self, vision_message: VisionMessage) -> DemonResult {
-        let message = self.get_message_from_vision_message(vision_message);
-        let report: Report<Mod, Out> = (*(self.update))(message, &self.model);
-        match report {
-            Report::Unchanged => DemonResult::Keep,
-            Report::Model(model) => {
-                self.model = model;
-                self.set_vision_adapter_option(Option::None);
+        match self.get_message_from_vision_message(vision_message) {
+            Some(message) => {
+                let report: Report<Mod, Out> = (*(self.update))(message, &self.model);
+                match report {
+                    Report::Unchanged => DemonResult::Keep,
+                    Report::Model(model) => {
+                        self.model = model;
+                        self.set_vision_adapter_option(Option::None);
+                        DemonResult::Keep
+                    },
+                    Report::Outcome(_) => {
+                        // TODO: Should do something with the outcome like pass it on to whoever is expecting it.
+                        DemonResult::Remove
+                    },
+                    Report::Error => {
+                        println!("Error while poking demon");
+                        DemonResult::Remove
+                    },
+                }
+            },
+            None => {
                 DemonResult::Keep
-            },
-            Report::Outcome(_) => {
-                // TODO: Should do something with the outcome like pass it on to whoever is expecting it.
-                DemonResult::Remove
-            },
-            Report::Error => {
-                println!("Error while poking demon");
-                DemonResult::Remove
-            },
+            }
         }
     }
 }
@@ -132,6 +147,20 @@ impl Summoner {
         };
         self.demons.insert(id, Box::new(demon));
         id
+    }
+    pub fn update(&mut self, vision_message: VisionMessage) {
+        let mut new_demons = HashMap::new();
+        for (_, demon_box) in &self.demons {
+            let mut new_demon_box = demon_box.clone();
+            let demon_result = new_demon_box.poke(vision_message);
+            match demon_result {
+                DemonResult::Keep => {
+                    new_demons.insert(new_demon_box.id(), new_demon_box);
+                },
+                DemonResult::Remove => (),
+            }
+        }
+        self.demons = new_demons;
     }
 }
 
