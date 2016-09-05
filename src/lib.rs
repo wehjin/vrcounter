@@ -27,6 +27,7 @@ mod howl;
 mod mist;
 mod patch;
 mod app;
+mod roar;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
