@@ -1,13 +1,4 @@
-use std::boxed::Box;
 use std::rc::Rc;
-use std::collections::HashMap;
-use patch::Patch;
-use mist::Mist;
-use common::IdSource;
-use std::any::Any;
-use std::cell::RefCell;
-use std::borrow::BorrowMut;
-use std::ops::Deref;
 use summoner::{Report};
 use vision::Vision;
 

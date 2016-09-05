@@ -32,11 +32,13 @@ pub enum Outcome {
 }
 
 fn view(model: &Model, viewer: &ActiveViewer) {
-    let demon_box: &Box<Demon> = model.summoner.demons.get(&model.roaring).unwrap();
-    let demon_vision_box: Box<DemonVision> = (*demon_box).see();
-    let demon_patches: &HashMap<u64, Patch> = (*demon_vision_box).patches();
-    for (id, patch) in demon_patches.iter() {
-        viewer.add_patch(*patch);
+    let demon_boxes = model.summoner.get_demon_boxes();
+    for demon_box in demon_boxes {
+        let demon_vision_box: Box<DemonVision> = (&demon_box).see();
+        let demon_patches: &HashMap<u64, Patch> = (*demon_vision_box).patches();
+        for (id, patch) in demon_patches.iter() {
+            viewer.add_patch(*patch);
+        }
     }
 }
 

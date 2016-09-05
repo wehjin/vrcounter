@@ -5,7 +5,6 @@ use patch::Patch;
 use mist::Mist;
 use common::IdSource;
 use std::cell::RefCell;
-use std::ops::Deref;
 use roar::Roar;
 use vision::{Vision, VisionMessage};
 
@@ -95,6 +94,13 @@ impl Summoner {
     pub fn new() -> Self {
         Summoner { demons: HashMap::new() }
     }
+    pub fn get_demon_boxes(&self) -> Vec<&Box<Demon>> {
+        let mut demon_boxes = Vec::new();
+        for (_, demon_box) in &self.demons {
+            demon_boxes.push(demon_box);
+        }
+        demon_boxes
+    }
     pub fn summon<Msg, SubMod: 'static, SubMsg: 'static, SubOut: 'static>(
         &mut self,
         id_source: &mut IdSource,
@@ -112,6 +118,18 @@ impl Summoner {
         };
         self.demons.insert(id, Box::new(demon));
         id
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn demons() {
+        let summoner = Summoner::new();
+        let demons: Vec<&Box<Demon>> = summoner.get_demon_boxes();
+        assert_eq!(0, demons.len());
     }
 }
 
