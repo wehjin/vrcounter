@@ -1,7 +1,7 @@
 extern crate glium;
 
 use glium::backend::glutin_backend::GlutinFacade;
-use super::System;
+use vr::System;
 use eye;
 use eye::Eye;
 use constants::{CLEAR_COLOR, CLEAR_DEPTH};
