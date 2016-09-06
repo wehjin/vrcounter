@@ -1,4 +1,7 @@
 extern crate openvr;
+extern crate nalgebra;
+
+use nalgebra::{Transpose};
 
 #[derive(Debug)]
 pub enum Error {
@@ -32,4 +35,21 @@ impl IdSource {
         self.global_id = self.global_id + 1;
         id
     }
+}
+
+pub fn nmatrix4_from_steam34(r: &[[f32; 4]; 3]) -> nalgebra::Matrix4<f32> {
+    nalgebra::Matrix4::new(
+        r[0][0], r[1][0], r[2][0], 0.0,
+        r[0][1], r[1][1], r[2][1], 0.0,
+        r[0][2], r[1][2], r[2][2], 0.0,
+        r[0][3], r[1][3], r[2][3], 1.0).transpose()
+}
+
+pub fn raw4_from_nmatrix4(m: &nalgebra::Matrix4<f32>) -> [[f32; 4]; 4] {
+    [
+        [m.m11, m.m21, m.m31, m.m41],
+        [m.m12, m.m22, m.m32, m.m42],
+        [m.m13, m.m23, m.m33, m.m43],
+        [m.m14, m.m24, m.m34, m.m44],
+    ]
 }

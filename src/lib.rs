@@ -34,9 +34,9 @@ mod beat;
 mod eye;
 mod hmd;
 mod constants;
+mod poses;
 
 use openvr::Eye;
-use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
 use openvr::common::{TextureBounds};
 use nalgebra::{Inverse, Transpose};
 use glium::{DisplayBuild};
@@ -44,13 +44,14 @@ use glium::framebuffer::{SimpleFrameBuffer, ToColorAttachment, ToDepthAttachment
 use glium::glutin::{Event, ElementState, WindowBuilder};
 use programs::Programs;
 use viewer::ActiveViewer;
-use common::{Error, RenderSize};
+use common::{Error, RenderSize, nmatrix4_from_steam34, raw4_from_nmatrix4};
 use std::rc::Rc;
 use app::{Message as AppMessage};
 use std::sync::mpsc::{Sender};
 use std::time::{Instant, Duration};
 use hmd::Hmd;
 use std::borrow::Borrow;
+use poses::Poses;
 
 pub fn main() {
     let viewer = ActiveViewer::start();
@@ -113,49 +114,6 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
     }
 }
 
-#[derive(Debug)]
-pub struct Poses {
-    poses: TrackedDevicePoses
-}
-
-impl From<TrackedDevicePoses> for Poses {
-    fn from(poses: TrackedDevicePoses) -> Self {
-        Poses { poses: poses }
-    }
-}
-
-impl Poses {
-    fn get_hmd_pose(&self) -> &TrackedDevicePose {
-        self.poses.poses.iter()
-                        .filter(|&x| match x.device_class() {
-                            TrackedDeviceClass::HMD => true,
-                            _ => false
-                        })
-                        .last().unwrap()
-    }
-
-    pub fn get_world_to_hmd_matrix(&self) -> [[f32; 4]; 4] {
-        let hmd: &TrackedDevicePose = self.get_hmd_pose();
-        let raw_hmd_to_world = hmd.to_device;
-        let nalg_hmd_to_world = nmatrix4_from_steam34(&raw_hmd_to_world);
-        let nalg_world_to_hmd = nalg_hmd_to_world.inverse().unwrap();
-        raw4_from_nmatrix4(&nalg_world_to_hmd)
-    }
-
-    pub fn audit(&self) {
-        println!("Count {}", self.poses.count);
-        let poses: [TrackedDevicePose; 16] = self.poses.poses;
-        let poses_iter = poses.iter().filter(
-            |&x| match x.device_class() {
-                openvr::tracking::TrackedDeviceClass::Invalid => false,
-                _ => true
-            });
-        for it in poses_iter {
-            let pose: &TrackedDevicePose = it;
-            println!("Class:{:?}, valid:{}, connected:{}, {:?}", pose.device_class(), pose.is_valid, pose.is_connected, pose);
-        }
-    }
-}
 
 pub struct System {
     system: openvr::system::IVRSystem,
@@ -212,23 +170,6 @@ impl Drop for System {
     fn drop(&mut self) {
         openvr::shutdown();
     }
-}
-
-fn raw4_from_nmatrix4(m: &nalgebra::Matrix4<f32>) -> [[f32; 4]; 4] {
-    [
-        [m.m11, m.m21, m.m31, m.m41],
-        [m.m12, m.m22, m.m32, m.m42],
-        [m.m13, m.m23, m.m33, m.m43],
-        [m.m14, m.m24, m.m34, m.m44],
-    ]
-}
-
-fn nmatrix4_from_steam34(r: &[[f32; 4]; 3]) -> nalgebra::Matrix4<f32> {
-    nalgebra::Matrix4::new(
-        r[0][0], r[1][0], r[2][0], 0.0,
-        r[0][1], r[1][1], r[2][1], 0.0,
-        r[0][2], r[1][2], r[2][2], 0.0,
-        r[0][3], r[1][3], r[2][3], 1.0).transpose()
 }
 
 fn nmatrix4_from_steam44(r: &[[f32; 4]; 4]) -> nalgebra::Matrix4<f32> {
