@@ -49,7 +49,7 @@ use std::time::{Instant, Duration};
 use hmd::Hmd;
 use std::borrow::Borrow;
 use vr::System;
-use openvr::render_models::IVRRenderModels;
+use openvr::render_models::{IVRRenderModels, RenderModel};
 
 pub fn main() {
     let viewer = ActiveViewer::start();
@@ -78,8 +78,10 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
     println!("Render model names: {:?}", count);
     for index in 0..count {
         let name = render_models.get_name(index);
-        println!("{} {}", index+1, name);
+        println!("{} {}", index + 1, name);
     }
+
+    let controller_render_model: RenderModel = render_models.load(String::from("vr_controller_vive_1_5")).unwrap();
 
     let window = WindowBuilder::new()
         .with_title("vrcounter").with_depth_buffer(24).build_glium()
@@ -98,6 +100,9 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
 
     let mut frame_instant = Instant::now();
     let frame_duration = Duration::from_millis(300);
+
+    let poses = vr.await_poses();
+    poses.audit();
 
     'render: loop {
         let poses = vr.await_poses();
