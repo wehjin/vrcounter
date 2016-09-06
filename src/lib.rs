@@ -38,13 +38,13 @@ mod poses;
 
 use openvr::Eye;
 use openvr::common::{TextureBounds};
-use nalgebra::{Inverse, Transpose};
+use nalgebra::{Inverse};
 use glium::{DisplayBuild};
 use glium::framebuffer::{SimpleFrameBuffer, ToColorAttachment, ToDepthAttachment};
 use glium::glutin::{Event, ElementState, WindowBuilder};
 use programs::Programs;
 use viewer::ActiveViewer;
-use common::{Error, RenderSize, nmatrix4_from_steam34, raw4_from_nmatrix4};
+use common::{Error, RenderSize, nmatrix4_from_steam34, raw4_from_nmatrix4, nmatrix4_from_steam44};
 use std::rc::Rc;
 use app::{Message as AppMessage};
 use std::sync::mpsc::{Sender};
@@ -170,13 +170,4 @@ impl Drop for System {
     fn drop(&mut self) {
         openvr::shutdown();
     }
-}
-
-fn nmatrix4_from_steam44(r: &[[f32; 4]; 4]) -> nalgebra::Matrix4<f32> {
-    nalgebra::Matrix4::new(
-        r[0][0], r[1][0], r[2][0], r[3][0],
-        r[0][1], r[1][1], r[2][1], r[3][1],
-        r[0][2], r[1][2], r[2][2], r[3][2],
-        r[0][3], r[1][3], r[2][3], r[3][3],
-    ).transpose()
 }
