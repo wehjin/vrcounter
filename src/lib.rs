@@ -32,16 +32,16 @@ mod summoner;
 mod roar;
 mod beat;
 mod eye;
+mod hmd;
+mod constants;
 
 use openvr::Eye;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
 use openvr::common::{TextureBounds};
 use nalgebra::{Inverse, Transpose};
-use glium::{DisplayBuild, Surface};
-use glium::backend::glutin_backend::GlutinFacade;
+use glium::{DisplayBuild};
 use glium::framebuffer::{SimpleFrameBuffer, ToColorAttachment, ToDepthAttachment};
 use glium::glutin::{Event, ElementState, WindowBuilder};
-use std::{thread, time};
 use programs::Programs;
 use viewer::ActiveViewer;
 use common::{Error, RenderSize};
@@ -49,6 +49,8 @@ use std::rc::Rc;
 use app::{Message as AppMessage};
 use std::sync::mpsc::{Sender};
 use std::time::{Instant, Duration};
+use hmd::Hmd;
+use std::borrow::Borrow;
 
 pub fn main() {
     let viewer = ActiveViewer::start();
@@ -70,9 +72,6 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
 
     let vr: System = vr_option.unwrap();
 
-    let render_size = vr.get_render_size();
-    println!("{:?}", render_size);
-
     let can_render = vr.get_can_render();
     println!("Can render {}", can_render);
 
@@ -80,40 +79,25 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
         .with_title("vrcounter").with_depth_buffer(24).build_glium()
         .unwrap();
 
-    let clear_color = (0.05, 0.05, 0.08, 1.0);
-    let clear_depth = 1.0;
-    let (left_eye, right_eye) = (
-        eye::init(&window, &render_size, vr.get_left_projection(), clear_color, clear_depth),
-        eye::init(&window, &render_size, vr.get_right_projection(), clear_color, clear_depth)
-    );
+    let hmd = Hmd::new(&window, &vr);
     let (mut left_frame, mut right_frame) = (
-        SimpleFrameBuffer::with_depth_buffer(&window,
-                                             left_eye.buffers.color.to_color_attachment(),
-                                             left_eye.buffers.depth.to_depth_attachment()).unwrap(),
-        SimpleFrameBuffer::with_depth_buffer(&window,
-                                             right_eye.buffers.color.to_color_attachment(),
-                                             right_eye.buffers.depth.to_depth_attachment()).unwrap()
+        SimpleFrameBuffer::with_depth_buffer(&window, hmd.left_eye.buffers.color.to_color_attachment(),
+                                             hmd.left_eye.buffers.depth.to_depth_attachment()).unwrap(),
+        SimpleFrameBuffer::with_depth_buffer(&window, hmd.right_eye.buffers.color.to_color_attachment(),
+                                             hmd.right_eye.buffers.depth.to_depth_attachment()).unwrap()
     );
-    let display: Rc<GlutinFacade> = Rc::new(window);
+
+    let display = Rc::new(window);
     let programs = Programs::init(display.clone(), viewer);
 
     let mut frame_instant = Instant::now();
     let frame_duration = Duration::from_millis(300);
-    let sleep_time = time::Duration::from_millis(16);
 
     'render: loop {
         let poses = vr.await_poses();
         let world_to_hmd = poses.get_world_to_hmd_matrix();
 
-        let mut target = display.draw();
-        target.clear_color_and_depth(clear_color, clear_depth);
-        programs.draw(&mut target, &world_to_hmd, &left_eye.projection);
-        target.finish().unwrap();
-
-        vr.submit_textures(
-            eye::draw(&left_eye, &mut left_frame, &programs, &world_to_hmd),
-            eye::draw(&right_eye, &mut right_frame, &programs, &world_to_hmd)
-        );
+        hmd.draw(&programs, &world_to_hmd, display.borrow(), &mut left_frame, &mut right_frame);
 
         for ev in display.poll_events() {
             match ev {
@@ -125,8 +109,6 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
         if Instant::now().duration_since(frame_instant) > frame_duration {
             frame_instant = Instant::now();
             app.send(AppMessage::Frame).unwrap_or(());
-        } else {
-            thread::sleep(sleep_time);
         }
     }
 }
@@ -218,7 +200,7 @@ impl System {
 
     pub fn submit_textures(&self, left_texture_id: usize, right_texture_id: usize) {
         self.submit_texture(Eye::Left, left_texture_id);
-        self.submit_texture(Eye::Right, right_texture_id)
+        self.submit_texture(Eye::Right, right_texture_id);
     }
 
     fn submit_texture(&self, eye: Eye, texture_id: usize) {
