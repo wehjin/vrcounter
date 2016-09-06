@@ -36,6 +36,12 @@ impl Programs {
             }
         }
     }
+    pub fn set_controller_model_matrix(&mut self, model_matrix: &Option<[[f32; 4]; 4]>) {
+        if let Some(ref mut controller_program) = self.controller_program_option {
+            controller_program.set_model_matrix(model_matrix);
+        }
+    }
+
     pub fn draw<T>(&self, surface: &mut T, view: &[[f32; 4]; 4], projection: &[[f32; 4]; 4]) where T: Surface {
         self.mist_program.draw(surface, view, projection);
         self.patch_program.draw(surface, view, projection);

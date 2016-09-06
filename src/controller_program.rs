@@ -12,7 +12,7 @@ pub struct ControllerProgram {
     program: glium::Program,
     vertex_buffer: VertexBuffer<Vertex>,
     index_buffer: IndexBuffer<u16>,
-    model_matrix: [[f32; 4]; 4],
+    model_matrix_option: Option<[[f32; 4]; 4]>,
     texture: Texture2d,
 }
 
@@ -46,34 +46,35 @@ impl ControllerProgram {
             program: Program::from_source(display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap(),
             vertex_buffer: VertexBuffer::new(display, &vertices).unwrap(),
             index_buffer: IndexBuffer::new(display, PrimitiveType::TrianglesList, &indices).unwrap(),
-            model_matrix: [
-                [1.0, 0.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0, 0.0],
-                [0.0, 1.5, 0.0, 1.0f32],
-            ],
+            model_matrix_option: Option::None,
             texture: glium_texture,
         }
     }
 
+    pub fn set_model_matrix(&mut self, model_matrix_option: &Option<[[f32; 4]; 4]>) {
+        self.model_matrix_option = *model_matrix_option;
+    }
+
     pub fn draw<T: Surface>(&self, surface: &mut T, view: &[[f32; 4]; 4], projection: &[[f32; 4]; 4]) {
-        let uniforms = uniform! { model: self.model_matrix, view: *view, perspective: *projection, diffuse: &self.texture };
-        surface.draw(
-            &self.vertex_buffer,
-            &self.index_buffer,
-            &self.program,
-            &uniforms,
-            &glium::DrawParameters {
-                blend: glium::Blend::default(),
-                depth: glium::Depth {
-                    test: glium::draw_parameters::DepthTest::IfLess,
-                    write: true,
+        if let Some(model_matrix) = self.model_matrix_option {
+            let uniforms = uniform! { model: model_matrix, view: *view, perspective: *projection, diffuse: &self.texture };
+            surface.draw(
+                &self.vertex_buffer,
+                &self.index_buffer,
+                &self.program,
+                &uniforms,
+                &glium::DrawParameters {
+                    blend: glium::Blend::default(),
+                    depth: glium::Depth {
+                        test: glium::draw_parameters::DepthTest::IfLess,
+                        write: true,
+                        ..Default::default()
+                    },
+                    backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
                     ..Default::default()
-                },
-                backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
-                ..Default::default()
-            }
-        ).unwrap();
+                }
+            ).unwrap();
+        }
     }
 }
 

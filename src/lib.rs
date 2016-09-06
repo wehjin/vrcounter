@@ -86,7 +86,7 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
     );
 
     let display = Rc::new(window);
-    let programs = Programs::init(display.clone(), viewer, true);
+    let mut programs = Programs::init(display.clone(), viewer, true);
 
     let mut frame_instant = Instant::now();
     let frame_duration = Duration::from_millis(300);
@@ -97,6 +97,8 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
     'render: loop {
         let poses = vr.await_poses();
         let world_to_hmd = poses.get_world_to_hmd_matrix();
+
+        programs.set_controller_model_matrix(&poses.get_controller_to_world_matrix());
 
         hmd.draw(&programs, &world_to_hmd, display.borrow(), &mut left_frame, &mut right_frame);
 

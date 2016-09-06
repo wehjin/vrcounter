@@ -19,21 +19,22 @@ impl From<TrackedDevicePoses> for Poses {
 }
 
 impl Poses {
-    fn get_hmd_pose(&self) -> &TrackedDevicePose {
-        self.poses.poses.iter()
-                        .filter(|&x| match x.device_class() {
-                            TrackedDeviceClass::HMD => true,
-                            _ => false
-                        })
-                        .last().unwrap()
-    }
-
     pub fn get_world_to_hmd_matrix(&self) -> [[f32; 4]; 4] {
         let hmd: &TrackedDevicePose = self.get_hmd_pose();
         let raw_hmd_to_world = hmd.to_device;
         let nalg_hmd_to_world = nmatrix4_from_steam34(&raw_hmd_to_world);
         let nalg_world_to_hmd = nalg_hmd_to_world.inverse().unwrap();
         raw4_from_nmatrix4(&nalg_world_to_hmd)
+    }
+
+    pub fn get_controller_to_world_matrix(&self) -> Option<[[f32; 4]; 4]> {
+        if let Some(ref controller) = self.get_controller_pose() {
+            let raw_controller_to_world = controller.to_device;
+            let nalg_controller_to_world = nmatrix4_from_steam34(&raw_controller_to_world);
+            Some(raw4_from_nmatrix4(&nalg_controller_to_world))
+        } else {
+            None
+        }
     }
 
     pub fn audit(&self) {
@@ -49,6 +50,24 @@ impl Poses {
             let render_model_name = pose.get_property_string(TrackedDeviceStringProperty::RenderModelName).unwrap();
             println!("Class:{:?}, valid:{}, connected:{}, rm-name:{}, {:?}", pose.device_class(), pose.is_valid, pose.is_connected, render_model_name, pose);
         }
+    }
+
+    fn get_controller_pose(&self) -> Option<&TrackedDevicePose> {
+        self.poses.poses.iter()
+                        .filter(|&x| match x.device_class() {
+                            TrackedDeviceClass::Controller => true,
+                            _ => false
+                        })
+                        .last()
+    }
+
+    fn get_hmd_pose(&self) -> &TrackedDevicePose {
+        self.poses.poses.iter()
+                        .filter(|&x| match x.device_class() {
+                            TrackedDeviceClass::HMD => true,
+                            _ => false
+                        })
+                        .last().unwrap()
     }
 }
 
