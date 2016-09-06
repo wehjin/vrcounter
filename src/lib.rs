@@ -75,10 +75,10 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
 
     let render_models: IVRRenderModels = openvr::subsystems::render_models().unwrap();
     let count = render_models.get_count();
-    println!("Render model names: ");
+    println!("Render model names: {:?}", count);
     for index in 0..count {
         let name = render_models.get_name(index);
-        println!("{:?}", name);
+        println!("{} {}", index+1, name);
     }
 
     let window = WindowBuilder::new()
