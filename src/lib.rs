@@ -49,6 +49,7 @@ use std::time::{Instant, Duration};
 use hmd::Hmd;
 use std::borrow::Borrow;
 use vr::System;
+use openvr::render_models::IVRRenderModels;
 
 pub fn main() {
     let viewer = ActiveViewer::start();
@@ -69,9 +70,16 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
     }
 
     let vr: System = vr_option.unwrap();
+    println!("Can render {}", vr.get_can_render());
 
-    let can_render = vr.get_can_render();
-    println!("Can render {}", can_render);
+
+    let render_models: IVRRenderModels = openvr::subsystems::render_models().unwrap();
+    let count = render_models.get_count();
+    println!("Render model names: ");
+    for index in 0..count {
+        let name = render_models.get_name(index);
+        println!("{:?}", name);
+    }
 
     let window = WindowBuilder::new()
         .with_title("vrcounter").with_depth_buffer(24).build_glium()

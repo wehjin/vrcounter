@@ -35,7 +35,7 @@ impl Atlas {
         let scale = Scale::uniform(page_height as f32);
 
         let v_metrics: VMetrics = font.v_metrics(scale);
-        println!("V metrics: {:?}", v_metrics);
+        //println!("V metrics: {:?}", v_metrics);
         let mut caret = point(0.0, v_metrics.ascent);
         for i in 32u32..128u32 {
             let i_char = if let Some(c) = char::from_u32(i) {
@@ -47,7 +47,7 @@ impl Atlas {
             let glyph: Glyph = font.glyph(code_point).unwrap();
             let scaled_glyph: ScaledGlyph = glyph.scaled(scale);
             let h_metrics: HMetrics = scaled_glyph.h_metrics();
-            println!("H metrics: {:?}", h_metrics);
+            //println!("H metrics: {:?}", h_metrics);
             let page_right = caret.x + h_metrics.advance_width;
             if page_right >= atlas_width as f32 {
                 break;
@@ -58,7 +58,7 @@ impl Atlas {
                 } else {
                     continue;
                 };
-                println!("Pixel bounding: {:?}", pixel_bounding_box);
+                //println!("Pixel bounding: {:?}", pixel_bounding_box);
                 let draw_left = pixel_bounding_box.min.x as u32;
                 let draw_bottom = pixel_bounding_box.min.y as u32;
                 positioned_glyph.draw(|x, y, coverage| {
