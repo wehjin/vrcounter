@@ -5,6 +5,7 @@ extern crate nalgebra;
 use openvr::tracking::{TrackedDevicePose, TrackedDevicePoses, TrackedDeviceClass};
 use nalgebra::{Inverse};
 use common::{nmatrix4_from_steam34, raw4_from_nmatrix4};
+use openvr::tracking::TrackedDeviceStringProperty;
 
 #[derive(Debug)]
 pub struct Poses {
@@ -45,7 +46,8 @@ impl Poses {
             });
         for it in poses_iter {
             let pose: &TrackedDevicePose = it;
-            println!("Class:{:?}, valid:{}, connected:{}, {:?}", pose.device_class(), pose.is_valid, pose.is_connected, pose);
+            let render_model_name = pose.get_property_string(TrackedDeviceStringProperty::RenderModelName).unwrap();
+            println!("Class:{:?}, valid:{}, connected:{}, rm-name:{}, {:?}", pose.device_class(), pose.is_valid, pose.is_connected, render_model_name, pose);
         }
     }
 }
