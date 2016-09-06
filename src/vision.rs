@@ -61,12 +61,12 @@ mod tests {
                 VisionMessage::Tick => Message::Tish,
             }
         }));
-        let beat = Beat::new(1, Duration::from_millis(3000));
-        vision.add_beat(beat);
 
         let now = Instant::now();
-        assert_eq!(1, vision.find_beats(&now).len());
+        let beat = Beat::until_instant(1, now + Duration::from_millis(3000));
+        vision.add_beat(beat);
 
+        assert_eq!(1, vision.find_beats(&now).len());
         let future = now + Duration::from_millis(10000);
         assert_eq!(0, vision.find_beats(&future).len());
     }

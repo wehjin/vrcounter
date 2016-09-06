@@ -93,7 +93,7 @@ pub fn view(model: &Model) -> Message {
     target.finish().unwrap();
 
     let frame_instant = Instant::now();
-    let frame_duration = Duration::from_millis(32);
+    let frame_duration = Duration::from_millis(300);
 
     let mut message_option: Option<Message> = None;
     while message_option.is_none() {

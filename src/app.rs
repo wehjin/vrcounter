@@ -4,12 +4,12 @@ use common::{IdSource};
 use scream;
 use scream::{ScreamPosition};
 use howl;
-use howl::{Sigil, Howling, Message as HowlMessage};
+use howl::{Sigil, Howling};
 use scream::{Screaming};
-use std::sync::mpsc::{channel, Sender, Receiver};
+use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::collections::HashMap;
-use summoner::{Summoner, DemonVision, Report};
+use summoner::{Summoner, DemonVision};
 use roar;
 use color;
 use std::boxed::Box;
@@ -37,7 +37,7 @@ fn view(model: &Model, viewer: &ActiveViewer) {
     for demon_box in demon_boxes {
         let demon_vision_box: Box<DemonVision> = (&demon_box).see();
         let demon_patches: &HashMap<u64, Patch> = (*demon_vision_box).patches();
-        for (id, patch) in demon_patches.iter() {
+        for (_, patch) in demon_patches.iter() {
             viewer.add_patch(*patch);
         }
     }
