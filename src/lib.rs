@@ -11,6 +11,7 @@ mod keymap;
 mod patch_program;
 mod floor_program;
 mod mist_program;
+mod controller_program;
 mod programs;
 mod mat;
 mod cam;
@@ -49,7 +50,6 @@ use std::time::{Instant, Duration};
 use hmd::Hmd;
 use std::borrow::Borrow;
 use vr::System;
-use openvr::render_models::{IVRRenderModels, RenderModel};
 
 pub fn main() {
     let viewer = ActiveViewer::start();
@@ -73,16 +73,6 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
     println!("Can render {}", vr.get_can_render());
 
 
-    let render_models: IVRRenderModels = openvr::subsystems::render_models().unwrap();
-    let count = render_models.get_count();
-    println!("Render model names: {:?}", count);
-    for index in 0..count {
-        let name = render_models.get_name(index);
-        println!("{} {}", index + 1, name);
-    }
-
-    let controller_render_model: RenderModel = render_models.load(String::from("vr_controller_vive_1_5")).unwrap();
-
     let window = WindowBuilder::new()
         .with_title("vrcounter").with_depth_buffer(24).build_glium()
         .unwrap();
@@ -96,7 +86,7 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
     );
 
     let display = Rc::new(window);
-    let programs = Programs::init(display.clone(), viewer);
+    let programs = Programs::init(display.clone(), viewer, true);
 
     let mut frame_instant = Instant::now();
     let frame_duration = Duration::from_millis(300);

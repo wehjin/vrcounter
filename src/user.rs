@@ -56,7 +56,7 @@ pub fn init(viewer: ActiveViewer, app: Sender<AppMessage>) -> Model {
                                                            .unwrap());
     Model {
         display: display.clone(),
-        programs: Programs::init(display, viewer),
+        programs: Programs::init(display, viewer, false),
         keymap: Keymap::init(),
         camera: Camera::start(),
         app: app,
