@@ -29,9 +29,13 @@ impl Poses {
 
     pub fn get_controller_to_world_matrix(&self) -> Option<[[f32; 4]; 4]> {
         if let Some(ref controller) = self.get_controller_pose() {
-            let raw_controller_to_world = controller.to_device;
-            let nalg_controller_to_world = nmatrix4_from_steam34(&raw_controller_to_world);
-            Some(raw4_from_nmatrix4(&nalg_controller_to_world))
+            let s = controller.to_device;
+            Some([
+                [s[0][0], s[1][0], s[2][0], 0.0],
+                [s[0][1], s[1][1], s[2][1], 0.0],
+                [s[0][2], s[1][2], s[2][2], 0.0],
+                [s[0][3], s[1][3], s[2][3], 1.0f32],
+            ])
         } else {
             None
         }
