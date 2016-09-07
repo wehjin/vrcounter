@@ -6,16 +6,55 @@ use openvr::common::{TextureBounds};
 use common::{Error, RenderSize, nmatrix4_from_steam34, raw4_from_nmatrix4, nmatrix4_from_steam44};
 use poses::Poses;
 use nalgebra::{Inverse};
+use openvr::system::IVRSystem;
+use openvr::compositor::IVRCompositor;
+use openvr::subsystems::compositor;
+
+#[derive(Debug, Copy, Clone)]
+pub enum VrEvent {
+    TrackedDeviceActivated(usize),
+    TrackedDeviceDeactivated(usize),
+    TrackedDeviceUpdated(usize),
+    NotImplemented {
+        event_type: u32,
+        device_index: usize
+    },
+}
 
 pub struct System {
-    system: openvr::system::IVRSystem,
-    compositor: openvr::compositor::IVRCompositor,
+    system: IVRSystem,
+    compositor: IVRCompositor,
 }
 
 impl System {
+    pub fn poll_next_event(&self) -> Option<VrEvent> {
+        unsafe {
+            use openvr_sys::EVREventType;
+            use openvr_sys::uint32_t;
+            use std;
+            let system = *{ (&(self.system)).0 as *mut openvr_sys::VR_IVRSystem_FnTable };
+            let mut data: openvr_sys::VREvent_t = std::mem::zeroed();
+            system.PollNextEvent.unwrap()(&mut data, 84);
+            if data.eventType == EVREventType::EVREventType_VREvent_None as uint32_t {
+                None
+            } else if data.eventType == EVREventType::EVREventType_VREvent_TrackedDeviceActivated as uint32_t {
+                Some(VrEvent::TrackedDeviceActivated(data.trackedDeviceIndex as usize))
+            } else if data.eventType == EVREventType::EVREventType_VREvent_TrackedDeviceDeactivated as uint32_t {
+                Some(VrEvent::TrackedDeviceDeactivated(data.trackedDeviceIndex as usize))
+            } else if data.eventType == EVREventType::EVREventType_VREvent_TrackedDeviceUpdated as uint32_t {
+                Some(VrEvent::TrackedDeviceUpdated(data.trackedDeviceIndex as usize))
+            } else {
+                Some(VrEvent::NotImplemented {
+                    event_type: data.eventType as u32,
+                    device_index: data.trackedDeviceIndex as usize
+                })
+            }
+        }
+    }
+
     pub fn up() -> Result<System, Error> {
         let system = try!(openvr::init().map_err(|_| Error::NoSystem));
-        let compositor = try!(openvr::subsystems::compositor().map_err(|_| Error::NoCompositor));
+        let compositor = try!(compositor().map_err(|_| Error::NoCompositor));
         Ok(System { system: system, compositor: compositor })
     }
 

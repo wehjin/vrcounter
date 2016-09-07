@@ -109,6 +109,13 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
                 _ => ()
             }
         }
+        match vr.poll_next_event() {
+            Some(vr_event) => {
+                println!("{:?}", vr_event);
+            }
+            None => ()
+        }
+
         if Instant::now().duration_since(frame_instant) > frame_duration {
             frame_instant = Instant::now();
             app.send(AppMessage::Frame).unwrap_or(());

@@ -55,7 +55,7 @@ impl Poses {
     fn get_controller_pose(&self) -> Option<&TrackedDevicePose> {
         self.poses.poses.iter()
                         .filter(|&x| match x.device_class() {
-                            TrackedDeviceClass::Controller => true,
+                            TrackedDeviceClass::Controller => x.is_valid && x.is_connected,
                             _ => false
                         })
                         .last()
