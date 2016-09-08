@@ -194,7 +194,11 @@ static FRAGMENT_SHADER: &'static str = r#"
         void main() {
             if (vUseTexture > 0.5) {
                 vec4 tColor = texture(tex, vTexCoords);
-                color = vColor * vec4(1.0, 1.0, 1.0, tColor.r);
+                if (tColor.r == 0.0) {
+                    discard;
+                } else {
+                    color = vColor * vec4(1.0, 1.0, 1.0, tColor.r);
+                }
             } else {
                 color = vColor;
             }
