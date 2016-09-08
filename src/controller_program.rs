@@ -7,6 +7,7 @@ use glium::{Display, Program, VertexBuffer, IndexBuffer, Surface};
 use glium::index::{PrimitiveType};
 use glium::texture::{RawImage2d, Texture2d};
 use openvr::render_models::{IVRRenderModels, RenderModel, RenderModelTexture};
+use std::ffi::CString;
 
 pub struct ControllerProgram {
     program: glium::Program,
@@ -16,13 +17,36 @@ pub struct ControllerProgram {
     texture: Texture2d,
 }
 
+pub fn get_name(render_models: &IVRRenderModels, index: u32) -> String {
+    unsafe {
+        let models = *{ render_models.0 as *mut openvr_sys::VR_IVRRenderModels_FnTable };
+        let mut data = vec![0u8; 256];
+        let size = models.GetRenderModelName.unwrap()(
+            index,
+            data.as_mut_ptr() as *mut i8,
+            256
+        );
+        if size == 0 {
+            String::from("")
+        } else if size <= 256 {
+            data.set_len(size as usize - 1);
+            match CString::from_vec_unchecked(data).into_string() {
+                Ok(string) => string,
+                Err(into_string_error) => panic!(into_string_error),
+            }
+        } else {
+            unimplemented!();
+        }
+    }
+}
+
 impl ControllerProgram {
     pub fn new(display: &Display) -> Self {
         let render_models: IVRRenderModels = openvr::subsystems::render_models().unwrap();
         let count = render_models.get_count();
         println!("Render model names: {:?}", count);
         for index in 0..count {
-            let name = render_models.get_name(index);
+            let name = get_name(&render_models, index);
             println!("{} {}", index + 1, name);
         }
         let render_model: RenderModel = render_models.load(String::from("vr_controller_vive_1_5")).unwrap();
