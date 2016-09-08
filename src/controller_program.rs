@@ -20,22 +20,23 @@ pub struct ControllerProgram {
 pub fn get_name(render_models: &IVRRenderModels, index: u32) -> String {
     unsafe {
         let models = *{ render_models.0 as *mut openvr_sys::VR_IVRRenderModels_FnTable };
-        let mut data = vec![0u8; 256];
-        let size = models.GetRenderModelName.unwrap()(
-            index,
-            data.as_mut_ptr() as *mut i8,
-            256
-        );
-        if size == 0 {
-            String::from("")
-        } else if size <= 256 {
-            data.set_len(size as usize - 1);
-            match CString::from_vec_unchecked(data).into_string() {
-                Ok(string) => string,
-                Err(into_string_error) => panic!(into_string_error),
-            }
+        let name_function = models.GetRenderModelName.unwrap();
+        let mut empty = vec![0i8;0];
+        let required = name_function(index, empty.as_mut_ptr(), 0);
+        if required == 0 {
+            return String::from("")
+        }
+        let mut data: Vec<u8> = Vec::with_capacity(required as usize);
+        let size = name_function(index, data.as_mut_ptr() as *mut i8, required);
+        if (size != required) {
+            panic!("name size changed");
+        }
+        let size_without_null = size - 1;
+        data.set_len(size_without_null as usize);
+        if let Ok(string) = CString::from_vec_unchecked(data).into_string() {
+            string
         } else {
-            unimplemented!();
+            panic!("name cannot convert to utf8");
         }
     }
 }
