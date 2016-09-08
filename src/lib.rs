@@ -52,6 +52,9 @@ use std::borrow::Borrow;
 use vr::System;
 
 pub fn main() {
+    let size = std::mem::size_of::<openvr_sys::TrackedDevicePose_t>();
+    println!("Size of TrackedDevicePose: {}", size);
+
     let viewer = ActiveViewer::start();
     let app = app::start(viewer.clone());
     if os::is_windows() {

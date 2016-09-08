@@ -6,9 +6,9 @@ authors = ["Jeffrey Yu <wehjin@gmail.com>"]
 [dependencies]
 libc = "0.2.15"
 glium = "0.15.0"
-openvr = { git = "https://github.com/rust-openvr/rust-openvr", rev="fd417046ab3fe720492455d4830a4fdc724abfe6" }
+openvr = { git = "https://github.com/wehjin/rust-openvr", rev="140b712e0407be2629c03429b9b3bb7d7bc91d76" }
+openvr_sys = {git="https://github.com/wehjin/rust-openvr-sys", rev="3621c85b2a9a6f3422e65e6411fb50517a7a84bc"}
 nalgebra = "0.8.2"
-openvr_sys = {git="https://github.com/rust-openvr/rust-openvr-sys", rev="2a2d4bf37a4a1efc56e7c4bf6d6ee08888717411"}
 image = "0.10.1"
 rusttype = "0.2.0"
 unicode-normalization = "^0.1.2"
