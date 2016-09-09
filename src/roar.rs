@@ -1,24 +1,24 @@
 use std::rc::Rc;
-use summoner::{Report};
+use summoner::Report;
 use vision::Vision;
 
-pub struct Roar<Mod: Clone, Msg, Out> {
-    pub init: Rc<Fn() -> Mod>,
-    pub update: Rc<Fn(Msg, &Mod) -> Report<Mod, Out>>,
-    pub view: Rc<Fn(&Mod) -> Vision<Msg>>,
+pub struct Roar<Mdl: Clone, Msg, Out> {
+    pub init: Rc<Fn() -> Mdl>,
+    pub update: Rc<Fn(Msg, &Mdl) -> Report<Mdl, Out>>,
+    pub view: Rc<Fn(&Mdl) -> Vision<Msg>>,
 }
 
-impl<Mod: Clone, Msg, Out> Roar<Mod, Msg, Out> {
+impl<Mdl: Clone, Msg, Out> Roar<Mdl, Msg, Out> {
     pub fn create(
-        init: Rc<Fn() -> Mod>,
-        update: Rc<Fn(Msg, &Mod) -> Report<Mod, Out>>,
-        view: Rc<Fn(&Mod) -> Vision<Msg>>
+        init: Rc<Fn() -> Mdl>,
+        update: Rc<Fn(Msg, &Mdl) -> Report<Mdl, Out>>,
+        view: Rc<Fn(&Mdl) -> Vision<Msg>>
     ) -> Self {
         Roar { init: init, update: update, view: view }
     }
 }
 
-pub mod color {
+pub mod demo {
     use super::*;
     use vision::{Vision, VisionMessage};
     use summoner::{Report};

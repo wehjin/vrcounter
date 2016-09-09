@@ -1,10 +1,11 @@
+extern crate cage;
+
 use color::{GREEN, RED, BLUE, CYAN, YELLOW, MAGENTA};
 use viewer::{ActiveViewer};
 use common::{IdSource};
 use scream;
 use scream::{ScreamPosition};
 use howl;
-use howl::{Sigil, Howling};
 use scream::{Screaming};
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
@@ -15,6 +16,8 @@ use color;
 use std::boxed::Box;
 use patch::Patch;
 use vision::VisionMessage;
+use cage::Cage;
+use patch::Sigil;
 
 pub enum Message {
     Stop,
@@ -22,14 +25,48 @@ pub enum Message {
 }
 
 struct Model {
-    howlings: Vec<Howling>,
     screamings: Vec<Screaming>,
     summoner: Summoner,
-    roaring: u64,
 }
 
 pub enum Outcome {
     Done,
+}
+
+
+fn init(viewer: ActiveViewer) -> Model {
+    let mut id_source = IdSource::new();
+
+    let position = ScreamPosition { left: -0.5, right: -0.4, top: -0.15, bottom: -0.25, near: 0.03 };
+    let scream = scream::of_color(YELLOW)
+        .join_right(0.1, scream::of_color(MAGENTA).join_right(0.1, scream::of_color(CYAN)));
+    let mut screamings = Vec::new();
+    let screaming = scream.present(&position, &mut id_source, viewer.clone());
+    screamings.push(screaming);
+
+    let mut summoner = Summoner::new();
+    let roar = roar::demo::from(vec![color::GREEN, color::RED, color::BLUE, color::CYAN, color::MAGENTA, color::YELLOW]);
+    summoner.summon(&mut id_source, &roar, Box::new(move |_: roar::demo::Outcome| -> Outcome {
+        Outcome::Done
+    }));
+
+    let howls = vec![
+        howl::create(id_source.next_id(), BLUE, Cage::from((-0.70, -0.50, -0.10, 0.10, 0.10, 0.10)), Sigil::Fill),
+        howl::create(id_source.next_id(), RED, Cage::from((-0.5, 0.5, -0.25, 0.25, 0.0, 0.0)), Sigil::Fill),
+        howl::create(id_source.next_id(), GREEN, Cage::from((0.25, 0.75, 0.0, 0.5, -0.01, -0.01)), Sigil::Fill),
+        howl::create(id_source.next_id(), CYAN, Cage::from((-0.06, 0.00, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('J')),
+        howl::create(id_source.next_id(), YELLOW, Cage::from((0.00, 0.06, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('y')),
+    ];
+    for howl in &howls {
+        summoner.summon(&mut id_source, howl, Box::new(move |_: ()| -> Outcome {
+            Outcome::Done
+        }));
+    }
+
+    Model {
+        screamings: screamings,
+        summoner: summoner,
+    }
 }
 
 fn view(model: &Model, viewer: &ActiveViewer) {
@@ -55,6 +92,13 @@ fn update(message: Message, mut model: Model) -> Option<Model> {
             model.summoner = summoner;
             Some(model)
         },
+    }
+}
+
+fn finish(mut model: Model) {
+    // TODO: Silence roaring and howlings?
+    for screaming in &mut model.screamings {
+        screaming.silence();
     }
 }
 
@@ -89,51 +133,5 @@ pub fn start(viewer: ActiveViewer) -> Sender<Message> {
 
 pub fn stop(agent: Sender<Message>) {
     agent.send(Message::Stop).unwrap_or(())
-}
-
-fn init(viewer: ActiveViewer) -> Model {
-    let mut id_source = IdSource::new();
-    let (howl_message_sender, howl_message_receiver) = channel();
-    let howls = [
-        howl::start::<(), ()>(BLUE, Sigil::Fill, (-0.70, -0.50, -0.10, 0.10, 0.10, 0.10)),
-        howl::start::<(), ()>(RED, Sigil::Fill, (-0.5, 0.5, -0.25, 0.25, 0.0, 0.0)),
-        howl::start::<(), ()>(GREEN, Sigil::Fill, (0.25, 0.75, 0.0, 0.5, -0.01, -0.01)),
-        howl::start::<(), ()>(CYAN, Sigil::Letter('J'), (-0.06, 0.00, -0.03, 0.03, 0.005, 0.005)),
-        howl::start::<(), ()>(YELLOW, Sigil::Letter('y'), (0.00, 0.06, -0.03, 0.03, 0.005, 0.005)),
-    ];
-    let mut howlings = Vec::new();
-    for howl in howls.iter() {
-        let howling = howl.present(viewer.clone(), howl_message_sender.clone(), &mut id_source);
-        howlings.push(howling);
-    }
-
-    let position = ScreamPosition { left: -0.5, right: -0.4, top: -0.15, bottom: -0.25, near: 0.03 };
-    let scream = scream::of_color(YELLOW)
-        .join_right(0.1, scream::of_color(MAGENTA).join_right(0.1, scream::of_color(CYAN)));
-    let mut screamings = Vec::new();
-    let screaming = scream.present(&position, &mut id_source, viewer.clone());
-    screamings.push(screaming);
-
-    let mut summoner = Summoner::new();
-    let roar = roar::color::from(vec![color::GREEN, color::RED, color::BLUE, color::CYAN, color::MAGENTA, color::YELLOW]);
-    let roaring = summoner.summon(&mut id_source, &roar, Box::new(move |outcome: roar::color::Outcome| -> Outcome {
-        Outcome::Done
-    }));
-
-    Model {
-        howlings: howlings,
-        screamings: screamings,
-        summoner: summoner,
-        roaring: roaring,
-    }
-}
-
-fn finish(mut model: Model) {
-    for howling in &mut model.howlings {
-        howling.silence();
-    }
-    for screaming in &mut model.screamings {
-        screaming.silence();
-    }
 }
 

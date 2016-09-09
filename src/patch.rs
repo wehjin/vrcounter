@@ -1,3 +1,7 @@
+extern crate cage;
+
+use cage::Cage;
+
 #[derive(Debug, Copy, Clone)]
 pub struct PatchPosition {
     pub left: f32,
@@ -7,10 +11,26 @@ pub struct PatchPosition {
     pub near: f32
 }
 
+impl PatchPosition {
+    pub fn from_cage(cage: &Cage) -> Self {
+        let (left, right, bottom, top, _, near) = cage.limits();
+        PatchPosition { left: left, right: right, bottom: bottom, top: top, near: near }
+    }
+}
+
 #[derive(Copy, Clone)]
 pub enum Sigil {
     Fill,
     Letter(char),
+}
+
+impl Sigil {
+    pub fn to_glyph(&self) -> char {
+        match self {
+            &Sigil::Fill => '\u{0}',
+            &Sigil::Letter(c) => c,
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -27,10 +47,12 @@ impl Patch {
             id: id,
             position: PatchPosition { left: left, right: right, bottom: bottom, top: top, near: near },
             color: color,
-            glyph: match sigil {
-                Sigil::Fill => '\u{0}',
-                Sigil::Letter(c) => c,
-            },
+            glyph: sigil.to_glyph(),
+        }
+    }
+    pub fn from_cage(cage: &Cage, color: [f32; 4], sigil: Sigil, id: u64) -> Self {
+        Patch {
+            id: id, glyph: sigil.to_glyph(), color: color, position: PatchPosition::from_cage(cage)
         }
     }
 }
