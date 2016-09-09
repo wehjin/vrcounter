@@ -4,21 +4,22 @@ use std::time::Instant;
 use patch::Patch;
 use mist::Mist;
 use beat::Beat;
+use vision;
 
 #[derive(Copy, Clone)]
-pub enum VisionMessage {
+pub enum Outcome {
     Tick,
 }
 
 pub struct Vision<Msg> {
-    pub vision_message_adapter: Rc<Fn(VisionMessage) -> Msg>,
+    pub vision_message_adapter: Rc<Fn(vision::Outcome) -> Msg>,
     pub patches: HashMap<u64, Patch>,
     pub mists: HashMap<u64, Mist>,
     beats: HashMap<u64, Beat>,
 }
 
 impl<Msg> Vision<Msg> {
-    pub fn create<F>(adapter: F) -> Self where F: Fn(VisionMessage) -> Msg + 'static {
+    pub fn create<F>(adapter: F) -> Self where F: Fn(vision::Outcome) -> Msg + 'static {
         Vision {
             vision_message_adapter: Rc::new(adapter),
             patches: HashMap::new(),

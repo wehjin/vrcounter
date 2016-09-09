@@ -6,7 +6,8 @@ use mist::Mist;
 use common::IdSource;
 use std::cell::RefCell;
 use roar::Roar;
-use vision::{Vision, VisionMessage};
+use vision;
+use vision::Vision;
 use std::time::Instant;
 
 pub enum DemonResult {
@@ -23,7 +24,7 @@ pub trait Demon {
     fn clone_and_box(&self) -> Box<Demon>;
     fn id(&self) -> u64;
     fn see(&self) -> Box<DemonVision>;
-    fn poke(&mut self, vision_message: VisionMessage) -> DemonResult;
+    fn poke(&mut self, vision_outcome: vision::Outcome) -> DemonResult;
 }
 
 #[derive(Clone)]
@@ -32,14 +33,14 @@ pub struct Demonoid<Mod: Clone, Msg: Clone, Out: Clone> {
     model: Mod,
     update: Rc<Fn(Msg, &Mod) -> Report<Mod, Out>>,
     view: Rc<Fn(&Mod) -> Vision<Msg>>,
-    vision_message_adapter: RefCell<Option<Rc<Fn(VisionMessage) -> Msg>>>,
+    vision_message_adapter: RefCell<Option<Rc<Fn(vision::Outcome) -> Msg>>>,
 }
 
 impl<Mod, Msg, Out> Demonoid<Mod, Msg, Out> where Mod: Clone, Msg: Clone, Out: Clone {
-    fn get_vision_adapter_option(&self) -> Option<Rc<Fn(VisionMessage) -> Msg>> {
+    fn get_vision_adapter_option(&self) -> Option<Rc<Fn(vision::Outcome) -> Msg>> {
         (*(self.vision_message_adapter.borrow())).clone()
     }
-    fn set_vision_adapter_option(&self, option: Option<Rc<Fn(VisionMessage) -> Msg>>) {
+    fn set_vision_adapter_option(&self, option: Option<Rc<Fn(vision::Outcome) -> Msg>>) {
         *self.vision_message_adapter.borrow_mut() = option;
     }
     fn get_vision_and_save_vision_message_adapter(&self) -> Vision<Msg> {
@@ -47,9 +48,9 @@ impl<Mod, Msg, Out> Demonoid<Mod, Msg, Out> where Mod: Clone, Msg: Clone, Out: C
         self.set_vision_adapter_option(Option::Some(vision.vision_message_adapter.clone()));
         vision
     }
-    fn get_message_from_vision_message(&self, vision_message: VisionMessage) -> Option<Msg> {
+    fn get_message_from_vision_message(&self, vision_message: vision::Outcome) -> Option<Msg> {
         match vision_message {
-            VisionMessage::Tick => {
+            vision::Outcome::Tick => {
                 let vision = self.get_vision_and_save_vision_message_adapter();
                 let beats = vision.find_beats(&Instant::now());
                 if beats.len() > 0 {
@@ -81,7 +82,7 @@ impl<Mod, Msg, Out> Demon for Demonoid<Mod, Msg, Out> where Mod: 'static + Clone
         Box::new(vision)
     }
 
-    fn poke(&mut self, vision_message: VisionMessage) -> DemonResult {
+    fn poke(&mut self, vision_message: vision::Outcome) -> DemonResult {
         match self.get_message_from_vision_message(vision_message) {
             Some(message) => {
                 let report: Report<Mod, Out> = (*(self.update))(message, &self.model);
@@ -152,7 +153,7 @@ impl Summoner {
         self.demons.insert(id, Box::new(demon));
         id
     }
-    pub fn update(&mut self, vision_message: VisionMessage) {
+    pub fn update(&mut self, vision_message: vision::Outcome) {
         let mut new_demons = HashMap::new();
         for (_, demon_box) in &self.demons {
             let mut new_demon_box = demon_box.clone();

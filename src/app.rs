@@ -15,9 +15,9 @@ use roar;
 use color;
 use std::boxed::Box;
 use patch::Patch;
-use vision::VisionMessage;
 use cage::Cage;
 use patch::Sigil;
+use vision;
 
 pub enum Message {
     Stop,
@@ -84,7 +84,7 @@ fn update(message: Message, mut model: Model) -> Option<Model> {
         },
         Message::Frame => {
             let mut summoner: Summoner = model.summoner.clone();
-            summoner.update(VisionMessage::Tick);
+            summoner.update(vision::Outcome::Tick);
             model.summoner = summoner;
             Some(model)
         },

@@ -18,7 +18,8 @@ impl<Mdl, Msg, Out> Roar<Mdl, Msg, Out> where Mdl: Clone {
 
 pub mod demo {
     use super::*;
-    use vision::{Vision, VisionMessage};
+    use vision;
+    use vision::Vision;
     use summoner::{Report};
     use patch::{Sigil, Patch};
     use beat::Beat;
@@ -55,7 +56,7 @@ pub mod demo {
             },
             |model| {
                 let mut vision = Vision::create(|vision_message| match vision_message {
-                    VisionMessage::Tick => Message::IncrementIndex,
+                    vision::Outcome::Tick => Message::IncrementIndex,
                 });
                 let patch = Patch::new(15674u64, 0.55, 0.65, -0.35, -0.25, 0.25, model.colors[model.index].clone(), Sigil::Fill);
                 vision.add_patch(patch);
