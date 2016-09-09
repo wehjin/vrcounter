@@ -35,7 +35,7 @@ pub struct Demonoid<Mod: Clone, Msg: Clone, Out: Clone> {
     vision_message_adapter: RefCell<Option<Rc<Fn(VisionMessage) -> Msg>>>,
 }
 
-impl<Mod: Clone, Msg: Clone, Out: Clone> Demonoid<Mod, Msg, Out> {
+impl<Mod, Msg, Out> Demonoid<Mod, Msg, Out> where Mod: Clone, Msg: Clone, Out: Clone {
     fn get_vision_adapter_option(&self) -> Option<Rc<Fn(VisionMessage) -> Msg>> {
         (*(self.vision_message_adapter.borrow())).clone()
     }
@@ -64,7 +64,9 @@ impl<Mod: Clone, Msg: Clone, Out: Clone> Demonoid<Mod, Msg, Out> {
     }
 }
 
-impl<Mod: 'static + Clone, Msg: 'static + Clone, Out: 'static + Clone> Demon for Demonoid<Mod, Msg, Out> {
+impl<Mod, Msg, Out> Demon for Demonoid<Mod, Msg, Out> where Mod: 'static + Clone,
+                                                            Msg: 'static + Clone,
+                                                            Out: 'static + Clone {
     fn clone_and_box(&self) -> Box<Demon> {
         let demonoid: Demonoid<Mod, Msg, Out> = (*self).clone();
         Box::new(demonoid)
@@ -130,12 +132,14 @@ impl Summoner {
         }
         demon_boxes
     }
-    pub fn summon<Msg, SubMod: 'static + Clone, SubMsg: 'static + Clone, SubOut: 'static + Clone>(
-        &mut self,
-        id_source: &mut IdSource,
-        roar: &Roar<SubMod, SubMsg, SubOut>,
-        outcome_adapter: Box<Fn(SubOut) -> Msg>
-    ) -> u64 {
+    pub fn summon<Msg, SubMod, SubMsg, SubOut, F>(&mut self,
+                                                  id_source: &mut IdSource,
+                                                  roar: &Roar<SubMod, SubMsg, SubOut>,
+                                                  outcome_adapter: F) -> u64
+                                                  where SubMod: 'static + Clone,
+                                                        SubMsg: 'static + Clone,
+                                                        SubOut: 'static + Clone,
+                                                        F: Fn(SubOut) -> Msg + 'static {
         let model = ((*roar).init)();
         let id = id_source.next_id();
         let demon = Demonoid {

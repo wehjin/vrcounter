@@ -46,9 +46,7 @@ fn init(viewer: ActiveViewer) -> Model {
 
     let mut summoner = Summoner::new();
     let roar = roar::demo::from(vec![color::GREEN, color::RED, color::BLUE, color::CYAN, color::MAGENTA, color::YELLOW]);
-    summoner.summon(&mut id_source, &roar, Box::new(move |_: roar::demo::Outcome| -> Outcome {
-        Outcome::Done
-    }));
+    summoner.summon(&mut id_source, &roar, |_| Outcome::Done);
 
     let howls = vec![
         howl::create(id_source.next_id(), BLUE, Cage::from((-0.70, -0.50, -0.10, 0.10, 0.10, 0.10)), Sigil::Fill),
@@ -58,9 +56,7 @@ fn init(viewer: ActiveViewer) -> Model {
         howl::create(id_source.next_id(), YELLOW, Cage::from((0.00, 0.06, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('y')),
     ];
     for howl in &howls {
-        summoner.summon(&mut id_source, howl, Box::new(move |_: ()| -> Outcome {
-            Outcome::Done
-        }));
+        summoner.summon(&mut id_source, howl, |_| Outcome::Done);
     }
 
     Model {
