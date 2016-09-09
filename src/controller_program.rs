@@ -2,7 +2,6 @@ extern crate glium;
 extern crate openvr;
 extern crate openvr_sys;
 
-use mat::IDENTITY44;
 use glium::{Display, Program, VertexBuffer, IndexBuffer, Surface};
 use glium::index::{PrimitiveType};
 use glium::texture::{RawImage2d, Texture2d};

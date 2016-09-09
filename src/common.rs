@@ -1,8 +1,6 @@
 extern crate openvr;
 extern crate nalgebra;
 
-use nalgebra::{Transpose};
-
 #[derive(Debug)]
 pub enum Error {
     NoSystem,
