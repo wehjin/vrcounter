@@ -47,7 +47,6 @@ impl<Msg> Vision<Msg> {
 mod tests {
     use super::*;
     use beat::Beat;
-    use std::rc::Rc;
     use std::time::{Duration, Instant};
 
     enum Message {
@@ -56,12 +55,7 @@ mod tests {
 
     #[test]
     fn find_beats() {
-        let mut vision = Vision::new(Rc::new(move |vision_message: VisionMessage| -> Message {
-            match vision_message {
-                VisionMessage::Tick => Message::Tish,
-            }
-        }));
-
+        let mut vision = Vision::create(|VisionMessage::Tick| Message::Tish);
         let now = Instant::now();
         let beat = Beat::until_instant(1, now + Duration::from_millis(3000));
         vision.add_beat(beat);
