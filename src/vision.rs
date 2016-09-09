@@ -29,6 +29,19 @@ impl<Msg> Vision<Msg> {
     pub fn add_patch(&mut self, patch: Patch) {
         self.patches.insert(patch.id, patch);
     }
+    pub fn add_mist(&mut self, mist: Mist) {
+        self.mists.insert(mist.id(), mist);
+    }
+    pub fn find_mists(&self, x: f32, y: f32, z: f32) -> Vec<&Mist> {
+        let mut mists = Vec::new();
+        for (_, it) in &self.mists {
+            let mist: &Mist = it;
+            if mist.contains(x, y, z) {
+                mists.push(mist);
+            }
+        }
+        mists
+    }
     pub fn add_beat(&mut self, beat: Beat) {
         self.beats.insert(beat.id(), beat);
     }
@@ -46,16 +59,25 @@ impl<Msg> Vision<Msg> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use beat::Beat;
-    use std::time::{Duration, Instant};
 
-    enum Message {
-        Tish,
+    #[test]
+    fn find_mists() {
+        use cage::Cage;
+        use mist::Mist;
+
+        let mut vision = Vision::create(|x| x);
+        vision.add_mist(Default::default());
+        vision.add_mist(Mist::new(10, Cage::from((-10.0, -9.0, -1.0, 1.0, -1.0, 1.0))));
+        let mists = vision.find_mists(0.0, 0.0, 0.0);
+        assert_eq!(1, mists.len());
     }
 
     #[test]
     fn find_beats() {
-        let mut vision = Vision::create(|VisionMessage::Tick| Message::Tish);
+        use beat::Beat;
+        use std::time::{Duration, Instant};
+
+        let mut vision = Vision::create(|x| x);
         let now = Instant::now();
         let beat = Beat::until_instant(1, now + Duration::from_millis(3000));
         vision.add_beat(beat);
