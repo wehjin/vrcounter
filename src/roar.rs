@@ -22,7 +22,6 @@ pub mod demo {
     use summoner::{Report};
     use patch::{Sigil, Patch};
     use beat::Beat;
-    use std::rc::Rc;
     use std::time::{Instant, Duration};
 
     #[derive(Clone)]
@@ -37,12 +36,7 @@ pub mod demo {
         IncrementIndex,
     }
 
-    #[derive(Clone)]
-    pub enum Outcome {
-        Done,
-    }
-
-    pub fn from(colors: Vec<[f32; 4]>) -> Roar<Model, Message, Outcome> {
+    pub fn from(colors: Vec<[f32; 4]>) -> Roar<Model, Message, ()> {
         let init_colors = colors.clone();
         let update_colors = colors.clone();
         Roar::create(

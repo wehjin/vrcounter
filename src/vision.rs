@@ -26,14 +26,6 @@ impl<Msg> Vision<Msg> {
             beats: HashMap::new(),
         }
     }
-    pub fn new(vision_message_adapter: Rc<Fn(VisionMessage) -> Msg>) -> Self {
-        Vision {
-            vision_message_adapter: vision_message_adapter.clone(),
-            patches: HashMap::new(),
-            mists: HashMap::new(),
-            beats: HashMap::new(),
-        }
-    }
     pub fn add_patch(&mut self, patch: Patch) {
         self.patches.insert(patch.id, patch);
     }
