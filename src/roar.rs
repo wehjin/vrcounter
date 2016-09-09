@@ -2,19 +2,17 @@ use std::rc::Rc;
 use summoner::Report;
 use vision::Vision;
 
-pub struct Roar<Mdl: Clone, Msg, Out> {
+pub struct Roar<Mdl, Msg, Out> where Mdl: Clone {
     pub init: Rc<Fn() -> Mdl>,
     pub update: Rc<Fn(Msg, &Mdl) -> Report<Mdl, Out>>,
     pub view: Rc<Fn(&Mdl) -> Vision<Msg>>,
 }
 
-impl<Mdl: Clone, Msg, Out> Roar<Mdl, Msg, Out> {
-    pub fn create(
-        init: Rc<Fn() -> Mdl>,
-        update: Rc<Fn(Msg, &Mdl) -> Report<Mdl, Out>>,
-        view: Rc<Fn(&Mdl) -> Vision<Msg>>
-    ) -> Self {
-        Roar { init: init, update: update, view: view }
+impl<Mdl, Msg, Out> Roar<Mdl, Msg, Out> where Mdl: Clone {
+    pub fn create<F, G, H>(init: F, update: G, view: H) -> Self where F: Fn() -> Mdl + 'static,
+                                                                      G: Fn(Msg, &Mdl) -> Report<Mdl, Out> + 'static,
+                                                                      H: Fn(&Mdl) -> Vision<Msg> + 'static {
+        Roar { init: Rc::new(init), update: Rc::new(update), view: Rc::new(view) }
     }
 }
 
@@ -29,7 +27,7 @@ pub mod demo {
 
     #[derive(Clone)]
     pub struct Model {
-        pub colors: Rc<Vec<[f32; 4]>>,
+        pub colors: Vec<[f32; 4]>,
         pub index: usize,
         pub end_instant: Instant,
     }
@@ -45,44 +43,31 @@ pub mod demo {
     }
 
     pub fn from(colors: Vec<[f32; 4]>) -> Roar<Model, Message, Outcome> {
-        let init_colors = Rc::new(colors);
-        let update_colors = init_colors.clone();
-
-        let init = move || -> Model {
-            Model {
+        let init_colors = colors.clone();
+        let update_colors = colors.clone();
+        Roar::create(
+            move || Model {
                 colors: init_colors.clone(),
                 index: 0,
                 end_instant: Instant::now() + Duration::from_secs(30),
-            }
-        };
-        let update = move |message: Message, model: &Model| -> Report<Model, Outcome> {
-            match message {
-                Message::IncrementIndex => {
-                    let next_index = (model.index + 1) % (*update_colors).len();
-                    Report::Model(Model {
-                        colors: update_colors.clone(),
-                        index: next_index,
-                        end_instant: model.end_instant,
-                    })
-                }
-            }
-        };
-        let view = move |model: &Model| -> Vision<Message> {
-            let mut vision = Vision::new(
-                Rc::new(move |vision_message: VisionMessage| -> Message {
-                    match vision_message {
-                        VisionMessage::Tick => Message::IncrementIndex,
-                    }
-                }));
-
-            let patch = Patch::new(15674u64, 0.55, 0.65, -0.35, -0.25, 0.25, model.colors[model.index].clone(), Sigil::Fill);
-            vision.add_patch(patch);
-
-            let beat = Beat::until_instant(24352u64, model.end_instant);
-            vision.add_beat(beat);
-
-            vision
-        };
-        Roar::create(Rc::new(init), Rc::new(update), Rc::new(view))
+            },
+            move |Message::IncrementIndex, model| {
+                let next_index = (model.index + 1) % update_colors.len();
+                Report::Model(Model {
+                    colors: update_colors.clone(),
+                    index: next_index,
+                    end_instant: model.end_instant,
+                })
+            },
+            |model| {
+                let mut vision = Vision::create(|vision_message| match vision_message {
+                    VisionMessage::Tick => Message::IncrementIndex,
+                });
+                let patch = Patch::new(15674u64, 0.55, 0.65, -0.35, -0.25, 0.25, model.colors[model.index].clone(), Sigil::Fill);
+                vision.add_patch(patch);
+                let beat = Beat::until_instant(24352u64, model.end_instant);
+                vision.add_beat(beat);
+                vision
+            })
     }
 }
