@@ -21,9 +21,9 @@ impl Programs {
             FloorProgram::new(display_ref)
         };
         let mist_program = {
-            let display_ref: &Display = display.borrow();
-            let cage = Default::default();
-            MistProgram::new(display_ref, &cage)
+            let mut program = MistProgram::new(display.clone());
+            program.update(vec![Default::default()]);
+            program
         };
         Programs {
             floor_program: floor_program,
