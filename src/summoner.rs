@@ -142,7 +142,7 @@ impl Summoner {
                                                         SubOut: 'static + Clone,
                                                         F: Fn(SubOut) -> Msg + 'static {
         let model = ((*roar).init)();
-        let id = id_source.next_id();
+        let id = id_source.id();
         let demon = Demonoid {
             id: id,
             model: model,

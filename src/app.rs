@@ -57,7 +57,7 @@ fn init(viewer: ActiveViewer) -> Model {
     for howl in &howls {
         summoner.summon(&mut id_source, howl, |_| Outcome::Done);
     }
-    let howl_id = id_source.next_id();
+    let howl_id = id_source.id();
     summoner.summon(&mut id_source, &howl::misty(howl_id, Default::default()), |_| Outcome::Done);
 
     Model {

@@ -28,7 +28,7 @@ impl IdSource {
     pub fn new() -> Self {
         IdSource { global_id: 1u64 }
     }
-    pub fn next_id(&mut self) -> u64 {
+    pub fn id(&mut self) -> u64 {
         let id = self.global_id;
         self.global_id = self.global_id + 1;
         id

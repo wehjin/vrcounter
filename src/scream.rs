@@ -68,7 +68,7 @@ fn present_color(position: &ScreamPosition, id_source: &mut IdSource, viewer: Ac
         left: position.left, right: position.right, top: position.top, bottom: position.bottom,
         near: position.near
     };
-    let id = id_source.next_id();
+    let id = id_source.id();
     let patch = Patch { position: patch_position, color: color, glyph: 'Z', id: id };
     viewer.add_patch(patch);
     Screaming::create(Box::new(move || {
