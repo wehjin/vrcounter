@@ -9,6 +9,10 @@ pub enum Key {
     LookFar,
     LookNear,
     ResetLook,
+    H,
+    J,
+    K,
+    L,
     Quit,
 }
 
@@ -42,6 +46,10 @@ impl Key {
             &Event::KeyboardInput(ElementState::Pressed, 2, _) => Some(Key::LookRight),
             &Event::KeyboardInput(ElementState::Pressed, 12, _) => Some(Key::LookFar),
             &Event::KeyboardInput(ElementState::Pressed, 14, _) => Some(Key::LookNear),
+            &Event::KeyboardInput(ElementState::Pressed, 4, _) => Some(Key::H),
+            &Event::KeyboardInput(ElementState::Pressed, 38, _) => Some(Key::J),
+            &Event::KeyboardInput(ElementState::Pressed, 40, _) => Some(Key::K),
+            &Event::KeyboardInput(ElementState::Pressed, 37, _) => Some(Key::L),
             &Event::KeyboardInput(ElementState::Pressed, code, _) => {
                 println!("{}", code);
                 None

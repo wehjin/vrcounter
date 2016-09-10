@@ -11,6 +11,7 @@ enum Message {
     SendPatches(Sender<HashMap<u64, Patch>>),
     AddMist(Mist),
     SendMists(Sender<HashMap<u64, Mist>>),
+    SetHand(Hand),
     SendHand(Sender<Hand>),
     Clear,
     Stop,
@@ -27,7 +28,7 @@ impl ActiveViewer {
         thread::spawn(move || {
             let mut patches = HashMap::new();
             let mut mists = HashMap::new();
-            let hand: Hand = Default::default();
+            let mut hand: Hand = Default::default();
             while let Ok(message) = rx.recv() {
                 match message {
                     Message::Clear => { mists.clear(); }
@@ -36,6 +37,7 @@ impl ActiveViewer {
                     Message::SendPatches(tx) => { tx.send(patches.clone()).unwrap(); },
                     Message::AddMist(mist) => { mists.insert(mist.id(), mist); },
                     Message::SendMists(tx) => { tx.send(mists.clone()).unwrap(); },
+                    Message::SetHand(next_hand) => { hand = next_hand; }
                     Message::SendHand(tx) => { tx.send(hand.clone()).unwrap(); },
                     Message::Stop => { break; }
                 }
@@ -62,6 +64,7 @@ impl ActiveViewer {
     pub fn add_patch(&self, patch: Patch) { self.command_tx.send(Message::AddPatch(patch)).unwrap(); }
     pub fn remove_patch(&self, id: u64) { self.command_tx.send(Message::RemovePatch(id)).unwrap(); }
     pub fn add_mist(&self, mist: Mist) { self.command_tx.send(Message::AddMist(mist)).unwrap(); }
+    pub fn set_hand(&self, hand: Hand) { self.command_tx.send(Message::SetHand(hand)).unwrap(); }
     pub fn clear(&self) { self.command_tx.send(Message::Clear).unwrap(); }
     pub fn stop(&self) { self.command_tx.send(Message::Stop).unwrap_or(()); }
 }

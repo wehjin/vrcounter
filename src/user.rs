@@ -19,11 +19,13 @@ pub struct Model {
     camera: Camera,
     app: Sender<AppMessage>,
     hand: Hand,
+    viewer: ActiveViewer,
 }
 
 pub enum Message {
     Quit,
     MoveCamera(Direction),
+    MoveHand(Direction),
     ResetCamera,
     EmitAnimationFrame,
 }
@@ -32,7 +34,7 @@ pub fn run(viewer: ActiveViewer, app: Sender<AppMessage>) {
     let mut model = init(viewer, app);
     loop {
         let message = draw(&model);
-        match update(&message, model) {
+        match update(message, model) {
             None => return,
             Some(next_model) => model = next_model,
         }
@@ -48,32 +50,51 @@ pub fn init(viewer: ActiveViewer, app: Sender<AppMessage>) -> Model {
     Model {
         app: app,
         display: display.clone(),
-        programs: Programs::new(display, viewer, HandType::Keyboard),
+        programs: Programs::new(display, viewer.clone(), HandType::Keyboard),
         keymap: Keymap::init(),
         camera: Camera::start(),
         hand: Default::default(),
+        viewer: viewer.clone(),
     }
 }
 
-pub fn update(message: &Message, model: Model) -> Option<Model> {
-    match *message {
+pub fn update(message: Message, mut model: Model) -> Option<Model> {
+    match message {
         Message::Quit => None,
         Message::ResetCamera => Some(model.with_camera(Camera::start())),
-        Message::MoveCamera(ref direction) => {
-            let camera = match *direction {
-                Direction::Up => model.camera.move_up(),
-                Direction::Down => model.camera.move_down(),
-                Direction::Left => model.camera.move_left(),
-                Direction::Right => model.camera.move_right(),
-                Direction::Near => model.camera.move_near(),
-                Direction::Far => model.camera.move_far(),
-            };
+        Message::MoveCamera(direction) => {
+            let camera = get_camera(&model, direction);
             Some(model.with_camera(camera))
         },
         Message::EmitAnimationFrame => {
             model.app.send(AppMessage::EmitAnimationFrame).unwrap_or(());
             Some(model)
-        }
+        },
+        Message::MoveHand(direction) => {
+            const STEP: f32 = 0.15;
+            let (dx, dy) = match direction {
+                Direction::Up => (0.0, STEP),
+                Direction::Down => (0.0, -STEP),
+                Direction::Left => (-STEP, 0.0),
+                Direction::Right => (STEP, 0.0),
+                _ => (0.0, 0.0),
+            };
+            let offset = model.hand.offset.shift(dx, dy, 0.0);
+            model.hand.offset = offset;
+            model.viewer.set_hand(model.hand);
+            Some(model)
+        },
+    }
+}
+
+fn get_camera(model: &Model, direction: Direction) -> Camera {
+    match direction {
+        Direction::Up => model.camera.move_up(),
+        Direction::Down => model.camera.move_down(),
+        Direction::Left => model.camera.move_left(),
+        Direction::Right => model.camera.move_right(),
+        Direction::Near => model.camera.move_near(),
+        Direction::Far => model.camera.move_far(),
     }
 }
 
@@ -113,6 +134,7 @@ impl Model {
             camera: camera,
             app: self.app,
             hand: self.hand,
+            viewer: self.viewer,
         }
     }
 }
@@ -127,6 +149,10 @@ fn message_option_from_key(key: Key) -> Option<Message> {
         Key::LookNear => Some(Message::MoveCamera(Direction::Near)),
         Key::ResetLook => Some(Message::ResetCamera),
         Key::Quit => Some(Message::Quit),
+        Key::H => Some(Message::MoveHand(Direction::Left)),
+        Key::J => Some(Message::MoveHand(Direction::Down)),
+        Key::K => Some(Message::MoveHand(Direction::Up)),
+        Key::L => Some(Message::MoveHand(Direction::Right)),
     }
 }
 
