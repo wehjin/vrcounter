@@ -16,10 +16,12 @@ use std::boxed::Box;
 use cage::Cage;
 use patch::Sigil;
 use vision;
+use hand::Hand;
 
 pub enum Message {
     Stop,
     EmitAnimationFrame,
+    SetHand(Hand),
 }
 
 struct Model {
@@ -78,6 +80,9 @@ fn update(message: Message, mut model: Model) -> Option<Model> {
             model.summoner = summoner;
             Some(model)
         },
+        Message::SetHand(_) => {
+            Some(model)
+        }
     }
 }
 

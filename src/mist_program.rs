@@ -51,25 +51,28 @@ impl MistProgram {
         if cages.is_empty() {
             None
         } else {
+            let (x, y, z) = self.viewer.get_hand().offset.tuple();
             let mut vertices = Vec::new();
             for cage in &cages {
-                let (l, r, b, t, f, n) = cage.limits();
-                let high_nw = Vertex { position: [l, t, f] };
-                let high_sw = Vertex { position: [l, t, n] };
-                let high_ne = Vertex { position: [r, t, f] };
-                let high_se = Vertex { position: [r, t, n] };
-                let low_nw = Vertex { position: [l, b, f] };
-                let low_sw = Vertex { position: [l, b, n] };
-                let low_ne = Vertex { position: [r, b, f] };
-                let low_se = Vertex { position: [r, b, n] };
-                vertices.push(high_nw);
-                vertices.push(high_sw);
-                vertices.push(high_ne);
-                vertices.push(high_se);
-                vertices.push(low_nw);
-                vertices.push(low_sw);
-                vertices.push(low_ne);
-                vertices.push(low_se);
+                if cage.contains(x, y, z) {
+                    let (l, r, b, t, f, n) = cage.limits();
+                    let high_nw = Vertex { position: [l, t, f] };
+                    let high_sw = Vertex { position: [l, t, n] };
+                    let high_ne = Vertex { position: [r, t, f] };
+                    let high_se = Vertex { position: [r, t, n] };
+                    let low_nw = Vertex { position: [l, b, f] };
+                    let low_sw = Vertex { position: [l, b, n] };
+                    let low_ne = Vertex { position: [r, b, f] };
+                    let low_se = Vertex { position: [r, b, n] };
+                    vertices.push(high_nw);
+                    vertices.push(high_sw);
+                    vertices.push(high_ne);
+                    vertices.push(high_se);
+                    vertices.push(low_nw);
+                    vertices.push(low_sw);
+                    vertices.push(low_ne);
+                    vertices.push(low_se);
+                }
             }
             Some(VertexBuffer::new(self.display.borrow() as &Display, &vertices).unwrap())
         }
