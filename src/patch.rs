@@ -13,8 +13,8 @@ pub struct PatchPosition {
 
 impl PatchPosition {
     pub fn from_cage(cage: &Cage) -> Self {
-        let (left, right, bottom, top, _, near) = cage.limits();
-        PatchPosition { left: left, right: right, bottom: bottom, top: top, near: near }
+        let (left, right, bottom, top, far, near) = cage.limits();
+        PatchPosition { left: left, right: right, bottom: bottom, top: top, near: (far + near) / 2.0 }
     }
 }
 

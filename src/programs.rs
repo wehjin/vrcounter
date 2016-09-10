@@ -20,14 +20,9 @@ impl Programs {
             let display_ref: &Display = display.borrow();
             FloorProgram::new(display_ref)
         };
-        let mist_program = {
-            let mut program = MistProgram::new(display.clone());
-            program.update(vec![Default::default()]);
-            program
-        };
         Programs {
             floor_program: floor_program,
-            mist_program: mist_program,
+            mist_program: MistProgram::new(display.clone()),
             patch_program: PatchProgram::new(display.clone(), viewer),
             controller_program_option: if enable_controller {
                 Some(ControllerProgram::new(display.borrow()))
