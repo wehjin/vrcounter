@@ -110,7 +110,7 @@ fn run_in_vr(viewer: Viewer, app: Sender<AppMessage>) {
         let controller_matrix_option = poses.get_controller_to_world_matrix();
         programs.set_controller_model_matrix(&controller_matrix_option);
         if let Some(matrix) = controller_matrix_option {
-            let position = (matrix[0][3], matrix[1][3], matrix[2][3]);
+            let position = (matrix[3][0], matrix[3][1]-1.6, matrix[3][2]+1.0);
             viewer.set_hand(Hand { offset: Offset::from(position) });
         }
 
