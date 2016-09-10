@@ -1,4 +1,4 @@
-use viewer::{ActiveViewer};
+use viewer::{Viewer};
 use patch::{Patch, PatchPosition};
 use common::{IdSource};
 
@@ -12,20 +12,20 @@ pub struct ScreamPosition {
 }
 
 pub struct Scream {
-    on_present: Box<Fn(&ScreamPosition, &mut IdSource, ActiveViewer) -> Screaming>
+    on_present: Box<Fn(&ScreamPosition, &mut IdSource, Viewer) -> Screaming>
 }
 
 impl Scream {
-    pub fn create(on_present: Box<Fn(&ScreamPosition, &mut IdSource, ActiveViewer) -> Screaming>) -> Self {
+    pub fn create(on_present: Box<Fn(&ScreamPosition, &mut IdSource, Viewer) -> Screaming>) -> Self {
         Scream { on_present: on_present }
     }
-    pub fn present(&self, position: &ScreamPosition, id_source: &mut IdSource, viewer: ActiveViewer) -> Screaming {
+    pub fn present(&self, position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer) -> Screaming {
         let on_present = &(self.on_present);
         on_present(position, id_source, viewer)
     }
 
     pub fn join_right(self, width: f32, right_scream: Scream) -> Scream {
-        let on_present = move |position: &ScreamPosition, id_source: &mut IdSource, viewer: ActiveViewer| -> Screaming {
+        let on_present = move |position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer| -> Screaming {
             let left_presenting = self.present(position, id_source, viewer.clone());
             let &ScreamPosition { right, top, bottom, near, .. } = position;
             let right_position = ScreamPosition { left: right, right: right + width, top: top, bottom: bottom, near: near };
@@ -58,12 +58,12 @@ impl Screaming {
 }
 
 pub fn of_color(color: [f32; 4]) -> Scream {
-    Scream::create(Box::new(move |position: &ScreamPosition, id_source: &mut IdSource, viewer: ActiveViewer| -> Screaming {
+    Scream::create(Box::new(move |position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer| -> Screaming {
         present_color(position, id_source, viewer, color)
     }))
 }
 
-fn present_color(position: &ScreamPosition, id_source: &mut IdSource, viewer: ActiveViewer, color: [f32; 4]) -> Screaming {
+fn present_color(position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer, color: [f32; 4]) -> Screaming {
     let patch_position = PatchPosition {
         left: position.left, right: position.right, top: position.top, bottom: position.bottom,
         near: position.near
@@ -80,7 +80,7 @@ fn present_color(position: &ScreamPosition, id_source: &mut IdSource, viewer: Ac
 pub fn main() {
     use color;
     let scream = of_color(color::MAGENTA);
-    let viewer = ActiveViewer::start();
+    let viewer = Viewer::start();
     let position = ScreamPosition { left: -0.5, right: -0.4, top: 0.5, bottom: 0.4, near: 0.05 };
     let mut id_source = IdSource::new();
     scream.present(&position, &mut id_source, viewer.clone());

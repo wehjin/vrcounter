@@ -4,7 +4,7 @@ use mist_program::MistProgram;
 use patch_program::PatchProgram;
 use controller_program::ControllerProgram;
 use hand_program::HandProgram;
-use viewer::ActiveViewer;
+use viewer::Viewer;
 use std::rc::Rc;
 use std::borrow::Borrow;
 
@@ -23,7 +23,7 @@ pub struct Programs {
 }
 
 impl Programs {
-    pub fn new(display: Rc<Display>, viewer: ActiveViewer, hand_type: HandType) -> Self {
+    pub fn new(display: Rc<Display>, viewer: Viewer, hand_type: HandType) -> Self {
         Programs {
             floor_program: {
                 let display_ref: &Display = display.borrow();

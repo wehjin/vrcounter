@@ -6,7 +6,7 @@ use cam::Camera;
 use programs::Programs;
 use keymap::{Keymap, Key};
 use std::rc::Rc;
-use viewer::ActiveViewer;
+use viewer::Viewer;
 use app::{Message as AppMessage};
 use std::sync::mpsc::Sender;
 use std::time::{Instant, Duration};
@@ -19,7 +19,7 @@ pub struct Model {
     camera: Camera,
     app: Sender<AppMessage>,
     hand: Hand,
-    viewer: ActiveViewer,
+    viewer: Viewer,
 }
 
 pub enum Message {
@@ -30,7 +30,7 @@ pub enum Message {
     EmitAnimationFrame,
 }
 
-pub fn run(viewer: ActiveViewer, app: Sender<AppMessage>) {
+pub fn run(viewer: Viewer, app: Sender<AppMessage>) {
     let mut model = init(viewer, app);
     loop {
         let message = draw(&model);
@@ -41,7 +41,7 @@ pub fn run(viewer: ActiveViewer, app: Sender<AppMessage>) {
     }
 }
 
-pub fn init(viewer: ActiveViewer, app: Sender<AppMessage>) -> Model {
+pub fn init(viewer: Viewer, app: Sender<AppMessage>) -> Model {
     use programs::HandType;
     let display: Rc<Display> = Rc::new(WindowBuilder::new().with_title("vr counter")
                                                            .with_depth_buffer(24)

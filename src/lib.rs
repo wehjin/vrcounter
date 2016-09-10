@@ -44,7 +44,7 @@ use glium::{DisplayBuild};
 use glium::framebuffer::{SimpleFrameBuffer, ToColorAttachment, ToDepthAttachment};
 use glium::glutin::{Event, ElementState, WindowBuilder};
 use programs::Programs;
-use viewer::ActiveViewer;
+use viewer::Viewer;
 use std::rc::Rc;
 use app::{Message as AppMessage};
 use std::sync::mpsc::{Sender};
@@ -59,7 +59,7 @@ pub fn main() {
     let size = std::mem::size_of::<openvr_sys::TrackedDevicePose_t>();
     println!("Size of TrackedDevicePose: {}", size);
 
-    let viewer = ActiveViewer::start();
+    let viewer = Viewer::start();
     let app = app::start(viewer.clone());
     if os::is_windows() {
         run_in_vr(viewer.clone(), app.clone());
@@ -70,7 +70,7 @@ pub fn main() {
     viewer.stop();
 }
 
-fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
+fn run_in_vr(viewer: Viewer, app: Sender<AppMessage>) {
     use programs::HandType;
 
     let vr_option = System::up().ok();

@@ -18,11 +18,11 @@ enum Message {
 }
 
 #[derive(Clone)]
-pub struct ActiveViewer {
+pub struct Viewer {
     command_tx: Sender<Message>,
 }
 
-impl ActiveViewer {
+impl Viewer {
     pub fn start() -> Self {
         let (tx, rx) = channel();
         thread::spawn(move || {
@@ -43,7 +43,7 @@ impl ActiveViewer {
                 }
             }
         });
-        ActiveViewer { command_tx: tx }
+        Viewer { command_tx: tx }
     }
 
     pub fn get_patches(&self) -> HashMap<u64, Patch> {
@@ -78,7 +78,7 @@ mod tests {
 
     #[test]
     fn add_patch() {
-        let viewer = ActiveViewer::start();
+        let viewer = Viewer::start();
         let patch = Patch::new(1, -1.0, 1.0, -1.0, 1.0, 0.0, MAGENTA, Sigil::Fill);
         viewer.add_patch(patch);
         let report = viewer.get_patches();
@@ -92,7 +92,7 @@ mod tests {
         use mist::{Mist};
         use cage::{Cage};
 
-        let viewer = ActiveViewer::start();
+        let viewer = Viewer::start();
         let (mist, mist_rx) = Mist::new(2, Cage::from((0.0, 0.1, 0.0, 0.1, 0.0, 0.1)));
         viewer.add_mist(mist);
         let report = viewer.get_mists();

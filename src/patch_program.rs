@@ -6,7 +6,7 @@ use glium::{Surface, VertexBuffer, Program, Display};
 use glium::index::{NoIndices, PrimitiveType};
 use shape::{Shape, ShapeList, ShapeMask};
 use atlas::{Atlas};
-use viewer::ActiveViewer;
+use viewer::Viewer;
 use std::rc::Rc;
 use std::borrow::Borrow;
 
@@ -75,12 +75,12 @@ pub struct PatchProgram {
     indices: glium::index::NoIndices,
     model_matrix: [[f32; 4]; 4],
     atlas: Atlas,
-    viewer: ActiveViewer,
+    viewer: Viewer,
     display: Rc<Display>,
 }
 
 impl PatchProgram {
-    pub fn new(display: Rc<Display>, viewer: ActiveViewer) -> Self {
+    pub fn new(display: Rc<Display>, viewer: Viewer) -> Self {
         let program = {
             let display_ref: &Display = display.borrow();
             Program::from_source(display_ref, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap()
@@ -138,7 +138,7 @@ impl PatchProgram {
     }
 }
 
-fn get_shapes(viewer: &ActiveViewer) -> Vec<Shape> {
+fn get_shapes(viewer: &Viewer) -> Vec<Shape> {
     let patch_map = viewer.get_patches();
     let mut shapes = Vec::new();
     for (_, patch) in patch_map {

@@ -5,7 +5,7 @@ use glium::index::{NoIndices, PrimitiveType};
 use cage::Cage;
 use std::rc::Rc;
 use std::borrow::Borrow;
-use viewer::ActiveViewer;
+use viewer::Viewer;
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -18,11 +18,11 @@ pub struct MistProgram {
     program: glium::Program,
     indices: glium::index::NoIndices,
     model_matrix: [[f32; 4]; 4],
-    viewer: ActiveViewer,
+    viewer: Viewer,
 }
 
 impl MistProgram {
-    pub fn new(display: Rc<Display>, viewer: ActiveViewer) -> Self {
+    pub fn new(display: Rc<Display>, viewer: Viewer) -> Self {
         MistProgram {
             display: display.clone(),
             program: Program::from_source(display.borrow() as &Display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap(),

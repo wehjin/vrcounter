@@ -1,7 +1,7 @@
 extern crate cage;
 
 use color::{GREEN, RED, BLUE, CYAN, YELLOW, MAGENTA};
-use viewer::{ActiveViewer};
+use viewer::{Viewer};
 use common::{IdSource};
 use scream;
 use scream::{ScreamPosition};
@@ -32,7 +32,7 @@ pub enum Outcome {
 }
 
 
-fn init(viewer: ActiveViewer) -> Model {
+fn init(viewer: Viewer) -> Model {
     use howl;
     let mut id_source = IdSource::new();
 
@@ -81,7 +81,7 @@ fn update(message: Message, mut model: Model) -> Option<Model> {
     }
 }
 
-fn view(model: &Model, viewer: &ActiveViewer) {
+fn view(model: &Model, viewer: &Viewer) {
     use patch::Patch;
     use mist::Mist;
     viewer.clear();
@@ -106,7 +106,7 @@ fn finish(mut model: Model) {
     }
 }
 
-pub fn start(viewer: ActiveViewer) -> Sender<Message> {
+pub fn start(viewer: Viewer) -> Sender<Message> {
     let (tx, rx) = channel();
     thread::spawn(move || {
         let mut model = init(viewer.clone());
