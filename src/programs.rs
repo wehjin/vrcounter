@@ -3,31 +3,41 @@ use floor_program::FloorProgram;
 use mist_program::MistProgram;
 use patch_program::PatchProgram;
 use controller_program::ControllerProgram;
+use hand_program::HandProgram;
 use viewer::ActiveViewer;
 use std::rc::Rc;
 use std::borrow::Borrow;
+
+pub enum HandType {
+    Keyboard,
+    Vive,
+}
+
 
 pub struct Programs {
     floor_program: FloorProgram,
     mist_program: MistProgram,
     patch_program: PatchProgram,
     controller_program_option: Option<ControllerProgram>,
+    hand_program_option: Option<HandProgram>
 }
 
 impl Programs {
-    pub fn init(display: Rc<Display>, viewer: ActiveViewer, enable_controller: bool) -> Self {
-        let floor_program = {
-            let display_ref: &Display = display.borrow();
-            FloorProgram::new(display_ref)
-        };
+    pub fn new(display: Rc<Display>, viewer: ActiveViewer, hand_type: HandType) -> Self {
         Programs {
-            floor_program: floor_program,
+            floor_program: {
+                let display_ref: &Display = display.borrow();
+                FloorProgram::new(display_ref)
+            },
             mist_program: MistProgram::new(display.clone(), viewer.clone()),
             patch_program: PatchProgram::new(display.clone(), viewer.clone()),
-            controller_program_option: if enable_controller {
-                Some(ControllerProgram::new(display.borrow()))
-            } else {
-                None
+            controller_program_option: match hand_type {
+                HandType::Vive => Some(ControllerProgram::new(display.borrow())),
+                _ => None
+            },
+            hand_program_option: match hand_type {
+                HandType::Keyboard => Some(HandProgram::new(display.clone(), viewer.clone())),
+                _ => None
             }
         }
     }
@@ -43,6 +53,9 @@ impl Programs {
         self.floor_program.draw(surface, view, projection);
         if let Some(ref controller_program) = self.controller_program_option {
             controller_program.draw(surface, view, projection);
+        }
+        if let Some(ref hand_program) = self.hand_program_option {
+            hand_program.draw(surface, view, projection);
         }
     }
 }

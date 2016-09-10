@@ -84,7 +84,7 @@ pub fn main() {
     let position = ScreamPosition { left: -0.5, right: -0.4, top: 0.5, bottom: 0.4, near: 0.05 };
     let mut id_source = IdSource::new();
     scream.present(&position, &mut id_source, viewer.clone());
-    let report = viewer.get_patch_report();
+    let report = viewer.get_patches();
     let report_length = report.len();
     assert_eq!(report_length, 1)
 }

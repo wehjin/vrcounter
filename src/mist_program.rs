@@ -39,7 +39,7 @@ impl MistProgram {
 
     fn get_cages(&self) -> Vec<Cage> {
         let mut cages: Vec<Cage> = Vec::new();
-        let mist_report = self.viewer.get_mist_report();
+        let mist_report = self.viewer.get_mists();
         for (_, mist) in mist_report {
             cages.push(*mist.cage());
         }

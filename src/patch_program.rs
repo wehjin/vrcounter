@@ -139,7 +139,7 @@ impl PatchProgram {
 }
 
 fn get_shapes(viewer: &ActiveViewer) -> Vec<Shape> {
-    let patch_map = viewer.get_patch_report();
+    let patch_map = viewer.get_patches();
     let mut shapes = Vec::new();
     for (_, patch) in patch_map {
         let mask = if patch.glyph == '\u{0}' { ShapeMask::None } else { ShapeMask::Letter(patch.glyph) };

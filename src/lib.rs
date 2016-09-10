@@ -7,6 +7,8 @@ extern crate rusttype;
 extern crate unicode_normalization;
 extern crate cage;
 
+mod hand;
+mod hand_program;
 mod keymap;
 mod patch_program;
 mod floor_program;
@@ -67,6 +69,8 @@ pub fn main() {
 }
 
 fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
+    use programs::HandType;
+
     let vr_option = System::up().ok();
     if vr_option.is_none() {
         return;
@@ -89,7 +93,7 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
     );
 
     let display = Rc::new(window);
-    let mut programs = Programs::init(display.clone(), viewer, true);
+    let mut programs = Programs::new(display.clone(), viewer, HandType::Vive);
 
     let mut frame_instant = Instant::now();
     let frame_duration = Duration::from_millis(300);

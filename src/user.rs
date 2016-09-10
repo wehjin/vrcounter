@@ -10,6 +10,7 @@ use viewer::ActiveViewer;
 use app::{Message as AppMessage};
 use std::sync::mpsc::Sender;
 use std::time::{Instant, Duration};
+use hand::Hand;
 
 pub struct Model {
     display: Rc<Display>,
@@ -17,6 +18,7 @@ pub struct Model {
     keymap: Keymap,
     camera: Camera,
     app: Sender<AppMessage>,
+    hand: Hand,
 }
 
 pub enum Message {
@@ -38,6 +40,7 @@ pub fn run(viewer: ActiveViewer, app: Sender<AppMessage>) {
 }
 
 pub fn init(viewer: ActiveViewer, app: Sender<AppMessage>) -> Model {
+    use programs::HandType;
     let display: Rc<Display> = Rc::new(WindowBuilder::new().with_title("vr counter")
                                                            .with_depth_buffer(24)
                                                            .build_glium()
@@ -45,9 +48,10 @@ pub fn init(viewer: ActiveViewer, app: Sender<AppMessage>) -> Model {
     Model {
         app: app,
         display: display.clone(),
-        programs: Programs::init(display, viewer, false),
+        programs: Programs::new(display, viewer, HandType::Keyboard),
         keymap: Keymap::init(),
         camera: Camera::start(),
+        hand: Default::default(),
     }
 }
 
@@ -108,6 +112,7 @@ impl Model {
             keymap: self.keymap,
             camera: camera,
             app: self.app,
+            hand: self.hand,
         }
     }
 }
