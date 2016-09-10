@@ -52,6 +52,8 @@ use std::time::{Instant, Duration};
 use hmd::Hmd;
 use std::borrow::Borrow;
 use vr::System;
+use hand::Hand;
+use cage::Offset;
 
 pub fn main() {
     let size = std::mem::size_of::<openvr_sys::TrackedDevicePose_t>();
@@ -93,7 +95,7 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
     );
 
     let display = Rc::new(window);
-    let mut programs = Programs::new(display.clone(), viewer, HandType::Vive);
+    let mut programs = Programs::new(display.clone(), viewer.clone(), HandType::Vive);
 
     let mut frame_instant = Instant::now();
     let frame_duration = Duration::from_millis(300);
@@ -105,7 +107,12 @@ fn run_in_vr(viewer: ActiveViewer, app: Sender<AppMessage>) {
         let poses = vr.await_poses();
         let world_to_hmd = poses.get_world_to_hmd_matrix();
 
-        programs.set_controller_model_matrix(&poses.get_controller_to_world_matrix());
+        let controller_matrix_option = poses.get_controller_to_world_matrix();
+        programs.set_controller_model_matrix(&controller_matrix_option);
+        if let Some(matrix) = controller_matrix_option {
+            let position = (matrix[0][3], matrix[1][3], matrix[2][3]);
+            viewer.set_hand(Hand { offset: Offset::from(position) });
+        }
 
         hmd.draw(&programs, &world_to_hmd, display.borrow(), &mut left_frame, &mut right_frame);
 
