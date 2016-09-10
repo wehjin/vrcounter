@@ -5,6 +5,7 @@ use glium::index::{NoIndices, PrimitiveType};
 use cage::Cage;
 use std::rc::Rc;
 use std::borrow::Borrow;
+use viewer::ActiveViewer;
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -17,15 +18,14 @@ pub struct MistProgram {
     program: glium::Program,
     indices: glium::index::NoIndices,
     model_matrix: [[f32; 4]; 4],
-    vertex_buffer_option: Option<VertexBuffer<Vertex>>,
+    viewer: ActiveViewer,
 }
 
 impl MistProgram {
-    pub fn new(display: Rc<Display>) -> Self {
+    pub fn new(display: Rc<Display>, viewer: ActiveViewer) -> Self {
         MistProgram {
             display: display.clone(),
             program: Program::from_source(display.borrow() as &Display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap(),
-            vertex_buffer_option: None,
             indices: NoIndices(PrimitiveType::LinesList),
             model_matrix: [
                 [1.0, 0.0, 0.0, 0.0],
@@ -33,11 +33,22 @@ impl MistProgram {
                 [0.0, 0.0, 1.0, 0.0],
                 [0.0, 1.6, -1.0, 1.0f32],
             ],
+            viewer: viewer,
         }
     }
 
-    pub fn update(&mut self, cages: Vec<Cage>) {
-        self.vertex_buffer_option = if cages.is_empty() {
+    fn get_cages(&self) -> Vec<Cage> {
+        let mut cages: Vec<Cage> = Vec::new();
+        let mist_report = self.viewer.get_mist_report();
+        for (_, mist) in mist_report {
+            cages.push(*mist.cage());
+        }
+        cages
+    }
+
+    fn get_vertex_buffer_option(&self) -> Option<VertexBuffer<Vertex>> {
+        let cages = self.get_cages();
+        if cages.is_empty() {
             None
         } else {
             let mut vertices = Vec::new();
@@ -65,10 +76,10 @@ impl MistProgram {
     }
 
     pub fn draw<T: Surface>(&self, surface: &mut T, view: &[[f32; 4]; 4], projection: &[[f32; 4]; 4]) {
-        if let Some(ref vertex_buffer) = self.vertex_buffer_option {
+        if let Some(vertex_buffer) = self.get_vertex_buffer_option() {
             let uniforms = uniform! { model: self.model_matrix, view: *view, perspective: * projection };
             surface.draw(
-                vertex_buffer,
+                &vertex_buffer,
                 &self.indices,
                 &self.program,
                 &uniforms,

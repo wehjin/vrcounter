@@ -10,4 +10,3 @@ pub const MAGENTA: [f32; 4] = [1.0, 0.0, 1.0, 1.0];
 
 pub const YELLOW: [f32; 4] = [1.0, 1.0, 0.0, 1.0];
 
-pub struct Mixer;

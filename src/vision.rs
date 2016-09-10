@@ -18,6 +18,12 @@ pub struct Vision<Msg> {
     beats: HashMap<u64, Beat>,
 }
 
+impl<Msg> Default for Vision<Msg> where Msg: Default {
+    fn default() -> Self {
+        Vision::create(|_| Default::default())
+    }
+}
+
 impl<Msg> Vision<Msg> {
     pub fn create<F>(adapter: F) -> Self where F: Fn(vision::Outcome) -> Msg + 'static {
         Vision {

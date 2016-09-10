@@ -5,7 +5,6 @@ use viewer::{ActiveViewer};
 use common::{IdSource};
 use scream;
 use scream::{ScreamPosition};
-use howl;
 use scream::{Screaming};
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
@@ -14,14 +13,13 @@ use summoner::{Summoner, DemonVision};
 use roar;
 use color;
 use std::boxed::Box;
-use patch::Patch;
 use cage::Cage;
 use patch::Sigil;
 use vision;
 
 pub enum Message {
     Stop,
-    Frame,
+    EmitAnimationFrame,
 }
 
 struct Model {
@@ -35,6 +33,7 @@ pub enum Outcome {
 
 
 fn init(viewer: ActiveViewer) -> Model {
+    use howl;
     let mut id_source = IdSource::new();
 
     let position = ScreamPosition { left: -0.5, right: -0.4, top: -0.15, bottom: -0.25, near: 0.03 };
@@ -58,21 +57,12 @@ fn init(viewer: ActiveViewer) -> Model {
     for howl in &howls {
         summoner.summon(&mut id_source, howl, |_| Outcome::Done);
     }
+    let howl_id = id_source.next_id();
+    summoner.summon(&mut id_source, &howl::misty(howl_id, Default::default()), |_| Outcome::Done);
 
     Model {
         screamings: screamings,
         summoner: summoner,
-    }
-}
-
-fn view(model: &Model, viewer: &ActiveViewer) {
-    let demon_boxes = model.summoner.get_demon_boxes();
-    for demon_box in demon_boxes {
-        let demon_vision_box: Box<DemonVision> = (&demon_box).see();
-        let demon_patches: &HashMap<u64, Patch> = (*demon_vision_box).patches();
-        for (_, patch) in demon_patches.iter() {
-            viewer.add_patch(*patch);
-        }
     }
 }
 
@@ -82,12 +72,30 @@ fn update(message: Message, mut model: Model) -> Option<Model> {
             finish(model);
             None
         },
-        Message::Frame => {
+        Message::EmitAnimationFrame => {
             let mut summoner: Summoner = model.summoner.clone();
             summoner.update(vision::Outcome::Tick);
             model.summoner = summoner;
             Some(model)
         },
+    }
+}
+
+fn view(model: &Model, viewer: &ActiveViewer) {
+    use patch::Patch;
+    use mist::Mist;
+    viewer.clear();
+    let demon_boxes = model.summoner.get_demon_boxes();
+    for demon_box in demon_boxes {
+        let vision_box: Box<DemonVision> = (&demon_box).see();
+        let patches: &HashMap<u64, Patch> = (*vision_box).patches();
+        for (_, patch) in patches.iter() {
+            viewer.add_patch(*patch);
+        }
+        let mists: &HashMap<u64, Mist> = (*vision_box).mists();
+        for (_, mist) in mists.iter() {
+            viewer.add_mist(*mist);
+        }
     }
 }
 

@@ -18,10 +18,16 @@ impl PatchPosition {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum Sigil {
     Fill,
     Letter(char),
+}
+
+impl Default for Sigil {
+    fn default() -> Self {
+        Sigil::Fill
+    }
 }
 
 impl Sigil {

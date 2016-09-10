@@ -22,8 +22,8 @@ impl Programs {
         };
         Programs {
             floor_program: floor_program,
-            mist_program: MistProgram::new(display.clone()),
-            patch_program: PatchProgram::new(display.clone(), viewer),
+            mist_program: MistProgram::new(display.clone(), viewer.clone()),
+            patch_program: PatchProgram::new(display.clone(), viewer.clone()),
             controller_program_option: if enable_controller {
                 Some(ControllerProgram::new(display.borrow()))
             } else {
