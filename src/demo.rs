@@ -18,7 +18,7 @@ pub struct Message;
 #[derive(Clone)]
 pub struct Outcome;
 
-fn summon(id_source: &mut IdSource, summoner: &mut Summoner) -> u64 {
+fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
     use cage::Cage;
     use vrcounter::{howl, scream, roar};
     use vrcounter::color::*;
@@ -54,9 +54,6 @@ fn summon(id_source: &mut IdSource, summoner: &mut Summoner) -> u64 {
     }
     let howl_id = id_source.id();
     summoner.summon(id_source, &howl::misty(howl_id, Default::default()), |_| Outcome);
-
-    // TODO remove return from Wish::SummonStar
-    0
 }
 
 fn init() -> (Model, Vec<Wish>) {

@@ -16,7 +16,7 @@ pub enum Error {
 pub enum Wish {
     Tick,
     FitToCage(Cage),
-    SummonStar(Rc<Fn(&mut IdSource, &mut Summoner) -> u64>),
+    SummonStar(Rc<Fn(&mut IdSource, &mut Summoner)>),
 }
 
 #[derive(Debug)]

@@ -27,10 +27,10 @@ pub fn misty(id: u64, cage: Cage) -> SeedStar<bool, Message, ()> {
     use color::WHITE;
 
     fn init() -> (bool, Vec<Wish>) {
-        fn summon(id_source: &mut IdSource, summoner: &mut Summoner) -> u64 {
+        fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
             let cage = Cage::from((-0.7, -0.5, 0.25, 0.45, 0.25, 0.25));
             let sub_star = create(id_source.id(), WHITE, cage, Sigil::Letter('S'));
-            summoner.summon(id_source, &sub_star, |_| false)
+            summoner.summon(id_source, &sub_star, |_| false);
         }
 
         (false, vec![Wish::SummonStar(Rc::new(summon))])
