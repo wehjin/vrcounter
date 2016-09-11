@@ -1,5 +1,8 @@
 extern crate openvr;
 extern crate nalgebra;
+extern crate cage;
+
+use cage::Cage;
 
 #[derive(Debug)]
 pub enum Error {
@@ -10,6 +13,7 @@ pub enum Error {
 #[derive(Copy, Clone, Debug)]
 pub enum Wish {
     Tick,
+    FitToCage(Cage),
 }
 
 pub enum Report<Mod, Out> {

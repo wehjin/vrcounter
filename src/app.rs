@@ -4,8 +4,6 @@ use color::{GREEN, RED, BLUE, CYAN, YELLOW, MAGENTA};
 use viewer::{Viewer};
 use common::{IdSource};
 use scream;
-use scream::{ScreamPosition};
-use scream::{OScreaming};
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::collections::HashMap;
@@ -26,7 +24,6 @@ pub enum Message {
 }
 
 struct Model {
-    screamings: Vec<OScreaming>,
     summoner: Summoner,
 }
 
@@ -34,20 +31,30 @@ pub enum Outcome {
     Done,
 }
 
-fn init(viewer: Viewer) -> Model {
+fn init() -> Model {
     use howl;
-    let mut id_source = IdSource::new();
 
-    let position = ScreamPosition { left: -0.5, right: -0.4, top: -0.15, bottom: -0.25, near: 0.03 };
-    let scream = scream::of_color(YELLOW)
-        .join_right(0.1, scream::of_color(MAGENTA).join_right(0.1, scream::of_color(CYAN)));
-    let mut screamings = Vec::new();
-    let screaming = scream.present(&position, &mut id_source, viewer.clone());
-    screamings.push(screaming);
+    let mut id_source = IdSource::new();
 
     let mut summoner = Summoner::new();
     let roar = roar::demo::from(vec![color::GREEN, color::RED, color::BLUE, color::CYAN, color::MAGENTA, color::YELLOW]);
     summoner.summon(&mut id_source, &roar, |_| Outcome::Done);
+
+    let scream_id1 = id_source.id();
+    let screaming1 = summoner.summon(&mut id_source, &scream::from_color(scream_id1, CYAN), |_| Outcome::Done);
+    let cage1 = Cage::from((-0.3, -0.2, -0.25, -0.15, 0.03, 0.03));
+    summoner.update_one(screaming1, Wish::FitToCage(Cage::from(cage1)));
+
+    let scream_id2 = id_source.id();
+    let screaming2 = summoner.summon(&mut id_source, &scream::from_color(scream_id2, MAGENTA), |_| Outcome::Done);
+    let cage2 = Cage::from((-0.4, -0.3, -0.25, -0.15, 0.03, 0.03));
+    summoner.update_one(screaming2, Wish::FitToCage(Cage::from(cage2)));
+
+    let scream_id3 = id_source.id();
+    let screaming3 = summoner.summon(&mut id_source, &scream::from_color(scream_id3, YELLOW), |_| Outcome::Done);
+    let cage3 = Cage::from((-0.5, -0.4, -0.25, -0.15, 0.03, 0.03));
+    summoner.update_one(screaming3, Wish::FitToCage(Cage::from(cage3)));
+
 
     let howls = vec![
         howl::create(id_source.id(), BLUE, Cage::from((-0.70, -0.50, -0.10, 0.10, 0.10, 0.10)), Sigil::Fill),
@@ -63,7 +70,6 @@ fn init(viewer: Viewer) -> Model {
     summoner.summon(&mut id_source, &howl::misty(howl_id, Default::default()), |_| Outcome::Done);
 
     Model {
-        screamings: screamings,
         summoner: summoner,
     }
 }
@@ -104,17 +110,12 @@ fn view(model: &Model, viewer: &Viewer) {
     }
 }
 
-fn finish(mut model: Model) {
-    // TODO: Silence roaring and howlings?
-    for screaming in &mut model.screamings {
-        screaming.silence();
-    }
-}
+fn finish(_: Model) {}
 
 pub fn start(viewer: Viewer) -> Sender<Message> {
     let (tx, rx) = channel();
     thread::spawn(move || {
-        let mut model = init(viewer.clone());
+        let mut model = init();
         view(&model, &viewer);
         loop {
             match rx.recv() {

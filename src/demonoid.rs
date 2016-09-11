@@ -28,9 +28,9 @@ impl<Mod, Msg, Out> Demonoid<Mod, Msg, Out> where Mod: Clone, Msg: Clone, Out: C
         vision
     }
     fn get_message_from_wish(&self, wish: Wish) -> Option<Msg> {
+        let vision = self.get_vision_and_save_wish_adapter();
         match wish {
             Wish::Tick => {
-                let vision = self.get_vision_and_save_wish_adapter();
                 let beats = vision.find_beats(&Instant::now());
                 if beats.len() > 0 {
                     let wish_adapter = self.get_wish_adapter_option().unwrap();
@@ -40,6 +40,11 @@ impl<Mod, Msg, Out> Demonoid<Mod, Msg, Out> where Mod: Clone, Msg: Clone, Out: C
                     None
                 }
             },
+            _ => {
+                let wish_adapter = self.get_wish_adapter_option().unwrap();
+                let message = (*wish_adapter)(wish);
+                Some(message)
+            }
         }
     }
 }

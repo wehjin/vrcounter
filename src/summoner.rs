@@ -25,6 +25,14 @@ impl Summoner {
         }
         demon_boxes
     }
+    pub fn get_demon_box_clone(&self, id: u64) -> Option<Box<Demon>> {
+        if let Some(demon_box) = self.demons.get(&id) {
+            Some(demon_box.clone())
+        } else {
+            None
+        }
+    }
+
     pub fn summon<Msg, SubMod, SubMsg, SubOut, F>(&mut self,
                                                   id_source: &mut IdSource,
                                                   star: &Star<SubMod, SubMsg, SubOut>,
@@ -44,6 +52,19 @@ impl Summoner {
         };
         self.demons.insert(id, Box::new(demon));
         id
+    }
+    pub fn update_one(&mut self, id: u64, wish: Wish) {
+        let demon_box_option = self.get_demon_box_clone(id);
+        if let Some(mut demon_box) = demon_box_option {
+            match demon_box.poke(wish) {
+                DemonResult::Keep => {
+                    self.demons.insert(id, demon_box);
+                },
+                DemonResult::Remove => {
+                    self.demons.remove(&id);
+                },
+            }
+        }
     }
     pub fn update(&mut self, wish: Wish) {
         let mut new_demons = HashMap::new();

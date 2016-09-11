@@ -7,7 +7,6 @@ use hand::Hand;
 
 enum Message {
     AddPatch(Patch),
-    RemovePatch(u64),
     SendPatches(Sender<HashMap<u64, Patch>>),
     AddMist(Mist),
     SendMists(Sender<HashMap<u64, Mist>>),
@@ -33,7 +32,6 @@ impl Viewer {
                 match message {
                     Message::Clear => { mists.clear(); }
                     Message::AddPatch(patch) => { patches.insert(patch.id, patch); },
-                    Message::RemovePatch(id) => { patches.remove(&id); },
                     Message::SendPatches(tx) => { tx.send(patches.clone()).unwrap(); },
                     Message::AddMist(mist) => { mists.insert(mist.id(), mist); },
                     Message::SendMists(tx) => { tx.send(mists.clone()).unwrap(); },
@@ -62,7 +60,6 @@ impl Viewer {
         if let Ok(hand) = rx.recv() { hand } else { Default::default() }
     }
     pub fn add_patch(&self, patch: Patch) { self.command_tx.send(Message::AddPatch(patch)).unwrap(); }
-    pub fn remove_patch(&self, id: u64) { self.command_tx.send(Message::RemovePatch(id)).unwrap(); }
     pub fn add_mist(&self, mist: Mist) { self.command_tx.send(Message::AddMist(mist)).unwrap(); }
     pub fn set_hand(&self, hand: Hand) { self.command_tx.send(Message::SetHand(hand)).unwrap(); }
     pub fn clear(&self) { self.command_tx.send(Message::Clear).unwrap(); }
