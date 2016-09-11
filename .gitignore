@@ -3,5 +3,6 @@ target
 .idea/libraries/Cargo__vrcounter_.xml
 .idea/misc.xml
 .idea/libraries/Rust__vrcounter_.xml
+.idea/dictionaries
 SDL2.dll
 Cargo.lock

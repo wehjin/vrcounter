@@ -86,14 +86,13 @@ mod tests {
         assert!(report.contains_key(&1));
     }
 
-
     #[test]
     fn add_mist() {
         use mist::{Mist};
         use cage::{Cage};
 
         let viewer = Viewer::start();
-        let (mist, mist_rx) = Mist::new(2, Cage::from((0.0, 0.1, 0.0, 0.1, 0.0, 0.1)));
+        let mist = Mist::new(2, Cage::from((0.0, 0.1, 0.0, 0.1, 0.0, 0.1)));
         viewer.add_mist(mist);
         let report = viewer.get_mists();
         viewer.stop();
