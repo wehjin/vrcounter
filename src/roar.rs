@@ -24,10 +24,13 @@ pub mod demo {
         let init_colors = colors.clone();
         let update_colors = colors.clone();
         SeedStar::create(
-            move || Model {
-                colors: init_colors.clone(),
-                index: 0,
-                end_instant: Instant::now() + Duration::from_secs(30),
+            move || {
+                let model = Model {
+                    colors: init_colors.clone(),
+                    index: 0,
+                    end_instant: Instant::now() + Duration::from_secs(30),
+                };
+                (model, None)
             },
             move |message, model| match message {
                 Message::IncrementIndex => {

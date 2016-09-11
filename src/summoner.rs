@@ -7,7 +7,7 @@ use demon::Demon;
 use demon::DemonResult;
 use demonoid::Demonoid;
 use common::Wish;
-
+use std::rc::Rc;
 
 #[derive(Clone)]
 pub struct Summoner {
@@ -40,8 +40,9 @@ impl Summoner {
                                                   where SubMod: 'static + Clone,
                                                         SubMsg: 'static + Clone,
                                                         SubOut: 'static + Clone,
-                                                        F: Fn(SubOut) -> Msg + 'static {
-        let model = ((*star).init)();
+                                                        F: Fn(SubOut) -> Msg + 'static,
+                                                        Self: Sized {
+        let (model, wish_option) = ((*star).init)();
         let id = id_source.id();
         let demon = Demonoid {
             id: id,
@@ -51,6 +52,11 @@ impl Summoner {
             wish_adapter: RefCell::new(Option::None),
         };
         self.demons.insert(id, Box::new(demon));
+
+        // TODO: Add to queue.
+        if let Some(Wish::SummonStar(summon)) = wish_option {
+            summon(id_source, self);
+        }
         id
     }
     pub fn update_one(&mut self, id: u64, wish: Wish) {
@@ -70,7 +76,7 @@ impl Summoner {
         let mut new_demons = HashMap::new();
         for (_, demon_box) in &self.demons {
             let mut new_demon_box = demon_box.clone();
-            let demon_result = new_demon_box.poke(wish);
+            let demon_result = new_demon_box.poke(wish.clone());
             match demon_result {
                 DemonResult::Keep => {
                     new_demons.insert(new_demon_box.id(), new_demon_box);

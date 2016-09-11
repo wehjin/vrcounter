@@ -21,23 +21,26 @@ pub enum Message {
 
 pub fn from_color(id: u64, color: [f32; 4]) -> SeedStar<Model, Message, ()> {
     use patch::Sigil;
-    SeedStar::create(|| Model { cage_option: None },
+    fn init() -> (Model, Option<Wish>) {
+        (Model { cage_option: None }, None)
+    }
+    SeedStar::create(init,
                      |message, _| match message {
-                     Message::FitToCage(cage) => {
-                         let next = Model { cage_option: Some(cage) };
-                         Report::Model::<Model, ()>(next)
-                     }
-                     _ => Report::Unchanged,
-                 },
+                         Message::FitToCage(cage) => {
+                             let next = Model { cage_option: Some(cage) };
+                             Report::Model::<Model, ()>(next)
+                         }
+                         _ => Report::Unchanged,
+                     },
                      move |model: &Model| {
-                     let mut vision = Vision::create(|wish| match wish {
-                         Wish::FitToCage(cage) => Message::FitToCage(cage),
-                         _ => Message::Ignore,
-                     });
-                     if let Some(cage) = model.cage_option {
-                         let patch = Patch::from_cage(&cage, color, Sigil::Fill, id);
-                         vision.add_patch(patch);
-                     }
-                     vision
-                 })
+                         let mut vision = Vision::create(|wish| match wish {
+                             Wish::FitToCage(cage) => Message::FitToCage(cage),
+                             _ => Message::Ignore,
+                         });
+                         if let Some(cage) = model.cage_option {
+                             let patch = Patch::from_cage(&cage, color, Sigil::Fill, id);
+                             vision.add_patch(patch);
+                         }
+                         vision
+                     })
 }

@@ -3,6 +3,8 @@ extern crate nalgebra;
 extern crate cage;
 
 use cage::Cage;
+use std::rc::Rc;
+use summoner::Summoner;
 
 #[derive(Debug)]
 pub enum Error {
@@ -10,10 +12,11 @@ pub enum Error {
     NoCompositor,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone)]
 pub enum Wish {
     Tick,
     FitToCage(Cage),
+    SummonStar(Rc<Fn(&mut IdSource, &mut Summoner) -> u64>),
 }
 
 #[derive(Debug)]
