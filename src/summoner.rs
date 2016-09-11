@@ -2,7 +2,7 @@ use std::boxed::Box;
 use std::collections::HashMap;
 use common::IdSource;
 use std::cell::RefCell;
-use star::Star;
+use star::SeedStar;
 use demon::Demon;
 use demon::DemonResult;
 use demonoid::Demonoid;
@@ -35,7 +35,7 @@ impl Summoner {
 
     pub fn summon<Msg, SubMod, SubMsg, SubOut, F>(&mut self,
                                                   id_source: &mut IdSource,
-                                                  star: &Star<SubMod, SubMsg, SubOut>,
+                                                  star: &SeedStar<SubMod, SubMsg, SubOut>,
                                                   outcome_adapter: F) -> u64
                                                   where SubMod: 'static + Clone,
                                                         SubMsg: 'static + Clone,

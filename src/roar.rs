@@ -5,7 +5,7 @@ pub mod demo {
     use std::time::{Instant, Duration};
     use common::Wish;
     use report::Report;
-    use star::Star;
+    use star::SeedStar;
 
     #[derive(Clone)]
     pub struct Model {
@@ -20,10 +20,10 @@ pub mod demo {
         IncrementIndex,
     }
 
-    pub fn from(colors: Vec<[f32; 4]>) -> Star<Model, Message, ()> {
+    pub fn from(colors: Vec<[f32; 4]>) -> SeedStar<Model, Message, ()> {
         let init_colors = colors.clone();
         let update_colors = colors.clone();
-        Star::create(
+        SeedStar::create(
             move || Model {
                 colors: init_colors.clone(),
                 index: 0,

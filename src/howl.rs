@@ -1,6 +1,6 @@
 extern crate cage;
 
-use star::Star;
+use star::SeedStar;
 use vision::Vision;
 use cage::Cage;
 use patch::{Patch, Sigil};
@@ -19,9 +19,9 @@ impl Default for Message {
     }
 }
 
-pub fn misty(id: u64, cage: Cage) -> Star<bool, Message, ()> {
-    Star::create(|| false,
-                 |message, is_silenced| if *is_silenced {
+pub fn misty(id: u64, cage: Cage) -> SeedStar<bool, Message, ()> {
+    SeedStar::create(|| false,
+                     |message, is_silenced| if *is_silenced {
                      Report::Unchanged
                  } else {
                      match message {
@@ -29,7 +29,7 @@ pub fn misty(id: u64, cage: Cage) -> Star<bool, Message, ()> {
                          Message::Silence => Report::Model(true),
                      }
                  },
-                 move |is_silenced| if *is_silenced {
+                     move |is_silenced| if *is_silenced {
                      Default::default()
                  } else {
                      let mut vision = Vision::create(|vision_outcome| match vision_outcome {
@@ -40,8 +40,8 @@ pub fn misty(id: u64, cage: Cage) -> Star<bool, Message, ()> {
                  })
 }
 
-pub fn create(id: u64, color: [f32; 4], cage: Cage, sigil: Sigil) -> Star<Cage, Message, ()> {
-    Star::create(
+pub fn create(id: u64, color: [f32; 4], cage: Cage, sigil: Sigil) -> SeedStar<Cage, Message, ()> {
+    SeedStar::create(
         move || -> Cage { cage },
         |message, _| match message {
             Message::Silence => Report::Outcome(()),

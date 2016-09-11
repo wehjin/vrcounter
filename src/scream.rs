@@ -2,7 +2,7 @@ extern crate cage;
 
 use patch::{Patch};
 use common::Wish;
-use star::Star;
+use star::SeedStar;
 use std::option::Option;
 use vision::Vision;
 use report::Report;
@@ -19,17 +19,17 @@ pub enum Message {
     FitToCage(Cage),
 }
 
-pub fn from_color(id: u64, color: [f32; 4]) -> Star<Model, Message, ()> {
+pub fn from_color(id: u64, color: [f32; 4]) -> SeedStar<Model, Message, ()> {
     use patch::Sigil;
-    Star::create(|| Model { cage_option: None },
-                 |message, _| match message {
+    SeedStar::create(|| Model { cage_option: None },
+                     |message, _| match message {
                      Message::FitToCage(cage) => {
                          let next = Model { cage_option: Some(cage) };
                          Report::Model::<Model, ()>(next)
                      }
                      _ => Report::Unchanged,
                  },
-                 move |model: &Model| {
+                     move |model: &Model| {
                      let mut vision = Vision::create(|wish| match wish {
                          Wish::FitToCage(cage) => Message::FitToCage(cage),
                          _ => Message::Ignore,
