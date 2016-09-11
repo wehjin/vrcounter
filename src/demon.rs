@@ -1,15 +1,15 @@
 use patch::Patch;
 use mist::Mist;
-use vision;
 use vision::Vision;
 use std::boxed::Box;
 use std::collections::HashMap;
+use common::Wish;
 
 pub trait Demon {
     fn clone_and_box(&self) -> Box<Demon>;
     fn id(&self) -> u64;
     fn see(&self) -> Box<DemonVision>;
-    fn poke(&mut self, vision_outcome: vision::Outcome) -> DemonResult;
+    fn poke(&mut self, vision_outcome: Wish) -> DemonResult;
 }
 
 impl Clone for Box<Demon> {

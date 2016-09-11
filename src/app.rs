@@ -16,8 +16,8 @@ use color;
 use std::boxed::Box;
 use cage::Cage;
 use patch::Sigil;
-use vision;
 use hand::Hand;
+use common::Wish;
 
 pub enum Message {
     Stop,
@@ -77,7 +77,7 @@ fn update(message: Message, mut model: Model) -> Option<Model> {
         },
         Message::EmitAnimationFrame => {
             let mut summoner: Summoner = model.summoner.clone();
-            summoner.update(vision::Outcome::Tick);
+            summoner.update(Wish::Tick);
             model.summoner = summoner;
             Some(model)
         },
@@ -121,9 +121,7 @@ pub fn start(viewer: Viewer) -> Sender<Message> {
             match rx.recv() {
                 Ok(message) => {
                     match update(message, model) {
-                        Option::None => {
-                            break;
-                        },
+                        Option::None => { break; },
                         Option::Some(next_model) => {
                             model = next_model;
                             view(&model, &viewer);

@@ -7,11 +7,15 @@ pub enum Error {
     NoCompositor,
 }
 
+#[derive(Copy, Clone, Debug)]
+pub enum Wish {
+    Tick,
+}
+
 pub enum Report<Mod, Out> {
     Unchanged,
     Model(Mod),
     Outcome(Out),
-    Error,
 }
 
 #[derive(Debug)]

@@ -3,10 +3,10 @@ use std::collections::HashMap;
 use common::IdSource;
 use std::cell::RefCell;
 use roar::Roar;
-use vision;
 use demon::Demon;
 use demon::DemonResult;
 use demonoid::Demonoid;
+use common::Wish;
 
 
 #[derive(Clone)]
@@ -45,7 +45,7 @@ impl Summoner {
         self.demons.insert(id, Box::new(demon));
         id
     }
-    pub fn update(&mut self, vision_message: vision::Outcome) {
+    pub fn update(&mut self, vision_message: Wish) {
         let mut new_demons = HashMap::new();
         for (_, demon_box) in &self.demons {
             let mut new_demon_box = demon_box.clone();
