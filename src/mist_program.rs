@@ -23,16 +23,12 @@ pub struct MistProgram {
 
 impl MistProgram {
     pub fn new(display: Rc<Display>, viewer: Viewer) -> Self {
+        use programs::SCREEN_TO_WORLD;
         MistProgram {
             display: display.clone(),
             program: Program::from_source(display.borrow() as &Display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap(),
             indices: NoIndices(PrimitiveType::LinesList),
-            model_matrix: [
-                [1.0, 0.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0, 0.0],
-                [0.0, 1.6, -1.0, 1.0f32],
-            ],
+            model_matrix: SCREEN_TO_WORLD,
             viewer: viewer,
         }
     }

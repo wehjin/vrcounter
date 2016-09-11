@@ -81,6 +81,8 @@ pub struct PatchProgram {
 
 impl PatchProgram {
     pub fn new(display: Rc<Display>, viewer: Viewer) -> Self {
+        use programs::SCREEN_TO_WORLD;
+
         let program = {
             let display_ref: &Display = display.borrow();
             Program::from_source(display_ref, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap()
@@ -92,12 +94,7 @@ impl PatchProgram {
         PatchProgram {
             program: program,
             indices: NoIndices(PrimitiveType::TrianglesList),
-            model_matrix: [
-                [1.0, 0.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0, 0.0],
-                [0.0, 1.6, -1.0, 1.0f32],
-            ],
+            model_matrix: SCREEN_TO_WORLD,
             atlas: atlas,
             viewer: viewer,
             display: display,

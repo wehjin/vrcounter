@@ -22,17 +22,13 @@ pub struct HandProgram {
 
 impl HandProgram {
     pub fn new(display: Rc<Display>, viewer: Viewer) -> Self {
+        use programs::SCREEN_TO_WORLD;
         HandProgram {
             display: display.clone(),
             program: Program::from_source(display.borrow() as &Display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap(),
             indices: NoIndices(PrimitiveType::LinesList),
             viewer: viewer,
-            model_matrix: [
-                [1.0, 0.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0, 0.0],
-                [0.0, 1.5, -0.95, 1.0f32],
-            ],
+            model_matrix: SCREEN_TO_WORLD,
         }
     }
 

@@ -8,12 +8,6 @@ use viewer::Viewer;
 use std::rc::Rc;
 use std::borrow::Borrow;
 
-pub enum HandType {
-    Keyboard,
-    Vive,
-}
-
-
 pub struct Programs {
     floor_program: FloorProgram,
     mist_program: MistProgram,
@@ -59,3 +53,15 @@ impl Programs {
         }
     }
 }
+
+pub enum HandType {
+    Keyboard,
+    Vive,
+}
+
+pub const SCREEN_TO_WORLD: [[f32; 4]; 4] = [
+    [1.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0],
+    [0.0, 0.0, 1.0, 0.0],
+    [0.0, 1.6, -1.0, 1.0f32],
+];

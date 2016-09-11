@@ -44,6 +44,7 @@ use glium::{DisplayBuild};
 use glium::framebuffer::{SimpleFrameBuffer, ToColorAttachment, ToDepthAttachment};
 use glium::glutin::{Event, ElementState, WindowBuilder};
 use programs::Programs;
+use programs::SCREEN_TO_WORLD;
 use viewer::Viewer;
 use std::rc::Rc;
 use app::{Message as AppMessage};
@@ -110,7 +111,9 @@ fn run_in_vr(viewer: Viewer, app: Sender<AppMessage>) {
         let controller_matrix_option = poses.get_controller_to_world_matrix();
         programs.set_controller_model_matrix(&controller_matrix_option);
         if let Some(matrix) = controller_matrix_option {
-            let position = (matrix[3][0], matrix[3][1]-1.6, matrix[3][2]+1.0);
+            let position = (matrix[3][0] - SCREEN_TO_WORLD[3][0],
+                            matrix[3][1] - SCREEN_TO_WORLD[3][1],
+                            matrix[3][2] - SCREEN_TO_WORLD[3][2]);
             viewer.set_hand(Hand { offset: Offset::from(position) });
         }
 
