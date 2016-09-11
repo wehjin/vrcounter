@@ -40,6 +40,8 @@ mod hmd;
 mod constants;
 mod poses;
 mod vr;
+mod demon;
+mod demonoid;
 
 use viewer::Viewer;
 

@@ -7,6 +7,13 @@ pub enum Error {
     NoCompositor,
 }
 
+pub enum Report<Mod, Out> {
+    Unchanged,
+    Model(Mod),
+    Outcome(Out),
+    Error,
+}
+
 #[derive(Debug)]
 pub struct RenderSize {
     pub width: u32,

@@ -1,11 +1,11 @@
 extern crate cage;
 
 use roar::*;
-use summoner::{Report};
 use vision::Vision;
 use cage::Cage;
 use patch::{Patch, Sigil};
 use mist::Mist;
+use common::Report;
 
 #[derive(Copy, Clone, Debug)]
 pub enum Message {

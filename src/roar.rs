@@ -1,6 +1,6 @@
 use std::rc::Rc;
-use summoner::Report;
 use vision::Vision;
+use common::Report;
 
 pub struct Roar<Mdl, Msg, Out> where Mdl: Clone {
     pub init: Rc<Fn() -> Mdl>,
@@ -20,10 +20,10 @@ pub mod demo {
     use super::*;
     use vision;
     use vision::Vision;
-    use summoner::{Report};
     use patch::{Sigil, Patch};
     use beat::Beat;
     use std::time::{Instant, Duration};
+    use common::Report;
 
     #[derive(Clone)]
     pub struct Model {
