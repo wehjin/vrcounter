@@ -5,7 +5,7 @@ use viewer::{Viewer};
 use common::{IdSource};
 use scream;
 use scream::{ScreamPosition};
-use scream::{Screaming};
+use scream::{OScreaming};
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::collections::HashMap;
@@ -26,7 +26,7 @@ pub enum Message {
 }
 
 struct Model {
-    screamings: Vec<Screaming>,
+    screamings: Vec<OScreaming>,
     summoner: Summoner,
 }
 

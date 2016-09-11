@@ -11,44 +11,44 @@ pub struct ScreamPosition {
     pub near: f32,
 }
 
-pub struct Scream {
-    on_present: Box<Fn(&ScreamPosition, &mut IdSource, Viewer) -> Screaming>
+pub struct OScream {
+    on_present: Box<Fn(&ScreamPosition, &mut IdSource, Viewer) -> OScreaming>
 }
 
-impl Scream {
-    pub fn create(on_present: Box<Fn(&ScreamPosition, &mut IdSource, Viewer) -> Screaming>) -> Self {
-        Scream { on_present: on_present }
+impl OScream {
+    pub fn create(on_present: Box<Fn(&ScreamPosition, &mut IdSource, Viewer) -> OScreaming>) -> Self {
+        OScream { on_present: on_present }
     }
-    pub fn present(&self, position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer) -> Screaming {
+    pub fn present(&self, position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer) -> OScreaming {
         let on_present = &(self.on_present);
         on_present(position, id_source, viewer)
     }
 
-    pub fn join_right(self, width: f32, right_scream: Scream) -> Scream {
-        let on_present = move |position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer| -> Screaming {
+    pub fn join_right(self, width: f32, right_scream: OScream) -> OScream {
+        let on_present = move |position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer| -> OScreaming {
             let left_presenting = self.present(position, id_source, viewer.clone());
             let &ScreamPosition { right, top, bottom, near, .. } = position;
             let right_position = ScreamPosition { left: right, right: right + width, top: top, bottom: bottom, near: near };
             let right_presenting = right_scream.present(&right_position, id_source, viewer.clone());
-            Screaming::double(left_presenting, right_presenting)
+            OScreaming::double(left_presenting, right_presenting)
         };
-        Scream::create(Box::new(on_present))
+        OScream::create(Box::new(on_present))
     }
 }
 
-pub struct Screaming {
+pub struct OScreaming {
     on_stop: Box<Fn()>
 }
 
-impl Screaming {
+impl OScreaming {
     pub fn silence(&self) {
         (*self.on_stop)();
     }
     pub fn create(on_stop: Box<Fn()>) -> Self {
-        Screaming { on_stop: on_stop }
+        OScreaming { on_stop: on_stop }
     }
-    pub fn double(first: Screaming, second: Screaming) -> Self {
-        Screaming {
+    pub fn double(first: OScreaming, second: OScreaming) -> Self {
+        OScreaming {
             on_stop: Box::new(move || {
                 first.silence();
                 second.silence();
@@ -57,13 +57,13 @@ impl Screaming {
     }
 }
 
-pub fn of_color(color: [f32; 4]) -> Scream {
-    Scream::create(Box::new(move |position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer| -> Screaming {
+pub fn of_color(color: [f32; 4]) -> OScream {
+    OScream::create(Box::new(move |position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer| -> OScreaming {
         present_color(position, id_source, viewer, color)
     }))
 }
 
-fn present_color(position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer, color: [f32; 4]) -> Screaming {
+fn present_color(position: &ScreamPosition, id_source: &mut IdSource, viewer: Viewer, color: [f32; 4]) -> OScreaming {
     let patch_position = PatchPosition {
         left: position.left, right: position.right, top: position.top, bottom: position.bottom,
         near: position.near
@@ -71,7 +71,7 @@ fn present_color(position: &ScreamPosition, id_source: &mut IdSource, viewer: Vi
     let id = id_source.id();
     let patch = Patch { position: patch_position, color: color, glyph: 'Z', id: id };
     viewer.add_patch(patch);
-    Screaming::create(Box::new(move || {
+    OScreaming::create(Box::new(move || {
         viewer.remove_patch(id);
     }))
 }
