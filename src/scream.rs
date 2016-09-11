@@ -21,8 +21,8 @@ pub enum Message {
 
 pub fn from_color(id: u64, color: [f32; 4]) -> SeedStar<Model, Message, ()> {
     use patch::Sigil;
-    fn init() -> (Model, Option<Wish>) {
-        (Model { cage_option: None }, None)
+    fn init() -> (Model, Vec<Wish>) {
+        (Model { cage_option: None }, Vec::new())
     }
     SeedStar::create(init,
                      |message, _| match message {

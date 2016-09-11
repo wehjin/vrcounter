@@ -45,6 +45,12 @@ mod demonoid;
 mod star;
 mod report;
 
+pub struct Model;
+
+pub struct Message;
+
+pub struct Outcome;
+
 pub fn main() {
     let viewer = viewer::Viewer::start();
     let app = app::start(viewer.clone());

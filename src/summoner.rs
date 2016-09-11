@@ -42,7 +42,7 @@ impl Summoner {
                                                         SubOut: 'static + Clone,
                                                         F: Fn(SubOut) -> Msg + 'static,
                                                         Self: Sized {
-        let (model, wish_option) = ((*star).init)();
+        let (model, wishes) = ((*star).init)();
         let id = id_source.id();
         let demon = Demonoid {
             id: id,
@@ -54,8 +54,10 @@ impl Summoner {
         self.demons.insert(id, Box::new(demon));
 
         // TODO: Add to queue.
-        if let Some(Wish::SummonStar(summon)) = wish_option {
-            summon(id_source, self);
+        for wish in wishes {
+            if let Wish::SummonStar(ref summon) = wish {
+                summon(id_source, self);
+            }
         }
         id
     }

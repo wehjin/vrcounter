@@ -30,7 +30,7 @@ pub mod demo {
                     index: 0,
                     end_instant: Instant::now() + Duration::from_secs(30),
                 };
-                (model, None)
+                (model, vec![])
             },
             move |message, model| match message {
                 Message::IncrementIndex => {
