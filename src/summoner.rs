@@ -7,7 +7,6 @@ use demon::Demon;
 use demon::DemonResult;
 use demonoid::Demonoid;
 use common::Wish;
-use std::rc::Rc;
 
 #[derive(Clone)]
 pub struct Summoner {

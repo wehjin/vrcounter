@@ -1,23 +1,20 @@
 extern crate cage;
 
-use color::{GREEN, RED, BLUE, CYAN, YELLOW, MAGENTA};
 use viewer::{Viewer};
 use common::{IdSource};
-use scream;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::collections::HashMap;
 use summoner::Summoner;
 use demon::DemonVision;
-use roar;
-use color;
 use std::boxed::Box;
-use cage::Cage;
-use patch::Sigil;
 use hand::Hand;
 use common::Wish;
+use star::SeedStar;
+use std::sync::Arc;
 
 pub enum Message {
+    Ignore,
     Stop,
     EmitAnimationFrame,
     SetHand(Hand),
@@ -25,70 +22,27 @@ pub enum Message {
 
 struct Model {
     summoner: Summoner,
-}
-
-pub enum Outcome {
-    Done,
+    id_source: IdSource,
 }
 
 fn init() -> Model {
-    use howl;
-
-    let mut id_source = IdSource::new();
-
-    let mut summoner = Summoner::new();
-    let roar = roar::demo::from(vec![color::GREEN, color::RED, color::BLUE, color::CYAN, color::MAGENTA, color::YELLOW]);
-    summoner.summon(&mut id_source, &roar, |_| Outcome::Done);
-
-    let scream_id1 = id_source.id();
-    let screaming1 = summoner.summon(&mut id_source, &scream::from_color(scream_id1, CYAN), |_| Outcome::Done);
-    let cage1 = Cage::from((-0.3, -0.2, -0.25, -0.15, 0.03, 0.03));
-    summoner.update_one(screaming1, Wish::FitToCage(Cage::from(cage1)));
-
-    let scream_id2 = id_source.id();
-    let screaming2 = summoner.summon(&mut id_source, &scream::from_color(scream_id2, MAGENTA), |_| Outcome::Done);
-    let cage2 = Cage::from((-0.4, -0.3, -0.25, -0.15, 0.03, 0.03));
-    summoner.update_one(screaming2, Wish::FitToCage(Cage::from(cage2)));
-
-    let scream_id3 = id_source.id();
-    let screaming3 = summoner.summon(&mut id_source, &scream::from_color(scream_id3, YELLOW), |_| Outcome::Done);
-    let cage3 = Cage::from((-0.5, -0.4, -0.25, -0.15, 0.03, 0.03));
-    summoner.update_one(screaming3, Wish::FitToCage(Cage::from(cage3)));
-
-
-    let howls = vec![
-        howl::create(id_source.id(), BLUE, Cage::from((-0.70, -0.50, -0.10, 0.10, 0.10, 0.10)), Sigil::Fill),
-        howl::create(id_source.id(), RED, Cage::from((-0.5, 0.5, -0.25, 0.25, 0.0, 0.0)), Sigil::Fill),
-        howl::create(id_source.id(), GREEN, Cage::from((0.25, 0.75, 0.0, 0.5, -0.01, -0.01)), Sigil::Fill),
-        howl::create(id_source.id(), CYAN, Cage::from((-0.06, 0.00, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('J')),
-        howl::create(id_source.id(), YELLOW, Cage::from((0.00, 0.06, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('y')),
-    ];
-    for howl in &howls {
-        summoner.summon(&mut id_source, howl, |_| Outcome::Done);
-    }
-    let howl_id = id_source.id();
-    summoner.summon(&mut id_source, &howl::misty(howl_id, Default::default()), |_| Outcome::Done);
-
     Model {
-        summoner: summoner,
+        summoner: Summoner::new(),
+        id_source: IdSource::new(),
     }
 }
 
 fn update(message: Message, mut model: Model) -> Option<Model> {
     match message {
-        Message::Stop => {
-            finish(model);
-            None
-        },
+        Message::Ignore => Some(model),
+        Message::Stop => None,
         Message::EmitAnimationFrame => {
             let mut summoner: Summoner = model.summoner.clone();
             summoner.update(Wish::Tick);
             model.summoner = summoner;
             Some(model)
         },
-        Message::SetHand(_) => {
-            Some(model)
-        }
+        Message::SetHand(_) => Some(model)
     }
 }
 
@@ -110,12 +64,17 @@ fn view(model: &Model, viewer: &Viewer) {
     }
 }
 
-fn finish(_: Model) {}
-
-pub fn start(viewer: Viewer) -> Sender<Message> {
+pub fn start<Mdl, Msg, Out, F>(viewer: Viewer, star_builder: Arc<F>)
+    -> Sender<Message> where Mdl: Clone + 'static,
+                             Msg: Clone + 'static,
+                             Out: Clone + 'static,
+                             F: Fn() -> SeedStar<Mdl, Msg, Out> + Send + Sync + 'static
+{
     let (tx, rx) = channel();
     thread::spawn(move || {
         let mut model = init();
+        let star = star_builder();
+        model.summoner.summon(&mut model.id_source, &star, |_| Message::Ignore);
         view(&model, &viewer);
         loop {
             match rx.recv() {
@@ -130,7 +89,6 @@ pub fn start(viewer: Viewer) -> Sender<Message> {
                 }
                 Err(err) => {
                     println!("ERROR: {:?}", err);
-                    finish(model);
                     break;
                 },
             };

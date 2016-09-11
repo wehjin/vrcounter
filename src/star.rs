@@ -10,9 +10,9 @@ pub struct SeedStar<Mdl, Msg, Out> where Mdl: Clone {
 }
 
 impl<Mdl, Msg, Out> SeedStar<Mdl, Msg, Out> where Mdl: Clone {
-    pub fn create<F, G, H>(init: F, update: G, view: H) -> Self where F: Fn() -> (Mdl, Vec<Wish>) + 'static,
-                                                                      G: Fn(Msg, &Mdl) -> Report<Mdl, Out> + 'static,
-                                                                      H: Fn(&Mdl) -> Vision<Msg> + 'static {
+    pub fn create<In, Up, Vw>(init: In, update: Up, view: Vw) -> Self where In: Fn() -> (Mdl, Vec<Wish>) + 'static,
+                                                                            Up: Fn(Msg, &Mdl) -> Report<Mdl, Out> + 'static,
+                                                                            Vw: Fn(&Mdl) -> Vision<Msg> + 'static {
         SeedStar { init: Rc::new(init), update: Rc::new(update), view: Rc::new(view) }
     }
 }
