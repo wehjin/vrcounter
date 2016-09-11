@@ -6,10 +6,10 @@ use std::collections::HashMap;
 use common::Wish;
 
 pub trait Demon {
-    fn clone_and_box(&self) -> Box<Demon>;
     fn id(&self) -> u64;
     fn see(&self) -> Box<DemonVision>;
-    fn poke(&mut self, vision_outcome: Wish) -> DemonResult;
+    fn poke(&mut self, wish: Wish) -> DemonResult;
+    fn clone_and_box(&self) -> Box<Demon>;
 }
 
 impl Clone for Box<Demon> {
