@@ -5,7 +5,7 @@ use vision::Vision;
 use cage::Cage;
 use patch::{Patch, Sigil};
 use mist::Mist;
-use common::Report;
+use report::Report;
 
 #[derive(Copy, Clone, Debug)]
 pub enum Message {

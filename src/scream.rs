@@ -1,10 +1,11 @@
 extern crate cage;
 
 use patch::{Patch};
-use common::{Wish, Report};
+use common::Wish;
 use star::Star;
 use std::option::Option;
 use vision::Vision;
+use report::Report;
 use cage::Cage;
 
 #[derive(Copy, Clone, Debug, Default)]

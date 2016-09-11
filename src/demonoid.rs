@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use demon::*;
 use std::rc::Rc;
-use common::Report;
+use report::Report;
 use common::Wish;
 use vision::Vision;
 use std::time::Instant;

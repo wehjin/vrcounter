@@ -3,7 +3,8 @@ pub mod demo {
     use patch::{Sigil, Patch};
     use beat::Beat;
     use std::time::{Instant, Duration};
-    use common::{Report, Wish};
+    use common::Wish;
+    use report::Report;
     use star::Star;
 
     #[derive(Clone)]

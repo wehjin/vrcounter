@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use vision::Vision;
-use common::Report;
+use report::Report;
 
 pub struct Star<Mdl, Msg, Out> where Mdl: Clone {
     pub init: Rc<Fn() -> Mdl>,

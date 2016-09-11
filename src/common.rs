@@ -16,12 +16,6 @@ pub enum Wish {
     FitToCage(Cage),
 }
 
-pub enum Report<Mod, Out> {
-    Unchanged,
-    Model(Mod),
-    Outcome(Out),
-}
-
 #[derive(Debug)]
 pub struct RenderSize {
     pub width: u32,

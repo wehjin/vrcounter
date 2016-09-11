@@ -43,11 +43,10 @@ mod vr;
 mod demon;
 mod demonoid;
 mod star;
-
-use viewer::Viewer;
+mod report;
 
 pub fn main() {
-    let viewer = Viewer::start();
+    let viewer = viewer::Viewer::start();
     let app = app::start(viewer.clone());
     if os::is_windows() {
         vr_user::run(viewer.clone(), app.clone());
