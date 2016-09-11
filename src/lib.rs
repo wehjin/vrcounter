@@ -17,7 +17,7 @@ mod controller_program;
 mod programs;
 mod mat;
 mod cam;
-mod user;
+mod gl_user;
 mod eyebuffers;
 mod common;
 mod os;
@@ -65,7 +65,7 @@ pub fn main() {
     if os::is_windows() {
         run_in_vr(viewer.clone(), app.clone());
     } else {
-        user::run(viewer.clone(), app.clone());
+        gl_user::run(viewer.clone(), app.clone());
     }
     app::stop(app);
     viewer.stop();
