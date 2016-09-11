@@ -34,7 +34,6 @@ pub enum Outcome {
     Done,
 }
 
-
 fn init(viewer: Viewer) -> Model {
     use howl;
     let mut id_source = IdSource::new();

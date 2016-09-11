@@ -1,28 +1,10 @@
-use std::rc::Rc;
-use vision::Vision;
-use common::Report;
-
-pub struct Roar<Mdl, Msg, Out> where Mdl: Clone {
-    pub init: Rc<Fn() -> Mdl>,
-    pub update: Rc<Fn(Msg, &Mdl) -> Report<Mdl, Out>>,
-    pub view: Rc<Fn(&Mdl) -> Vision<Msg>>,
-}
-
-impl<Mdl, Msg, Out> Roar<Mdl, Msg, Out> where Mdl: Clone {
-    pub fn create<F, G, H>(init: F, update: G, view: H) -> Self where F: Fn() -> Mdl + 'static,
-                                                                      G: Fn(Msg, &Mdl) -> Report<Mdl, Out> + 'static,
-                                                                      H: Fn(&Mdl) -> Vision<Msg> + 'static {
-        Roar { init: Rc::new(init), update: Rc::new(update), view: Rc::new(view) }
-    }
-}
-
 pub mod demo {
-    use super::*;
     use vision::Vision;
     use patch::{Sigil, Patch};
     use beat::Beat;
     use std::time::{Instant, Duration};
     use common::{Report, Wish};
+    use star::Star;
 
     #[derive(Clone)]
     pub struct Model {
@@ -36,10 +18,10 @@ pub mod demo {
         IncrementIndex,
     }
 
-    pub fn from(colors: Vec<[f32; 4]>) -> Roar<Model, Message, ()> {
+    pub fn from(colors: Vec<[f32; 4]>) -> Star<Model, Message, ()> {
         let init_colors = colors.clone();
         let update_colors = colors.clone();
-        Roar::create(
+        Star::create(
             move || Model {
                 colors: init_colors.clone(),
                 index: 0,
@@ -54,7 +36,7 @@ pub mod demo {
                 })
             },
             |model| {
-                let mut vision = Vision::create(|vision_message| match vision_message {
+                let mut vision = Vision::create(|wish| match wish {
                     Wish::Tick => Message::IncrementIndex,
                 });
                 let patch = Patch::new(15674u64, 0.55, 0.65, -0.35, -0.25, 0.25, model.colors[model.index].clone(), Sigil::Fill);

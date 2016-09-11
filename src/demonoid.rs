@@ -12,29 +12,29 @@ pub struct Demonoid<Mod: Clone, Msg: Clone, Out: Clone> {
     pub model: Mod,
     pub update: Rc<Fn(Msg, &Mod) -> Report<Mod, Out>>,
     pub view: Rc<Fn(&Mod) -> Vision<Msg>>,
-    pub vision_message_adapter: RefCell<Option<Rc<Fn(Wish) -> Msg>>>,
+    pub wish_adapter: RefCell<Option<Rc<Fn(Wish) -> Msg>>>,
 }
 
 impl<Mod, Msg, Out> Demonoid<Mod, Msg, Out> where Mod: Clone, Msg: Clone, Out: Clone {
-    fn get_vision_adapter_option(&self) -> Option<Rc<Fn(Wish) -> Msg>> {
-        (*(self.vision_message_adapter.borrow())).clone()
+    fn get_wish_adapter_option(&self) -> Option<Rc<Fn(Wish) -> Msg>> {
+        (*(self.wish_adapter.borrow())).clone()
     }
     fn set_vision_adapter_option(&self, option: Option<Rc<Fn(Wish) -> Msg>>) {
-        *self.vision_message_adapter.borrow_mut() = option;
+        *self.wish_adapter.borrow_mut() = option;
     }
-    fn get_vision_and_save_vision_message_adapter(&self) -> Vision<Msg> {
+    fn get_vision_and_save_wish_adapter(&self) -> Vision<Msg> {
         let vision: Vision<Msg> = (*(self.view))(&self.model);
-        self.set_vision_adapter_option(Option::Some(vision.vision_message_adapter.clone()));
+        self.set_vision_adapter_option(Option::Some(vision.wish_adapter.clone()));
         vision
     }
-    fn get_message_from_vision_message(&self, vision_message: Wish) -> Option<Msg> {
-        match vision_message {
+    fn get_message_from_wish(&self, wish: Wish) -> Option<Msg> {
+        match wish {
             Wish::Tick => {
-                let vision = self.get_vision_and_save_vision_message_adapter();
+                let vision = self.get_vision_and_save_wish_adapter();
                 let beats = vision.find_beats(&Instant::now());
                 if beats.len() > 0 {
-                    let vision_message_adapter = self.get_vision_adapter_option().unwrap();
-                    let message = (*vision_message_adapter)(vision_message);
+                    let wish_adapter = self.get_wish_adapter_option().unwrap();
+                    let message = (*wish_adapter)(wish);
                     Some(message)
                 } else {
                     None
@@ -57,12 +57,12 @@ impl<Mod, Msg, Out> Demon for Demonoid<Mod, Msg, Out> where Mod: 'static + Clone
     }
 
     fn see(&self) -> Box<DemonVision> {
-        let vision = self.get_vision_and_save_vision_message_adapter();
+        let vision = self.get_vision_and_save_wish_adapter();
         Box::new(vision)
     }
 
     fn poke(&mut self, vision_message: Wish) -> DemonResult {
-        match self.get_message_from_vision_message(vision_message) {
+        match self.get_message_from_wish(vision_message) {
             Some(message) => {
                 let report: Report<Mod, Out> = (*(self.update))(message, &self.model);
                 match report {

@@ -42,6 +42,7 @@ mod poses;
 mod vr;
 mod demon;
 mod demonoid;
+mod star;
 
 use viewer::Viewer;
 

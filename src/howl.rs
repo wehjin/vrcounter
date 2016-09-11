@@ -1,6 +1,6 @@
 extern crate cage;
 
-use roar::*;
+use star::Star;
 use vision::Vision;
 use cage::Cage;
 use patch::{Patch, Sigil};
@@ -19,8 +19,8 @@ impl Default for Message {
     }
 }
 
-pub fn misty(id: u64, cage: Cage) -> Roar<bool, Message, ()> {
-    Roar::create(|| false,
+pub fn misty(id: u64, cage: Cage) -> Star<bool, Message, ()> {
+    Star::create(|| false,
                  |message, is_silenced| if *is_silenced {
                      Report::Unchanged
                  } else {
@@ -40,8 +40,8 @@ pub fn misty(id: u64, cage: Cage) -> Roar<bool, Message, ()> {
                  })
 }
 
-pub fn create(id: u64, color: [f32; 4], cage: Cage, sigil: Sigil) -> Roar<Cage, Message, ()> {
-    Roar::create(
+pub fn create(id: u64, color: [f32; 4], cage: Cage, sigil: Sigil) -> Star<Cage, Message, ()> {
+    Star::create(
         move || -> Cage { cage },
         |message, _| match message {
             Message::Silence => Report::Outcome(()),
