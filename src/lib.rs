@@ -43,14 +43,12 @@ mod vr;
 mod demon;
 mod demonoid;
 pub mod star;
-mod report;
 
 use std::sync::Arc;
 
 pub use common::IdSource;
 pub use summoner::Summoner;
 pub use common::Wish;
-pub use report::Report;
 pub use vision::Vision;
 pub use star::Star;
 pub use patch::Sigil;

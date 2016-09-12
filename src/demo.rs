@@ -4,7 +4,6 @@ extern crate cage;
 use vrcounter::IdSource;
 use vrcounter::Summoner;
 use vrcounter::Wish;
-use vrcounter::Report;
 use vrcounter::Vision;
 use vrcounter::Star;
 use std::sync::Arc;
@@ -31,8 +30,8 @@ impl Star for MyStar {
         (Model, vec![Wish::SummonStar(Rc::new(summon))])
     }
 
-    fn update(&self, _: Self::Msg, _: &Self::Mdl) -> Report<Self::Mdl, Self::Out> {
-        Report::Unchanged
+    fn update(&self, _: Self::Msg, _: &Self::Mdl) -> (Option<Self::Mdl>, Vec<Wish>, Vec<Self::Out>) {
+        (None, vec![], vec![])
     }
 
     fn view(&self, _: &Self::Mdl) -> Vision<Self::Msg> {

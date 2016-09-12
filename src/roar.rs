@@ -4,7 +4,6 @@ pub mod demo {
     use beat::Beat;
     use std::time::{Instant, Duration};
     use common::Wish;
-    use report::Report;
     use star::Star;
 
     #[derive(Clone)]
@@ -43,16 +42,13 @@ pub mod demo {
             (model, vec![])
         }
 
-        fn update(&self, message: Self::Msg, model: &Self::Mdl) -> Report<Self::Mdl, Self::Out> {
-            match message {
-                Message::IncrementIndex => {
-                    let next_index = (model.index + 1) % self.colors.len();
-                    Report::Model(Model {
-                        index: next_index,
-                        end_instant: model.end_instant,
-                    })
-                }
-                _ => Report::Unchanged
+        fn update(&self, message: Self::Msg, model: &Self::Mdl) -> (Option<Self::Mdl>, Vec<Wish>, Vec<Self::Out>) {
+            if let Message::IncrementIndex = message {
+                let next_index = (model.index + 1) % self.colors.len();
+                let next_model = Model { index: next_index, end_instant: model.end_instant };
+                (Some(next_model), vec![], vec![])
+            } else {
+                (None, vec![], vec![])
             }
         }
 

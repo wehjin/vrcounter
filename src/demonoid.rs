@@ -1,7 +1,6 @@
 use std::cell::RefCell;
 use demon::*;
 use std::rc::Rc;
-use report::Report;
 use common::Wish;
 use vision::Vision;
 use std::time::Instant;
@@ -75,25 +74,14 @@ impl<S: Star> Demon for Demonoid<S> where S: 'static {
     }
 
     fn poke(&mut self, vision_message: Wish) -> DemonResult {
-        match self.get_message_from_wish(vision_message) {
-            Some(message) => {
-                let report: Report<S::Mdl, S::Out> = self.star.as_ref().update(message, &self.model);
-                match report {
-                    Report::Unchanged => DemonResult::Keep,
-                    Report::Model(model) => {
-                        self.model = model;
-                        self.set_vision_adapter_option(Option::None);
-                        DemonResult::Keep
-                    },
-                    Report::Outcome(_) => {
-                        // TODO: Should do something with the outcome like pass it on to whoever is expecting it.
-                        DemonResult::Remove
-                    },
-                }
-            },
-            None => {
-                DemonResult::Keep
+        if let Some(message) = self.get_message_from_wish(vision_message) {
+            let (model_option, _, _) = self.star.as_ref().update(message, &self.model);
+            if let Some(model) = model_option {
+                self.model = model;
+                self.set_vision_adapter_option(Option::None);
             }
+            // TODO Deal with outcomes and wishes
         }
+        DemonResult::Keep
     }
 }

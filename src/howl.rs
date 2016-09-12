@@ -5,7 +5,6 @@ use vision::Vision;
 use cage::Cage;
 use patch::{Patch, Sigil};
 use mist::Mist;
-use report::Report;
 use summoner::Summoner;
 use std::rc::Rc;
 use common::IdSource;
@@ -48,13 +47,13 @@ impl Star for MistyStar {
         (false, wishes)
     }
 
-    fn update(&self, message: Self::Msg, is_silenced: &Self::Mdl) -> Report<Self::Mdl, Self::Out> {
+    fn update(&self, message: Self::Msg, is_silenced: &Self::Mdl) -> (Option<Self::Mdl>, Vec<Wish>, Vec<Self::Out>) {
         if *is_silenced {
-            Report::Unchanged
+            (None, vec![], vec![])
         } else {
             match message {
-                Message::Ignore => Report::Unchanged,
-                Message::Silence => Report::Model(true),
+                Message::Ignore => (None, vec![], vec![]),
+                Message::Silence => (Some(true), vec![], vec![]),
             }
         }
     }
@@ -93,11 +92,8 @@ impl Star for Howl {
         (self.cage, vec![])
     }
 
-    fn update(&self, message: Self::Msg, _: &Self::Mdl) -> Report<Self::Mdl, Self::Out> {
-        match message {
-            Message::Silence => Report::Outcome(()),
-            Message::Ignore => Report::Unchanged,
-        }
+    fn update(&self, _: Self::Msg, _: &Self::Mdl) -> (Option<Self::Mdl>, Vec<Wish>, Vec<Self::Out>) {
+        (None, vec![], vec![])
     }
 
     fn view(&self, model: &Self::Mdl) -> Vision<Self::Msg> {

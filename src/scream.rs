@@ -4,7 +4,6 @@ use patch::{Patch};
 use common::Wish;
 use std::option::Option;
 use vision::Vision;
-use report::Report;
 use cage::Cage;
 use star::Star;
 use patch::Sigil;
@@ -33,13 +32,13 @@ impl Star for Scream {
     fn init(&self) -> (Self::Mdl, Vec<Wish>) {
         (Model { cage_option: None }, Vec::new())
     }
-    fn update(&self, message: Self::Msg, _: &Self::Mdl) -> Report<Self::Mdl, Self::Out> {
+    fn update(&self, message: Self::Msg, _: &Self::Mdl) -> (Option<Self::Mdl>, Vec<Wish>, Vec<Self::Out>) {
         match message {
             Message::FitToCage(cage) => {
                 let next = Model { cage_option: Some(cage) };
-                Report::Model::<Model, ()>(next)
+                (Some(next), vec![], vec![])
             }
-            _ => Report::Unchanged,
+            _ => (None, vec![], vec![])
         }
     }
     fn view(&self, model: &Self::Mdl) -> Vision<Self::Msg> {
