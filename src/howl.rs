@@ -1,11 +1,16 @@
 extern crate cage;
 
-use star::SeedStar;
+use star::Star;
 use vision::Vision;
 use cage::Cage;
 use patch::{Patch, Sigil};
 use mist::Mist;
 use report::Report;
+use summoner::Summoner;
+use std::rc::Rc;
+use common::IdSource;
+use common::Wish;
+use color::WHITE;
 
 #[derive(Copy, Clone, Debug)]
 pub enum Message {
@@ -19,24 +24,31 @@ impl Default for Message {
     }
 }
 
-pub fn misty(id: u64, cage: Cage) -> SeedStar<bool, Message, ()> {
-    use summoner::Summoner;
-    use std::rc::Rc;
-    use common::IdSource;
-    use common::Wish;
-    use color::WHITE;
+#[derive(Clone)]
+pub struct MistyStar {
+    id: u64,
+    cage: Cage
+}
 
-    fn init() -> (bool, Vec<Wish>) {
-        fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
-            let cage = Cage::from((-0.7, -0.5, 0.25, 0.45, 0.25, 0.25));
-            let sub_star = create(id_source.id(), WHITE, cage, Sigil::Letter('S'));
-            summoner.summon(id_source, &sub_star, |_| false);
-        }
+fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
+    let id = id_source.id();
+    let cage = Cage::from((-0.7, -0.5, 0.25, 0.45, 0.25, 0.25));
+    let sub_star = create(id, WHITE, cage, Sigil::Letter('S'));
+    summoner.summon(id_source, &sub_star, |_| false);
+}
 
-        (false, vec![Wish::SummonStar(Rc::new(summon))])
+impl Star for MistyStar {
+    type Mdl = bool;
+    type Msg = Message;
+    type Out = ();
+
+    fn init(&self) -> (Self::Mdl, Vec<Wish>) {
+        let mut wishes = Vec::new();
+        wishes.push(Wish::SummonStar(Rc::new(summon)));
+        (false, wishes)
     }
 
-    fn update(message: Message, is_silenced: &bool) -> Report<bool, ()> {
+    fn update(&self, message: Self::Msg, is_silenced: &Self::Mdl) -> Report<Self::Mdl, Self::Out> {
         if *is_silenced {
             Report::Unchanged
         } else {
@@ -46,30 +58,56 @@ pub fn misty(id: u64, cage: Cage) -> SeedStar<bool, Message, ()> {
             }
         }
     }
-    SeedStar::create(init, update,
-                     move |is_silenced| if *is_silenced {
-                         Default::default()
-                     } else {
-                         let mut vision = Vision::create(|vision_outcome| match vision_outcome {
-                             _ => Message::Ignore,
-                         });
-                         vision.add_mist(Mist::new(id, cage));
-                         vision
-                     })
-}
 
-pub fn create(id: u64, color: [f32; 4], cage: Cage, sigil: Sigil) -> SeedStar<Cage, Message, ()> {
-    SeedStar::create(
-        move || (cage, vec![]),
-        |message, _| match message {
-            Message::Silence => Report::Outcome(()),
-            Message::Ignore => Report::Unchanged,
-        },
-        move |cage| {
-            let mut vision = Vision::create(move |_| Message::Ignore);
-            let patch = Patch::from_cage(cage, color, sigil, id);
-            vision.add_patch(patch);
+    fn view(&self, is_silenced: &Self::Mdl) -> Vision<Self::Msg> {
+        if *is_silenced {
+            Default::default()
+        } else {
+            let mut vision = Vision::create(|vision_outcome| match vision_outcome {
+                _ => Message::Ignore,
+            });
+            vision.add_mist(Mist::new(self.id, self.cage));
             vision
         }
-    )
+    }
+}
+
+pub fn misty(id: u64, cage: Cage) -> MistyStar {
+    MistyStar { id: id, cage: cage }
+}
+
+#[derive(Clone)]
+pub struct Howl {
+    id: u64,
+    color: [f32; 4],
+    cage: Cage,
+    sigil: Sigil
+}
+
+impl Star for Howl {
+    type Mdl = Cage;
+    type Msg = Message;
+    type Out = ();
+
+    fn init(&self) -> (Self::Mdl, Vec<Wish>) {
+        (self.cage, vec![])
+    }
+
+    fn update(&self, message: Self::Msg, _: &Self::Mdl) -> Report<Self::Mdl, Self::Out> {
+        match message {
+            Message::Silence => Report::Outcome(()),
+            Message::Ignore => Report::Unchanged,
+        }
+    }
+
+    fn view(&self, model: &Self::Mdl) -> Vision<Self::Msg> {
+        let mut vision = Vision::create(move |_| Message::Ignore);
+        let patch = Patch::from_cage(&model, self.color, self.sigil, self.id);
+        vision.add_patch(patch);
+        vision
+    }
+}
+
+pub fn create(id: u64, color: [f32; 4], cage: Cage, sigil: Sigil) -> Howl {
+    Howl { id: id, color: color, cage: cage, sigil: sigil }
 }
