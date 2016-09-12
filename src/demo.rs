@@ -1,5 +1,6 @@
 extern crate vrcounter;
 extern crate cage;
+extern crate rand;
 
 use vrcounter::IdSource;
 use vrcounter::Summoner;
@@ -7,12 +8,20 @@ use vrcounter::Wish;
 use vrcounter::Vision;
 use vrcounter::Star;
 use std::sync::Arc;
+use cage::Cage;
 
 #[derive(Clone)]
-pub struct Model;
+pub struct Model {
+    pub color: [f32; 4],
+    pub mist_id: u64,
+    pub patch_id: u64
+}
 
 #[derive(Clone)]
-pub struct Message;
+pub enum Message {
+    Ignore,
+    Toggle
+}
 
 #[derive(Clone)]
 pub struct Outcome;
@@ -25,17 +34,29 @@ impl Star for MyStar {
     type Msg = Message;
     type Out = Outcome;
 
-    fn init(&self) -> (Self::Mdl, Vec<Wish>) {
+    fn init(&self) -> (Model, Vec<Wish>) {
         use std::rc::Rc;
-        (Model, vec![Wish::SummonStar(Rc::new(summon))])
+        use vrcounter::color::BLUE;
+
+        let patch_id = rand::random::<u64>();
+        let mist_id = rand::random::<u64>();
+        let model = Model { color: BLUE, mist_id: mist_id, patch_id: patch_id };
+        (model, vec![Wish::SummonStar(Rc::new(summon))])
     }
 
-    fn update(&self, _: Self::Msg, _: &Self::Mdl) -> (Option<Self::Mdl>, Vec<Wish>, Vec<Self::Out>) {
+    fn update(&self, message: Self::Msg, model: &Model) -> (Option<Model>, Vec<Wish>, Vec<Outcome>) {
         (None, vec![], vec![])
     }
 
-    fn view(&self, _: &Self::Mdl) -> Vision<Self::Msg> {
-        Vision::create(|_| Message)
+    fn view(&self, model: &Model) -> Vision<Message> {
+        use vrcounter::{Patch, Sigil};
+        use vrcounter::Mist;
+
+        let cage = Cage::from((-0.70, -0.50, -0.10, 0.10, 0.00, 0.20));
+        let mut vision = Vision::new(|_| Message::Ignore);
+        vision.add_patch(Patch::from_cage(&cage, model.color, Sigil::Fill, model.patch_id));
+        vision.add_mist(Mist::new(model.mist_id, cage));
+        vision
     }
 }
 
@@ -64,7 +85,6 @@ fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
     let cage3 = Cage::from((-0.5, -0.4, -0.25, -0.15, 0.03, 0.03));
     summoner.update_one(screaming3, Wish::FitToCage(Cage::from(cage3)));
     let howls = vec![
-        howl::create(id_source.id(), BLUE, Cage::from((-0.70, -0.50, -0.10, 0.10, 0.10, 0.10)), Sigil::Fill),
         howl::create(id_source.id(), RED, Cage::from((-0.5, 0.5, -0.25, 0.25, 0.0, 0.0)), Sigil::Fill),
         howl::create(id_source.id(), GREEN, Cage::from((0.25, 0.75, 0.0, 0.5, -0.01, -0.01)), Sigil::Fill),
         howl::create(id_source.id(), CYAN, Cage::from((-0.06, 0.00, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('J')),

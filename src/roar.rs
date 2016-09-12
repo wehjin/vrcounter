@@ -53,7 +53,7 @@ pub mod demo {
         }
 
         fn view(&self, model: &Self::Mdl) -> Vision<Self::Msg> {
-            let mut vision = Vision::create(|wish| match wish {
+            let mut vision = Vision::new(|wish| match wish {
                 Wish::Tick => Message::IncrementIndex,
                 _ => Message::Ignore
             });

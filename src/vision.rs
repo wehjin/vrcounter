@@ -7,6 +7,7 @@ use beat::Beat;
 use common::Wish;
 
 pub struct Vision<Msg> {
+    // TODO Wish_adapter should return Option<Msg>
     pub wish_adapter: Rc<Fn(Wish) -> Msg>,
     pub patches: HashMap<u64, Patch>,
     pub mists: HashMap<u64, Mist>,
@@ -15,12 +16,12 @@ pub struct Vision<Msg> {
 
 impl<Msg> Default for Vision<Msg> where Msg: Default {
     fn default() -> Self {
-        Vision::create(|_| Default::default())
+        Vision::new(|_| Default::default())
     }
 }
 
 impl<Msg> Vision<Msg> {
-    pub fn create<F>(adapter: F) -> Self where F: Fn(Wish) -> Msg + 'static {
+    pub fn new<F>(adapter: F) -> Self where F: Fn(Wish) -> Msg + 'static {
         Vision {
             wish_adapter: Rc::new(adapter),
             patches: HashMap::new(),
@@ -67,7 +68,7 @@ mod tests {
         use cage::Cage;
         use mist::Mist;
 
-        let mut vision = Vision::create(|x| x);
+        let mut vision = Vision::new(|x| x);
         vision.add_mist(Default::default());
         vision.add_mist(Mist::new(10, Cage::from((-10.0, -9.0, -1.0, 1.0, -1.0, 1.0))));
         let mists = vision.find_mists(0.0, 0.0, 0.0);
@@ -79,7 +80,7 @@ mod tests {
         use beat::Beat;
         use std::time::{Duration, Instant};
 
-        let mut vision = Vision::create(|x| x);
+        let mut vision = Vision::new(|x| x);
         let now = Instant::now();
         let beat = Beat::until_instant(1, now + Duration::from_millis(3000));
         vision.add_beat(beat);

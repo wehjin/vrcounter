@@ -62,7 +62,7 @@ impl Star for MistyStar {
         if *is_silenced {
             Default::default()
         } else {
-            let mut vision = Vision::create(|vision_outcome| match vision_outcome {
+            let mut vision = Vision::new(|vision_outcome| match vision_outcome {
                 _ => Message::Ignore,
             });
             vision.add_mist(Mist::new(self.id, self.cage));
@@ -97,7 +97,7 @@ impl Star for Howl {
     }
 
     fn view(&self, model: &Self::Mdl) -> Vision<Self::Msg> {
-        let mut vision = Vision::create(move |_| Message::Ignore);
+        let mut vision = Vision::new(move |_| Message::Ignore);
         let patch = Patch::from_cage(&model, self.color, self.sigil, self.id);
         vision.add_patch(patch);
         vision

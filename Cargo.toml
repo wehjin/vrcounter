@@ -13,6 +13,7 @@ image = "0.10.1"
 rusttype = "0.2.0"
 unicode-normalization = "^0.1.2"
 cage = {git="https://github.com/wehjin/rust-cage"}
+rand = "0.3"
 
 [lib]
 name = "vrcounter"

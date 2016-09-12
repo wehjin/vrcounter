@@ -42,7 +42,7 @@ impl Star for Scream {
         }
     }
     fn view(&self, model: &Self::Mdl) -> Vision<Self::Msg> {
-        let mut vision = Vision::create(|wish| match wish {
+        let mut vision = Vision::new(|wish| match wish {
             Wish::FitToCage(cage) => Message::FitToCage(cage),
             _ => Message::Ignore,
         });

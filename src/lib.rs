@@ -52,6 +52,8 @@ pub use common::Wish;
 pub use vision::Vision;
 pub use star::Star;
 pub use patch::Sigil;
+pub use patch::Patch;
+pub use mist::Mist;
 
 pub fn start<S: Star, F>(star_builder: Arc<F>) where S: Clone + 'static,
                                                      F: Fn() -> S + Send + Sync + 'static
