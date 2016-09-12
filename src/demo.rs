@@ -7,6 +7,7 @@ use vrcounter::Wish;
 use vrcounter::Report;
 use vrcounter::Vision;
 use vrcounter::SeedStar;
+use vrcounter::scream::Scream;
 use std::sync::Arc;
 use vrcounter::star::Star;
 
