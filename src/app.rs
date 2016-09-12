@@ -37,12 +37,14 @@ fn update(message: Message, mut model: Model) -> Option<Model> {
         Message::Ignore => Some(model),
         Message::Stop => None,
         Message::EmitAnimationFrame => {
-            let mut summoner: Summoner = model.summoner.clone();
-            summoner.update(Wish::Tick);
-            model.summoner = summoner;
+            (&mut model.summoner).update(Wish::Tick);
             Some(model)
         },
-        Message::SetHand(_) => Some(model)
+        Message::SetHand(hand) => {
+            // TODO Maybe check if hand occupies mist
+            (&mut model.summoner).update(Wish::SenseHand(hand));
+            Some(model)
+        }
     }
 }
 

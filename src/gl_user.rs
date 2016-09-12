@@ -59,6 +59,7 @@ pub fn init(viewer: Viewer, app: Sender<AppMessage>) -> Model {
 }
 
 pub fn update(message: Message, mut model: Model) -> Option<Model> {
+    use app::Message as AppMessage;
     match message {
         Message::Quit => None,
         Message::ResetCamera => Some(model.with_camera(Camera::start())),
@@ -71,17 +72,19 @@ pub fn update(message: Message, mut model: Model) -> Option<Model> {
             Some(model)
         },
         Message::MoveHand(direction) => {
-            const STEP: f32 = 0.15;
-            let (dx, dy) = match direction {
-                Direction::Up => (0.0, STEP),
-                Direction::Down => (0.0, -STEP),
-                Direction::Left => (-STEP, 0.0),
-                Direction::Right => (STEP, 0.0),
-                _ => (0.0, 0.0),
+            const STEP: f32 = 0.05;
+            let (dx, dy, dz) = match direction {
+                Direction::Up => (0.0, STEP, 0.0),
+                Direction::Down => (0.0, -STEP, 0.0),
+                Direction::Left => (-STEP, 0.0, 0.0),
+                Direction::Right => (STEP, 0.0, 0.0),
+                Direction::Far => (0.0, 0.0, -STEP),
+                Direction::Near => (0.0, 0.0, STEP),
             };
-            let offset = model.hand.offset.shift(dx, dy, 0.0);
+            let offset = model.hand.offset.shift(dx, dy, dz);
             model.hand.offset = offset;
             model.viewer.set_hand(model.hand);
+            model.app.send(AppMessage::SetHand(model.hand)).unwrap();
             Some(model)
         },
     }
@@ -153,6 +156,8 @@ fn message_option_from_key(key: Key) -> Option<Message> {
         Key::J => Some(Message::MoveHand(Direction::Down)),
         Key::K => Some(Message::MoveHand(Direction::Up)),
         Key::L => Some(Message::MoveHand(Direction::Right)),
+        Key::RBracket => Some(Message::MoveHand(Direction::Far)),
+        Key::LBracket => Some(Message::MoveHand(Direction::Near)),
     }
 }
 

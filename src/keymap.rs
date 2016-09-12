@@ -13,6 +13,8 @@ pub enum Key {
     J,
     K,
     L,
+    RBracket,
+    LBracket,
     Quit,
 }
 
@@ -50,6 +52,8 @@ impl Key {
             &Event::KeyboardInput(ElementState::Pressed, 38, _) => Some(Key::J),
             &Event::KeyboardInput(ElementState::Pressed, 40, _) => Some(Key::K),
             &Event::KeyboardInput(ElementState::Pressed, 37, _) => Some(Key::L),
+            &Event::KeyboardInput(ElementState::Pressed, 30, _) => Some(Key::RBracket),
+            &Event::KeyboardInput(ElementState::Pressed, 33, _) => Some(Key::LBracket),
             &Event::KeyboardInput(ElementState::Pressed, code, _) => {
                 println!("{}", code);
                 None

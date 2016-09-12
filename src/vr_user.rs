@@ -59,7 +59,9 @@ pub fn run(viewer: Viewer, app: Sender<AppMessage>) {
             let position = (matrix[3][0] - SCREEN_TO_WORLD[3][0],
                             matrix[3][1] - SCREEN_TO_WORLD[3][1],
                             matrix[3][2] - SCREEN_TO_WORLD[3][2]);
-            viewer.set_hand(Hand { offset: Offset::from(position) });
+            let hand = Hand { offset: Offset::from(position) };
+            viewer.set_hand(hand);
+            app.send(AppMessage::SetHand(hand)).unwrap();
         }
 
         hmd.draw(&programs, &world_to_hmd, display.borrow(), &mut left_frame, &mut right_frame);

@@ -7,20 +7,26 @@ use vrcounter::Summoner;
 use vrcounter::Wish;
 use vrcounter::Vision;
 use vrcounter::Star;
+use vrcounter::Hand;
 use std::sync::Arc;
 use cage::Cage;
+use cage::Offset;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Model {
-    pub color: [f32; 4],
+    pub colors: [[f32; 4]; 2],
+    pub color_index: usize,
     pub mist_id: u64,
-    pub patch_id: u64
+    pub patch_id: u64,
+    pub delta_z_option: Option<f32>,
+    pub cage: Cage,
 }
 
 #[derive(Clone)]
 pub enum Message {
     Ignore,
-    Toggle
+    Toggle,
+    SeeHand(Hand),
 }
 
 #[derive(Clone)]
@@ -36,26 +42,70 @@ impl Star for MyStar {
 
     fn init(&self) -> (Model, Vec<Wish>) {
         use std::rc::Rc;
-        use vrcounter::color::BLUE;
+        use vrcounter::color::{BLUE, YELLOW};
 
         let patch_id = rand::random::<u64>();
         let mist_id = rand::random::<u64>();
-        let model = Model { color: BLUE, mist_id: mist_id, patch_id: patch_id };
+        let cage = Cage::from((-0.70, -0.50, -0.10, 0.10, 0.00, 0.20));
+        let model = Model {
+            colors: [BLUE, YELLOW],
+            color_index: 0,
+            mist_id: mist_id,
+            patch_id: patch_id,
+            delta_z_option: None,
+            cage: cage
+        };
         (model, vec![Wish::SummonStar(Rc::new(summon))])
     }
 
     fn update(&self, message: Self::Msg, model: &Model) -> (Option<Model>, Vec<Wish>, Vec<Outcome>) {
-        (None, vec![], vec![])
+        if let Message::SeeHand(hand) = message {
+            let Offset { x, y, z } = hand.offset;
+            let mut new_delta_z_option = None;
+            let mut did_toggle = false;
+            if model.cage.contains(x, y, z) {
+                println!("See Hand!");
+                let (_, _, _, _, f, n) = model.cage.limits();
+                let center_z = (f + n) / 2.0;
+                let delta_z = z - center_z;
+                new_delta_z_option = Some(delta_z);
+                if let Some(previous_delta_z) = model.delta_z_option {
+                    println!("Delta_z: {} previous: {}", delta_z, previous_delta_z);
+                    if delta_z < 0.0 && previous_delta_z >= 0.0 {
+                        println!("See Toggle!");
+                        did_toggle = true;
+                    }
+                } else {
+                    println!("Delta_z: {} no previous", delta_z);
+                }
+            } else {
+                println!("No Hand!");
+            }
+            let mut new_model = model.clone();
+            if did_toggle {
+                new_model.color_index = model.color_index + 1;
+            }
+            new_model.delta_z_option = new_delta_z_option;
+            println!("New model: {:?}", new_model);
+            (Some(new_model), vec![], vec![])
+        } else {
+            (None, vec![], vec![])
+        }
     }
 
     fn view(&self, model: &Model) -> Vision<Message> {
         use vrcounter::{Patch, Sigil};
         use vrcounter::Mist;
-
-        let cage = Cage::from((-0.70, -0.50, -0.10, 0.10, 0.00, 0.20));
-        let mut vision = Vision::new(|_| Message::Ignore);
-        vision.add_patch(Patch::from_cage(&cage, model.color, Sigil::Fill, model.patch_id));
-        vision.add_mist(Mist::new(model.mist_id, cage));
+        let mut vision = Vision::new(|wish| {
+            if let Wish::SenseHand(hand) = wish {
+                Message::SeeHand(hand)
+            } else {
+                Message::Ignore
+            }
+        });
+        let color = model.colors[model.color_index % model.colors.len()];
+        vision.add_patch(Patch::from_cage(&model.cage, color, Sigil::Fill, model.patch_id));
+        vision.add_mist(Mist::new(model.mist_id, model.cage));
         vision
     }
 }
