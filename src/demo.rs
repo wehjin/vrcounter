@@ -64,29 +64,23 @@ impl Star for MyStar {
             let mut new_delta_z_option = None;
             let mut did_toggle = false;
             if model.cage.contains(x, y, z) {
-                println!("See Hand!");
                 let (_, _, _, _, f, n) = model.cage.limits();
                 let center_z = (f + n) / 2.0;
                 let delta_z = z - center_z;
                 new_delta_z_option = Some(delta_z);
                 if let Some(previous_delta_z) = model.delta_z_option {
-                    println!("Delta_z: {} previous: {}", delta_z, previous_delta_z);
-                    if delta_z < 0.0 && previous_delta_z >= 0.0 {
+                    const BIAS: f32 = 0.045;
+                    if delta_z < BIAS && previous_delta_z >= BIAS {
                         println!("See Toggle!");
                         did_toggle = true;
                     }
-                } else {
-                    println!("Delta_z: {} no previous", delta_z);
                 }
-            } else {
-                println!("No Hand!");
             }
             let mut new_model = model.clone();
             if did_toggle {
                 new_model.color_index = model.color_index + 1;
             }
             new_model.delta_z_option = new_delta_z_option;
-            println!("New model: {:?}", new_model);
             (Some(new_model), vec![], vec![])
         } else {
             (None, vec![], vec![])
