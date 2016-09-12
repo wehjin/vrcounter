@@ -5,29 +5,39 @@ use report::Report;
 use common::Wish;
 use vision::Vision;
 use std::time::Instant;
+use star::Star;
 
 #[derive(Clone)]
-pub struct Demonoid<Mod: Clone, Msg: Clone, Out: Clone> {
+pub struct Demonoid<S: Star> {
     pub id: u64,
-    pub model: Mod,
-    pub update: Rc<Fn(Msg, &Mod) -> Report<Mod, Out>>,
-    pub view: Rc<Fn(&Mod) -> Vision<Msg>>,
-    pub wish_adapter: RefCell<Option<Rc<Fn(Wish) -> Msg>>>,
+    pub model: S::Mdl,
+    pub star: Rc<S>,
+    pub wish_adapter: RefCell<Option<Rc<Fn(Wish) -> S::Msg>>>,
 }
 
-impl<Mod, Msg, Out> Demonoid<Mod, Msg, Out> where Mod: Clone, Msg: Clone, Out: Clone {
-    fn get_wish_adapter_option(&self) -> Option<Rc<Fn(Wish) -> Msg>> {
+impl<S: Star> Demonoid<S>
+{
+    pub fn new(id: u64, model: S::Mdl, star: &S) -> Self {
+        Demonoid {
+            id: id,
+            model: model,
+            star: Rc::new((*star).clone()),
+            wish_adapter: RefCell::new(None)
+        }
+    }
+
+    fn get_wish_adapter_option(&self) -> Option<Rc<Fn(Wish) -> S::Msg>> {
         (*(self.wish_adapter.borrow())).clone()
     }
-    fn set_vision_adapter_option(&self, option: Option<Rc<Fn(Wish) -> Msg>>) {
+    fn set_vision_adapter_option(&self, option: Option<Rc<Fn(Wish) -> S::Msg>>) {
         *self.wish_adapter.borrow_mut() = option;
     }
-    fn get_vision_and_save_wish_adapter(&self) -> Vision<Msg> {
-        let vision: Vision<Msg> = (*(self.view))(&self.model);
+    fn get_vision_and_save_wish_adapter(&self) -> Vision<S::Msg> {
+        let vision: Vision<S::Msg> = self.star.as_ref().view(&self.model);
         self.set_vision_adapter_option(Option::Some(vision.wish_adapter.clone()));
         vision
     }
-    fn get_message_from_wish(&self, wish: Wish) -> Option<Msg> {
+    fn get_message_from_wish(&self, wish: Wish) -> Option<S::Msg> {
         let vision = self.get_vision_and_save_wish_adapter();
         match wish {
             Wish::Tick => {
@@ -49,11 +59,9 @@ impl<Mod, Msg, Out> Demonoid<Mod, Msg, Out> where Mod: Clone, Msg: Clone, Out: C
     }
 }
 
-impl<Mod, Msg, Out> Demon for Demonoid<Mod, Msg, Out> where Mod: 'static + Clone,
-                                                            Msg: 'static + Clone,
-                                                            Out: 'static + Clone {
+impl<S: Star> Demon for Demonoid<S> where S: 'static {
     fn clone_and_box(&self) -> Box<Demon> {
-        let demonoid: Demonoid<Mod, Msg, Out> = (*self).clone();
+        let demonoid = (*self).clone() as Self;
         Box::new(demonoid)
     }
 
@@ -69,7 +77,7 @@ impl<Mod, Msg, Out> Demon for Demonoid<Mod, Msg, Out> where Mod: 'static + Clone
     fn poke(&mut self, vision_message: Wish) -> DemonResult {
         match self.get_message_from_wish(vision_message) {
             Some(message) => {
-                let report: Report<Mod, Out> = (*(self.update))(message, &self.model);
+                let report: Report<S::Mdl, S::Out> = self.star.as_ref().update(message, &self.model);
                 match report {
                     Report::Unchanged => DemonResult::Keep,
                     Report::Model(model) => {

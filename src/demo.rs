@@ -8,6 +8,7 @@ use vrcounter::Report;
 use vrcounter::Vision;
 use vrcounter::SeedStar;
 use std::sync::Arc;
+use vrcounter::star::Star;
 
 #[derive(Clone)]
 pub struct Model;
@@ -17,6 +18,22 @@ pub struct Message;
 
 #[derive(Clone)]
 pub struct Outcome;
+
+struct MyStar;
+
+//impl Star for MyStar {
+//    fn init(&self) -> (Mdl, Vec<Wish>) {
+//        unimplemented!()
+//    }
+//
+//    fn update(&self, _: Msg, _: &Mdl) -> Report<Mdl, Out> {
+//        unimplemented!()
+//    }
+//
+//    fn view(&self, _: &Mdl) -> Vision<Msg> {
+//        unimplemented!()
+//    }
+//}
 
 fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
     use cage::Cage;

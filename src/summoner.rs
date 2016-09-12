@@ -1,12 +1,11 @@
 use std::boxed::Box;
 use std::collections::HashMap;
 use common::IdSource;
-use std::cell::RefCell;
-use star::SeedStar;
 use demon::Demon;
 use demon::DemonResult;
 use demonoid::Demonoid;
 use common::Wish;
+use star::Star;
 
 #[derive(Clone)]
 pub struct Summoner {
@@ -32,25 +31,13 @@ impl Summoner {
         }
     }
 
-    pub fn summon<Msg, SubMod, SubMsg, SubOut, F>(&mut self,
-                                                  id_source: &mut IdSource,
-                                                  star: &SeedStar<SubMod, SubMsg, SubOut>,
-                                                  outcome_adapter: F) -> u64
-                                                  where SubMod: 'static + Clone,
-                                                        SubMsg: 'static + Clone,
-                                                        SubOut: 'static + Clone,
-                                                        F: Fn(SubOut) -> Msg + 'static,
-                                                        Self: Sized {
-        let (model, wishes) = ((*star).init)();
+    pub fn summon<Msg, S: Star, F>(&mut self, id_source: &mut IdSource, star: &S, outcome_adapter: F) -> u64
+        where S: 'static, F: Fn(S::Out) -> Msg + 'static, Self: Sized
+    {
+        let (model, wishes) = star.init();
         let id = id_source.id();
-        let demon = Demonoid {
-            id: id,
-            model: model,
-            update: star.update.clone(),
-            view: star.view.clone(),
-            wish_adapter: RefCell::new(Option::None),
-        };
-        self.demons.insert(id, Box::new(demon));
+        let demonoid = Demonoid::new(id, model, star);
+        self.demons.insert(id, Box::new(demonoid));
 
         // TODO: Add to queue.
         for wish in wishes {

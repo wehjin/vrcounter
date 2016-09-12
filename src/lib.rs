@@ -42,7 +42,7 @@ mod poses;
 mod vr;
 mod demon;
 mod demonoid;
-mod star;
+pub mod star;
 mod report;
 
 use std::sync::Arc;
