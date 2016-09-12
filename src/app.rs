@@ -10,8 +10,8 @@ use demon::DemonVision;
 use std::boxed::Box;
 use hand::Hand;
 use common::Wish;
-use star::SeedStar;
 use std::sync::Arc;
+use star::Star;
 
 pub enum Message {
     Ignore,
@@ -64,11 +64,9 @@ fn view(model: &Model, viewer: &Viewer) {
     }
 }
 
-pub fn start<Mdl, Msg, Out, F>(viewer: Viewer, star_builder: Arc<F>)
-    -> Sender<Message> where Mdl: Clone + 'static,
-                             Msg: Clone + 'static,
-                             Out: Clone + 'static,
-                             F: Fn() -> SeedStar<Mdl, Msg, Out> + Send + Sync + 'static
+pub fn start<S: Star, F>(viewer: Viewer, star_builder: Arc<F>)
+    -> Sender<Message> where S: 'static,
+                             F: Fn() -> S + Send + Sync + 'static
 {
     let (tx, rx) = channel();
     thread::spawn(move || {
