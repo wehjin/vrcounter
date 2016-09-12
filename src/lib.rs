@@ -52,14 +52,11 @@ pub use summoner::Summoner;
 pub use common::Wish;
 pub use report::Report;
 pub use vision::Vision;
-pub use star::SeedStar;
+pub use star::Star;
 pub use patch::Sigil;
 
-pub fn start<Mdl, Msg, Out, F>(star_builder: Arc<F>)
-    where Mdl: Clone + 'static,
-          Msg: Clone + 'static,
-          Out: Clone + 'static,
-          F: Fn() -> SeedStar<Mdl, Msg, Out> + Send + Sync + 'static
+pub fn start<S: Star, F>(star_builder: Arc<F>) where S: Clone + 'static,
+                                                     F: Fn() -> S + Send + Sync + 'static
 {
     let viewer = viewer::Viewer::start();
     let app = app::start(viewer.clone(), star_builder);

@@ -6,10 +6,8 @@ use vrcounter::Summoner;
 use vrcounter::Wish;
 use vrcounter::Report;
 use vrcounter::Vision;
-use vrcounter::SeedStar;
-use vrcounter::scream::Scream;
+use vrcounter::Star;
 use std::sync::Arc;
-use vrcounter::star::Star;
 
 #[derive(Clone)]
 pub struct Model;
@@ -20,21 +18,27 @@ pub struct Message;
 #[derive(Clone)]
 pub struct Outcome;
 
+#[derive(Clone)]
 struct MyStar;
 
-//impl Star for MyStar {
-//    fn init(&self) -> (Mdl, Vec<Wish>) {
-//        unimplemented!()
-//    }
-//
-//    fn update(&self, _: Msg, _: &Mdl) -> Report<Mdl, Out> {
-//        unimplemented!()
-//    }
-//
-//    fn view(&self, _: &Mdl) -> Vision<Msg> {
-//        unimplemented!()
-//    }
-//}
+impl Star for MyStar {
+    type Mdl = Model;
+    type Msg = Message;
+    type Out = Outcome;
+
+    fn init(&self) -> (Self::Mdl, Vec<Wish>) {
+        use std::rc::Rc;
+        (Model, vec![Wish::SummonStar(Rc::new(summon))])
+    }
+
+    fn update(&self, _: Self::Msg, _: &Self::Mdl) -> Report<Self::Mdl, Self::Out> {
+        Report::Unchanged
+    }
+
+    fn view(&self, _: &Self::Mdl) -> Vision<Self::Msg> {
+        Vision::create(|_| Message)
+    }
+}
 
 fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
     use cage::Cage;
@@ -74,20 +78,7 @@ fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
     summoner.summon(id_source, &howl::misty(howl_id, Default::default()), |_| Outcome);
 }
 
-fn init() -> (Model, Vec<Wish>) {
-    use std::rc::Rc;
-    (Model, vec![Wish::SummonStar(Rc::new(summon))])
-}
-
-fn update(_: Message, _: &Model) -> Report<Model, Outcome> {
-    Report::Unchanged
-}
-
-fn view(_: &Model) -> Vision<Message> {
-    Vision::create(|_| Message)
-}
-
 fn main() {
-    let star_builder = Arc::new(|| SeedStar::create(init, update, view));
+    let star_builder = Arc::new(|| MyStar);
     vrcounter::start(star_builder)
 }
