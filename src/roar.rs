@@ -54,8 +54,8 @@ pub mod demo {
 
         fn view(&self, model: &Self::Mdl) -> Vision<Self::Msg> {
             let mut vision = Vision::new(|wish| match wish {
-                Wish::Tick => Message::IncrementIndex,
-                _ => Message::Ignore
+                Wish::Tick => Some(Message::IncrementIndex),
+                _ => None,
             });
             let patch = Patch::new(15674u64, 0.55, 0.65, -0.35, -0.25, 0.25, self.colors[model.index].clone(), Sigil::Fill);
             vision.add_patch(patch);

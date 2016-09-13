@@ -92,9 +92,9 @@ impl Star for MyStar {
         use vrcounter::Mist;
         let mut vision = Vision::new(|wish| {
             if let Wish::SenseHand(hand) = wish {
-                Message::SeeHand(hand)
+                Some(Message::SeeHand(hand))
             } else {
-                Message::Ignore
+                None
             }
         });
         let color = model.colors[model.color_index % model.colors.len()];

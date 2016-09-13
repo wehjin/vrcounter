@@ -11,7 +11,7 @@ pub struct Demonoid<S: Star> {
     pub id: u64,
     pub model: S::Mdl,
     pub star: Rc<S>,
-    pub wish_adapter: RefCell<Option<Rc<Fn(Wish) -> S::Msg>>>,
+    pub wish_adapter: RefCell<Option<Rc<Fn(Wish) -> Option<S::Msg>>>>,
 }
 
 impl<S: Star> Demonoid<S>
@@ -25,15 +25,15 @@ impl<S: Star> Demonoid<S>
         }
     }
 
-    fn get_wish_adapter_option(&self) -> Option<Rc<Fn(Wish) -> S::Msg>> {
+    fn get_wish_adapter_option(&self) -> Option<Rc<Fn(Wish) -> Option<S::Msg>>> {
         (*(self.wish_adapter.borrow())).clone()
     }
-    fn set_vision_adapter_option(&self, option: Option<Rc<Fn(Wish) -> S::Msg>>) {
+    fn set_vision_adapter_option(&self, option: Option<Rc<Fn(Wish) -> Option<S::Msg>>>) {
         *self.wish_adapter.borrow_mut() = option;
     }
     fn get_vision_and_save_wish_adapter(&self) -> Vision<S::Msg> {
         let vision: Vision<S::Msg> = self.star.as_ref().view(&self.model);
-        self.set_vision_adapter_option(Option::Some(vision.wish_adapter.clone()));
+        self.set_vision_adapter_option(Option::Some(vision.adapter.clone()));
         vision
     }
     fn get_message_from_wish(&self, wish: Wish) -> Option<S::Msg> {
@@ -43,16 +43,14 @@ impl<S: Star> Demonoid<S>
                 let beats = vision.find_beats(&Instant::now());
                 if beats.len() > 0 {
                     let wish_adapter = self.get_wish_adapter_option().unwrap();
-                    let message = (*wish_adapter)(wish);
-                    Some(message)
+                    (*wish_adapter)(wish)
                 } else {
                     None
                 }
             },
             _ => {
                 let wish_adapter = self.get_wish_adapter_option().unwrap();
-                let message = (*wish_adapter)(wish);
-                Some(message)
+                (*wish_adapter)(wish)
             }
         }
     }
@@ -68,7 +66,7 @@ impl<S: Star> Demon for Demonoid<S> where S: 'static {
         self.id
     }
 
-    fn see(&self) -> Box<DemonVision> {
+    fn see(&self) -> Box<Sight> {
         let vision = self.get_vision_and_save_wish_adapter();
         Box::new(vision)
     }

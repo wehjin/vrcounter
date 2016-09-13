@@ -6,7 +6,7 @@ use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::collections::HashMap;
 use summoner::Summoner;
-use demon::DemonVision;
+use demon::Sight;
 use std::boxed::Box;
 use hand::Hand;
 use common::Wish;
@@ -54,7 +54,7 @@ fn view(model: &Model, viewer: &Viewer) {
     viewer.clear();
     let demon_boxes = model.summoner.get_demon_boxes();
     for demon_box in demon_boxes {
-        let vision_box: Box<DemonVision> = (&demon_box).see();
+        let vision_box: Box<Sight> = (&demon_box).see();
         let patches: &HashMap<u64, Patch> = (*vision_box).patches();
         for (_, patch) in patches.iter() {
             viewer.add_patch(*patch);

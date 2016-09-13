@@ -6,24 +6,23 @@ use mist::Mist;
 use beat::Beat;
 use common::Wish;
 
-pub struct Vision<Msg> {
-    // TODO Wish_adapter should return Option<Msg>
-    pub wish_adapter: Rc<Fn(Wish) -> Msg>,
+pub struct Vision<T> {
+    pub adapter: Rc<Fn(Wish) -> Option<T>>,
     pub patches: HashMap<u64, Patch>,
     pub mists: HashMap<u64, Mist>,
     beats: HashMap<u64, Beat>,
 }
 
-impl<Msg> Default for Vision<Msg> where Msg: Default {
+impl<T> Default for Vision<T> {
     fn default() -> Self {
-        Vision::new(|_| Default::default())
+        Vision::new(|_| None)
     }
 }
 
-impl<Msg> Vision<Msg> {
-    pub fn new<F>(adapter: F) -> Self where F: Fn(Wish) -> Msg + 'static {
+impl<T> Vision<T> {
+    pub fn new<F>(adapter: F) -> Self where F: Fn(Wish) -> Option<T> + 'static {
         Vision {
-            wish_adapter: Rc::new(adapter),
+            adapter: Rc::new(adapter),
             patches: HashMap::new(),
             mists: HashMap::new(),
             beats: HashMap::new(),

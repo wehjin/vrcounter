@@ -43,8 +43,8 @@ impl Star for Scream {
     }
     fn view(&self, model: &Self::Mdl) -> Vision<Self::Msg> {
         let mut vision = Vision::new(|wish| match wish {
-            Wish::FitToCage(cage) => Message::FitToCage(cage),
-            _ => Message::Ignore,
+            Wish::FitToCage(cage) => Some(Message::FitToCage(cage)),
+            _ => None,
         });
         if let Some(cage) = model.cage_option {
             let patch = Patch::from_cage(&cage, self.color, Sigil::Fill, self.id);
