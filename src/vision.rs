@@ -19,14 +19,17 @@ impl<T> Default for Vision<T> {
     }
 }
 
-impl<T> Vision<T> {
-    pub fn new<F>(adapter: F) -> Self where F: Fn(Wish) -> Option<T> + 'static {
+impl<Msg> Vision<Msg> {
+    pub fn new<F>(adapter: F) -> Self where F: Fn(Wish) -> Option<Msg> + 'static {
         Vision {
             adapter: Rc::new(adapter),
             patches: HashMap::new(),
             mists: HashMap::new(),
             beats: HashMap::new(),
         }
+    }
+    pub fn message_from_wish(&self, wish: Wish) -> Option<Msg> {
+        (*self.adapter)(wish)
     }
     pub fn add_patch(&mut self, patch: Patch) {
         self.patches.insert(patch.id, patch);
