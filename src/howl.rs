@@ -13,14 +13,7 @@ use color::WHITE;
 
 #[derive(Copy, Clone, Debug)]
 pub enum Message {
-    Ignore,
     Silence,
-}
-
-impl Default for Message {
-    fn default() -> Self {
-        Message::Ignore
-    }
 }
 
 #[derive(Clone)]
@@ -49,12 +42,10 @@ impl Star for MistyStar {
 
     fn update(&self, message: Self::Msg, is_silenced: &Self::Mdl) -> (Option<Self::Mdl>, Vec<Wish>, Vec<Self::Out>) {
         if *is_silenced {
-            (None, vec![], vec![])
-        } else {
-            match message {
-                Message::Ignore => (None, vec![], vec![]),
-                Message::Silence => (Some(true), vec![], vec![]),
-            }
+            return (None, vec![], vec![])
+        }
+        match message {
+            Message::Silence => (Some(true), vec![], vec![]),
         }
     }
 
