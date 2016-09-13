@@ -1,24 +1,31 @@
 extern crate cage;
+extern crate rand;
 
 use star::Star;
 use vision::Vision;
 use cage::Cage;
 use patch::{Patch, Sigil};
 use mist::Mist;
-use summoner::Summoner;
-use std::rc::Rc;
-use common::IdSource;
 use common::Wish;
 use color::WHITE;
 
 #[derive(Clone)]
 pub struct MistyStar {
     id: u64,
-    cage: Cage
+    cage: Cage,
+    sub_star: Howl
 }
 
+// TODO Make sub_star into a LetterStar.
 pub fn misty(id: u64, cage: Cage) -> MistyStar {
-    MistyStar { id: id, cage: cage }
+    MistyStar {
+        id: id,
+        cage: cage,
+        sub_star: create(rand::random::<u64>(),
+                         WHITE,
+                         Cage::from((-0.7, -0.5, 0.25, 0.45, 0.25, 0.25)),
+                         Sigil::Letter('S')),
+    }
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -28,14 +35,8 @@ pub enum Message {
 
 #[derive(Clone)]
 pub struct Misty {
-    pub is_silenced: bool
-}
-
-fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
-    let id = id_source.id();
-    let cage = Cage::from((-0.7, -0.5, 0.25, 0.45, 0.25, 0.25));
-    let sub_star = create(id, WHITE, cage, Sigil::Letter('S'));
-    summoner.summon(id_source, &sub_star, |_| false);
+    pub is_silenced: bool,
+    pub sub_model: Cage,
 }
 
 impl Star for MistyStar {
@@ -44,9 +45,27 @@ impl Star for MistyStar {
     type Out = ();
 
     fn init(&self) -> (Misty, Vec<Wish>) {
-        let mut wishes = Vec::new();
-        wishes.push(Wish::SummonStar(Rc::new(summon)));
-        (Misty { is_silenced: false }, wishes)
+        let (sub_model, sub_wishes) = self.sub_star.init();
+        // TODO: Add sub_wishes to wishes and provide adapter to map Wishes intended
+        // for sub_star into Message::ForSubStar
+        let misty = Misty {
+            is_silenced: false,
+            sub_model: sub_model,
+        };
+        (misty, vec![])
+    }
+
+    fn view(&self, model: &Misty) -> Vision<Message> {
+        if model.is_silenced {
+            Default::default()
+        } else {
+            let sub_vision = self.sub_star.view(&model.sub_model);
+            let mut vision = Vision::new(|_| None);
+            vision.add_mist(Mist::new(self.id, self.cage));
+            // TODO Adapt wishes intended for sub_vision into Message::ForSubStar.
+            vision.add_vision(sub_vision);
+            vision
+        }
     }
 
     fn update(&self, message: Message, model: &Misty) -> (Option<Misty>, Vec<Wish>, Vec<()>) {
@@ -60,16 +79,6 @@ impl Star for MistyStar {
                     (Some(clone), vec![], vec![])
                 },
             }
-        }
-    }
-
-    fn view(&self, model: &Misty) -> Vision<Message> {
-        if model.is_silenced {
-            Default::default()
-        } else {
-            let mut vision = Vision::new(|_| None);
-            vision.add_mist(Mist::new(self.id, self.cage));
-            vision
         }
     }
 }
