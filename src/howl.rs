@@ -11,15 +11,24 @@ use common::IdSource;
 use common::Wish;
 use color::WHITE;
 
+#[derive(Clone)]
+pub struct MistyStar {
+    id: u64,
+    cage: Cage
+}
+
+pub fn misty(id: u64, cage: Cage) -> MistyStar {
+    MistyStar { id: id, cage: cage }
+}
+
 #[derive(Copy, Clone, Debug)]
 pub enum Message {
     Silence,
 }
 
 #[derive(Clone)]
-pub struct MistyStar {
-    id: u64,
-    cage: Cage
+pub struct Misty {
+    pub is_silenced: bool
 }
 
 fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
@@ -30,27 +39,32 @@ fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
 }
 
 impl Star for MistyStar {
-    type Mdl = bool;
+    type Mdl = Misty;
     type Msg = Message;
     type Out = ();
 
-    fn init(&self) -> (Self::Mdl, Vec<Wish>) {
+    fn init(&self) -> (Misty, Vec<Wish>) {
         let mut wishes = Vec::new();
         wishes.push(Wish::SummonStar(Rc::new(summon)));
-        (false, wishes)
+        (Misty { is_silenced: false }, wishes)
     }
 
-    fn update(&self, message: Self::Msg, is_silenced: &Self::Mdl) -> (Option<Self::Mdl>, Vec<Wish>, Vec<Self::Out>) {
-        if *is_silenced {
-            return (None, vec![], vec![])
-        }
-        match message {
-            Message::Silence => (Some(true), vec![], vec![]),
+    fn update(&self, message: Message, model: &Misty) -> (Option<Misty>, Vec<Wish>, Vec<()>) {
+        if model.is_silenced {
+            (None, vec![], vec![])
+        } else {
+            match message {
+                Message::Silence => {
+                    let mut clone = model.clone();
+                    clone.is_silenced = true;
+                    (Some(clone), vec![], vec![])
+                },
+            }
         }
     }
 
-    fn view(&self, is_silenced: &Self::Mdl) -> Vision<Self::Msg> {
-        if *is_silenced {
+    fn view(&self, model: &Misty) -> Vision<Message> {
+        if model.is_silenced {
             Default::default()
         } else {
             let mut vision = Vision::new(|_| None);
@@ -58,10 +72,6 @@ impl Star for MistyStar {
             vision
         }
     }
-}
-
-pub fn misty(id: u64, cage: Cage) -> MistyStar {
-    MistyStar { id: id, cage: cage }
 }
 
 #[derive(Clone)]
