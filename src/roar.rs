@@ -57,14 +57,14 @@ pub mod demo {
         }
 
         fn view(&self, model: &Self::Mdl) -> Vision<Self::Msg> {
-            let mut vision = Vision::new(|wish| match wish {
-                Wish::Tick => Some(Message::IncrementIndex),
-                _ => None,
-            });
+            let mut vision = Vision::new();
             let patch = Patch::new(15674u64, 0.55, 0.65, -0.35, -0.25, 0.25, self.colors[model.index].clone(), Sigil::Fill);
             vision.add_patch(patch);
             let beat = Beat::until_instant(24352u64, model.end_instant);
-            vision.add_beat(beat);
+            vision.add_beat(beat, |wish| match wish {
+                Wish::Tick => Some(Message::IncrementIndex),
+                _ => None,
+            });
             vision
         }
     }

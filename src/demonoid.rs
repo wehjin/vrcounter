@@ -5,6 +5,7 @@ use vision::Vision;
 use report::Well;
 use std::time::Instant;
 use star::Star;
+use std::collections::VecDeque;
 
 #[derive(Clone)]
 pub struct Demonoid<S: Star> {
@@ -25,21 +26,22 @@ impl<S: Star> Demonoid<S>
     fn get_vision(&self) -> Vision<S::Msg> {
         self.star.as_ref().view(&self.model)
     }
-    fn get_message_from_wish(&self, wish: Wish) -> Option<S::Msg> {
+    fn get_messages(&self, wish: Wish) -> Vec<S::Msg> {
+        let mut messages = Vec::new();
         let vision = self.get_vision();
-        match wish {
+        match wish.clone() {
             Wish::Tick => {
                 let beats = vision.find_beats(&Instant::now());
-                if beats.len() > 0 {
-                    vision.get_message_option(wish)
-                } else {
-                    None
+                for beat in beats {
+                    if let Some(message) = vision.get_message_option(beat.id(), wish.clone()) {
+                        messages.push(message);
+                    }
                 }
             },
-            _ => {
-                vision.get_message_option(wish)
-            }
+            // TODO : Handle SendHand and maybe FitToCage
+            _ => ()
         }
+        messages
     }
 }
 
@@ -58,14 +60,16 @@ impl<S: Star> Demon for Demonoid<S> where S: 'static {
         Box::new(vision)
     }
 
-    fn poke(&mut self, vision_message: Wish) -> DemonResult {
-        if let Some(message) = self.get_message_from_wish(vision_message) {
+    fn poke(&mut self, wish: Wish) -> DemonResult {
+        let mut messages = VecDeque::from(self.get_messages(wish));
+        while let Some(message) = messages.pop_front() {
             let mut well = Well::new(|_| None) as Well<S::Out, ()>;
+            // TODO Add real well adapter?
             let model_option = self.star.as_ref().update(&self.model, message, &mut well);
             if let Some(model) = model_option {
                 self.model = model;
-            }
-            // TODO Deal with outcomes and wishes
+            };
+            // TODO Deal with wishes in the well
         }
         DemonResult::Keep
     }

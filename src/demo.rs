@@ -69,17 +69,17 @@ impl Star for MyStar {
     }
 
     fn view(&self, model: &Model) -> Vision<Message> {
-        let mut vision = Vision::new(|wish| {
+        let mut vision = Vision::new();
+        let color = model.colors[model.color_index % model.colors.len()];
+        vision.add_patch(Patch::from_cage(&model.cage, color, Sigil::Fill, model.patch_id));
+        vision.add_mist(Mist::new(model.mist_id, model.cage), |wish| {
             if let Wish::SenseHand(hand) = wish {
                 Some(Message::SeeHand(hand))
             } else {
                 None
             }
         });
-        let color = model.colors[model.color_index % model.colors.len()];
-        vision.add_patch(Patch::from_cage(&model.cage, color, Sigil::Fill, model.patch_id));
-        vision.add_mist(Mist::new(model.mist_id, model.cage));
-        vision.add_vision(model.rainbow_star.view(&model.rainbow_star_model));
+        vision.add_vision(model.rainbow_star.view(&model.rainbow_star_model), |_| None);
         vision
     }
 

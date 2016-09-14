@@ -29,8 +29,9 @@ pub fn misty(id: u64, cage: Cage) -> MistyStar {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub enum Message {
+pub enum MistyMessage {
     Silence,
+    Forward(Message),
 }
 
 #[derive(Clone)]
@@ -41,7 +42,7 @@ pub struct Misty {
 
 impl Star for MistyStar {
     type Mdl = Misty;
-    type Msg = Message;
+    type Msg = MistyMessage;
     type Out = ();
 
     fn init(&self) -> Misty {
@@ -52,28 +53,40 @@ impl Star for MistyStar {
         misty
     }
 
-    fn view(&self, model: &Misty) -> Vision<Message> {
+    fn view(&self, model: &Misty) -> Vision<MistyMessage> {
         if model.is_silenced {
             Default::default()
         } else {
             let sub_vision = self.sub_star.view(&model.sub_model);
-            let mut vision = Vision::new(|_| None);
-            vision.add_mist(Mist::new(self.id, self.cage));
-            // TODO Adapt wishes intended for sub_vision into Message::ForSubStar.
-            vision.add_vision(sub_vision);
+            let mut vision = Vision::new();
+            vision.add_mist(Mist::new(self.id, self.cage), |_| None);
+            vision.add_vision(sub_vision, |x| Some(MistyMessage::Forward(x)));
             vision
         }
     }
 
-    fn update<T>(&self, model: &Misty, message: Message, well: &mut Well<(), T>) -> Option<Misty> {
+    fn update<T>(&self, model: &Misty, message: MistyMessage, well: &mut Well<(), T>) -> Option<Misty> {
         if model.is_silenced {
             return None;
         }
         match message {
-            Message::Silence => {
+            MistyMessage::Silence => {
                 let mut clone = model.clone();
                 clone.is_silenced = true;
                 Some(clone)
+            },
+            MistyMessage::Forward(howl_message) => {
+                let mut well = Well::new(|_| None) as Well<(), MistyMessage>;
+                let new_submodel_op = self.sub_star.update(&model.sub_model, howl_message, &mut well);
+                // TODO Deal with message and wishes in the well
+                match new_submodel_op {
+                    None => None,
+                    Some(new_submodel) => {
+                        let mut new_model = model.clone();
+                        new_model.sub_model = new_submodel;
+                        Some(new_model)
+                    }
+                }
             },
         }
     }
@@ -85,6 +98,11 @@ pub struct Howl {
     color: [f32; 4],
     cage: Cage,
     sigil: Sigil
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum Message {
+    Silence,
 }
 
 impl Star for Howl {
@@ -101,9 +119,8 @@ impl Star for Howl {
     }
 
     fn view(&self, model: &Cage) -> Vision<Message> {
-        let mut vision = Vision::new(move |_| None);
-        let patch = Patch::from_cage(&model, self.color, self.sigil, self.id);
-        vision.add_patch(patch);
+        let mut vision = Vision::new();
+        vision.add_patch(Patch::from_cage(&model, self.color, self.sigil, self.id));
         vision
     }
 }
