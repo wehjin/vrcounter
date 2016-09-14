@@ -7,7 +7,7 @@ pub mod demo {
     use star::Star;
     use report::Well;
 
-    #[derive(Clone)]
+    #[derive(Clone, Debug)]
     pub struct Model {
         pub index: usize,
         pub end_instant: Instant,
@@ -25,7 +25,7 @@ pub mod demo {
         }
     }
 
-    #[derive(Clone)]
+    #[derive(Clone, Debug)]
     pub struct RainbowStar {
         colors: Vec<[f32; 4]>
     }
@@ -35,7 +35,7 @@ pub mod demo {
         type Msg = Message;
         type Out = ();
 
-        fn init(&self) -> Self::Mdl {
+        fn init(&self) -> Model {
             Model {
                 index: 0,
                 end_instant: Instant::now() + Duration::from_secs(30),

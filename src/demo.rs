@@ -12,16 +12,14 @@ use vrcounter::Hand;
 use std::sync::Arc;
 use cage::Cage;
 use cage::Offset;
-
-#[derive(Clone, Debug)]
-pub struct Model {
-    pub colors: [[f32; 4]; 2],
-    pub color_index: usize,
-    pub mist_id: u64,
-    pub patch_id: u64,
-    pub delta_z_option: Option<f32>,
-    pub cage: Cage,
-}
+use std::rc::Rc;
+use vrcounter::{howl, scream, roar};
+use vrcounter::color::*;
+use vrcounter::Sigil;
+use vrcounter::Patch;
+use vrcounter::Mist;
+use vrcounter::roar::demo::RainbowStar;
+use std::collections::VecDeque;
 
 #[derive(Clone)]
 pub enum Message {
@@ -36,61 +34,42 @@ pub struct Outcome;
 #[derive(Clone)]
 struct MyStar;
 
+#[derive(Clone, Debug)]
+pub struct Model {
+    pub colors: [[f32; 4]; 2],
+    pub color_index: usize,
+    pub mist_id: u64,
+    pub patch_id: u64,
+    pub delta_z_option: Option<f32>,
+    pub cage: Cage,
+    pub rainbow_star: RainbowStar,
+    pub rainbow_star_model: roar::demo::Model,
+}
+
+
 impl Star for MyStar {
     type Mdl = Model;
     type Msg = Message;
     type Out = Outcome;
 
     fn init(&self) -> Model {
-        use std::rc::Rc;
-        use vrcounter::color::{BLUE, YELLOW};
-
         let patch_id = rand::random::<u64>();
         let mist_id = rand::random::<u64>();
         let cage = Cage::from((-0.70, -0.50, -0.10, 0.10, 0.00, 0.20));
+        let rainbow_star = roar::demo::from(vec![GREEN, RED, BLUE, CYAN, MAGENTA, YELLOW]);
         Model {
             colors: [BLUE, YELLOW],
             color_index: 0,
             mist_id: mist_id,
             patch_id: patch_id,
             delta_z_option: None,
-            cage: cage
-        }
-    }
-
-    fn update<T>(&self, model: &Model, message: Message, well: &mut Well<Outcome, T>) -> Option<Model> {
-        if let Message::SeeHand(hand) = message {
-            let Offset { x, y, z } = hand.offset;
-            let mut new_delta_z_option = None;
-            let mut did_toggle = false;
-            if model.cage.contains(x, y, z) {
-                let (_, _, _, _, f, n) = model.cage.limits();
-                let center_z = (f + n) / 2.0;
-                let delta_z = z - center_z;
-                new_delta_z_option = Some(delta_z);
-                if let Some(previous_delta_z) = model.delta_z_option {
-                    const BIAS: f32 = 0.045;
-                    if delta_z < BIAS && previous_delta_z >= BIAS {
-                        println!("See Toggle!");
-                        did_toggle = true;
-                    }
-                }
-            }
-            let mut new_model = model.clone();
-            if did_toggle {
-                new_model.color_index = model.color_index + 1;
-            }
-            new_model.delta_z_option = new_delta_z_option;
-            // TODO: Deal with well.
-            Some(new_model)
-        } else {
-            None
+            cage: cage,
+            rainbow_star_model: rainbow_star.init(),
+            rainbow_star: rainbow_star,
         }
     }
 
     fn view(&self, model: &Model) -> Vision<Message> {
-        use vrcounter::{Patch, Sigil};
-        use vrcounter::Mist;
         let mut vision = Vision::new(|wish| {
             if let Wish::SenseHand(hand) = wish {
                 Some(Message::SeeHand(hand))
@@ -101,19 +80,58 @@ impl Star for MyStar {
         let color = model.colors[model.color_index % model.colors.len()];
         vision.add_patch(Patch::from_cage(&model.cage, color, Sigil::Fill, model.patch_id));
         vision.add_mist(Mist::new(model.mist_id, model.cage));
+        vision.add_vision(model.rainbow_star.view(&model.rainbow_star_model));
         vision
+    }
+
+    fn update<T>(&self, model: &Model, message: Message, well: &mut Well<Outcome, T>) -> Option<Model> {
+        let mut deque = VecDeque::new();
+        deque.push_back(message);
+        let mut current_model_op = None;
+        while let Some(message) = deque.pop_front() {
+            let next_model_op = {
+                let current_model = match current_model_op {
+                    Some(ref model) => model,
+                    None => model,
+                };
+                match message {
+                    Message::SeeHand(hand) => {
+                        let Offset { x, y, z } = hand.offset;
+                        let mut new_delta_z_option = None;
+                        let mut did_toggle = false;
+                        if current_model.cage.contains(x, y, z) {
+                            let (_, _, _, _, f, n) = current_model.cage.limits();
+                            let center_z = (f + n) / 2.0;
+                            let delta_z = z - center_z;
+                            new_delta_z_option = Some(delta_z);
+                            if let Some(previous_delta_z) = current_model.delta_z_option {
+                                const BIAS: f32 = 0.045;
+                                if delta_z < BIAS && previous_delta_z >= BIAS {
+                                    println!("See Toggle!");
+                                    did_toggle = true;
+                                }
+                            }
+                        }
+                        let mut new_model = model.clone();
+                        if did_toggle {
+                            new_model.color_index = model.color_index + 1;
+                        }
+                        new_model.delta_z_option = new_delta_z_option;
+                        // TODO: Deal with well.
+                        Some(new_model)
+                    },
+                    _ => None,
+                }
+            };
+            if next_model_op.is_some() {
+                current_model_op = next_model_op;
+            }
+        }
+        current_model_op
     }
 }
 
 fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
-    use cage::Cage;
-    use vrcounter::{howl, scream, roar};
-    use vrcounter::color::*;
-    use vrcounter::Sigil;
-
-    let roar = roar::demo::from(vec![GREEN, RED, BLUE, CYAN, MAGENTA, YELLOW]);
-    summoner.summon(id_source, &roar);
-
     let scream_id1 = id_source.id();
     let scream1 = scream::from_color(scream_id1, CYAN);
     let screaming1 = summoner.summon(id_source, &scream1);
