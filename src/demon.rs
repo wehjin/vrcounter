@@ -9,9 +9,9 @@ use star::Star;
 use std::rc::Rc;
 
 pub trait Sun {
-    fn summon(&mut self) -> Vec<Wish>;
+    fn summon(&mut self);
     fn see(&mut self) -> Rc<Sight>;
-    fn signal(&mut self, Wish) -> (Vec<Wish>, bool);
+    fn signal(&mut self, Wish) -> bool;
 }
 
 pub trait Sight {
@@ -45,20 +45,18 @@ impl<S: Star> StarSun<S> {
 }
 
 impl<S: Star> Sun for StarSun<S> where S::Msg: 'static {
-    fn summon(&mut self) -> Vec<Wish> {
-        let (model, wishes) = self.star.init();
+    fn summon(&mut self) {
+        let model = self.star.init();
         self.model = Some(model);
         self.vision_rc_opt = None;
-        wishes
     }
     fn see(&mut self) -> Rc<Sight> {
         self.load_vision()
     }
-
-    fn signal(&mut self, wish: Wish) -> (Vec<Wish>, bool) {
+    fn signal(&mut self, wish: Wish) -> bool {
         let vision_rc = self.load_vision();
         match vision_rc.as_ref().get_message_option(wish) {
-            None => (vec![], false),
+            None => false,
             Some(message) => {
                 let mut well = Well::new(|x| None) as Well<S::Out, bool>;
                 let model_op = self.star.update(self.model.as_ref().unwrap(), message, &mut well);
@@ -66,7 +64,8 @@ impl<S: Star> Sun for StarSun<S> where S::Msg: 'static {
                     self.model = Some(model);
                 };
                 // TODO deal with messages in well.
-                (well.wishes, false)
+                // TODO deal with wishes in well.
+                false
             }
         }
     }

@@ -41,22 +41,21 @@ impl Star for MyStar {
     type Msg = Message;
     type Out = Outcome;
 
-    fn init(&self) -> (Model, Vec<Wish>) {
+    fn init(&self) -> Model {
         use std::rc::Rc;
         use vrcounter::color::{BLUE, YELLOW};
 
         let patch_id = rand::random::<u64>();
         let mist_id = rand::random::<u64>();
         let cage = Cage::from((-0.70, -0.50, -0.10, 0.10, 0.00, 0.20));
-        let model = Model {
+        Model {
             colors: [BLUE, YELLOW],
             color_index: 0,
             mist_id: mist_id,
             patch_id: patch_id,
             delta_z_option: None,
             cage: cage
-        };
-        (model, vec![Wish::SummonStar(Rc::new(summon))])
+        }
     }
 
     fn update<T>(&self, model: &Model, message: Message, well: &mut Well<Outcome, T>) -> Option<Model> {

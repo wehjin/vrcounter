@@ -35,12 +35,11 @@ pub mod demo {
         type Msg = Message;
         type Out = ();
 
-        fn init(&self) -> (Self::Mdl, Vec<Wish>) {
-            let model = Model {
+        fn init(&self) -> Self::Mdl {
+            Model {
                 index: 0,
                 end_instant: Instant::now() + Duration::from_secs(30),
-            };
-            (model, vec![])
+            }
         }
 
         fn update<T>(&self,

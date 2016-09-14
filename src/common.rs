@@ -3,8 +3,6 @@ extern crate nalgebra;
 extern crate cage;
 
 use cage::Cage;
-use std::rc::Rc;
-use summoner::Summoner;
 use hand::Hand;
 
 #[derive(Debug)]
@@ -17,7 +15,6 @@ pub enum Error {
 pub enum Wish {
     Tick,
     FitToCage(Cage),
-    SummonStar(Rc<Fn(&mut IdSource, &mut Summoner)>),
     SenseHand(Hand),
 }
 

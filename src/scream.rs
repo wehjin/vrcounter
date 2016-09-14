@@ -30,8 +30,8 @@ impl Star for Scream {
     type Mdl = Model;
     type Msg = Message;
     type Out = ();
-    fn init(&self) -> (Self::Mdl, Vec<Wish>) {
-        (Model { cage_option: None }, Vec::new())
+    fn init(&self) -> Self::Mdl {
+        Model { cage_option: None }
     }
     fn update<T>(&self, _: &Model,
                  message: Message,

@@ -36,17 +36,10 @@ impl Summoner {
                            star: &S) -> u64
                            where S: 'static, Self: Sized
     {
-        let (model, wishes) = star.init();
+        let model = star.init();
         let id = id_source.id();
         let demonoid = Demonoid::new(id, model, star);
         self.demons.insert(id, Box::new(demonoid));
-
-        // TODO: Add to queue.
-        for wish in wishes {
-            if let Wish::SummonStar(ref summon) = wish {
-                summon(id_source, self);
-            }
-        }
         id
     }
     pub fn update_one(&mut self, id: u64, wish: Wish) {

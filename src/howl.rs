@@ -6,7 +6,6 @@ use vision::Vision;
 use cage::Cage;
 use patch::{Patch, Sigil};
 use mist::Mist;
-use common::Wish;
 use color::WHITE;
 use report::Well;
 
@@ -45,15 +44,12 @@ impl Star for MistyStar {
     type Msg = Message;
     type Out = ();
 
-    fn init(&self) -> (Misty, Vec<Wish>) {
-        let (sub_model, sub_wishes) = self.sub_star.init();
-        // TODO: Add sub_wishes to wishes and provide adapter to map Wishes intended
-        // for sub_star into Message::ForSubStar
+    fn init(&self) -> Misty {
         let misty = Misty {
             is_silenced: false,
-            sub_model: sub_model,
+            sub_model: self.sub_star.init(),
         };
-        (misty, vec![])
+        misty
     }
 
     fn view(&self, model: &Misty) -> Vision<Message> {
@@ -96,8 +92,8 @@ impl Star for Howl {
     type Msg = Message;
     type Out = ();
 
-    fn init(&self) -> (Cage, Vec<Wish>) {
-        (self.cage, vec![])
+    fn init(&self) -> Cage {
+        self.cage
     }
 
     fn update<T>(&self, _: &Cage, _: Message, _: &mut Well<(), T>) -> Option<Cage> {
