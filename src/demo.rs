@@ -12,7 +12,6 @@ use vrcounter::Hand;
 use std::sync::Arc;
 use cage::Cage;
 use cage::Offset;
-use std::rc::Rc;
 use vrcounter::{howl, scream, roar};
 use vrcounter::color::*;
 use vrcounter::Sigil;

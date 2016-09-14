@@ -6,8 +6,9 @@ use mist::Mist;
 use beat::Beat;
 use common::Wish;
 
+#[derive(Clone)]
 pub struct Vision<Msg> {
-    pub adapter: Rc<Fn(Wish) -> Option<Msg>>,
+    adapter: Rc<Fn(Wish) -> Option<Msg>>,
     pub patches: HashMap<u64, Patch>,
     pub mists: HashMap<u64, Mist>,
     pub beats: HashMap<u64, Beat>,

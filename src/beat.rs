@@ -1,5 +1,6 @@
 use std::time::{Instant};
 
+#[derive(Clone)]
 pub struct Beat {
     id: u64,
     fade_out: Instant,
