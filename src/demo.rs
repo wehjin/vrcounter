@@ -113,21 +113,21 @@ fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
     use vrcounter::Sigil;
 
     let roar = roar::demo::from(vec![GREEN, RED, BLUE, CYAN, MAGENTA, YELLOW]);
-    summoner.summon(id_source, &roar, |_| Outcome);
+    summoner.summon(id_source, &roar);
 
     let scream_id1 = id_source.id();
     let scream1 = scream::from_color(scream_id1, CYAN);
-    let screaming1 = summoner.summon(id_source, &scream1, |_| Outcome);
+    let screaming1 = summoner.summon(id_source, &scream1);
     let cage1 = Cage::from((-0.3, -0.2, -0.25, -0.15, 0.03, 0.03));
     summoner.update_one(screaming1, Wish::FitToCage(Cage::from(cage1)));
 
     let scream_id2 = id_source.id();
     let scream2 = scream::from_color(scream_id2, MAGENTA);
-    let screaming2 = summoner.summon(id_source, &scream2, |_| Outcome);
+    let screaming2 = summoner.summon(id_source, &scream2);
     let cage2 = Cage::from((-0.4, -0.3, -0.25, -0.15, 0.03, 0.03));
     summoner.update_one(screaming2, Wish::FitToCage(Cage::from(cage2)));
     let scream_id3 = id_source.id();
-    let screaming3 = summoner.summon(id_source, &scream::from_color(scream_id3, YELLOW), |_| Outcome);
+    let screaming3 = summoner.summon(id_source, &scream::from_color(scream_id3, YELLOW));
     let cage3 = Cage::from((-0.5, -0.4, -0.25, -0.15, 0.03, 0.03));
     summoner.update_one(screaming3, Wish::FitToCage(Cage::from(cage3)));
     let howls = vec![
@@ -137,10 +137,10 @@ fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
         howl::create(id_source.id(), YELLOW, Cage::from((0.00, 0.06, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('y')),
     ];
     for howl in &howls {
-        summoner.summon(id_source, howl, |_| Outcome);
+        summoner.summon(id_source, howl);
     }
     let howl_id = id_source.id();
-    summoner.summon(id_source, &howl::misty(howl_id, Default::default()), |_| Outcome);
+    summoner.summon(id_source, &howl::misty(howl_id, Default::default()));
 }
 
 fn main() {

@@ -31,8 +31,10 @@ impl Summoner {
         }
     }
 
-    pub fn summon<Msg, S: Star, F>(&mut self, id_source: &mut IdSource, star: &S, outcome_adapter: F) -> u64
-        where S: 'static, F: Fn(S::Out) -> Msg + 'static, Self: Sized
+    pub fn summon<S: Star>(&mut self,
+                           id_source: &mut IdSource,
+                           star: &S) -> u64
+                           where S: 'static, Self: Sized
     {
         let (model, wishes) = star.init();
         let id = id_source.id();

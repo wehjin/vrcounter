@@ -14,7 +14,6 @@ use std::sync::Arc;
 use star::Star;
 
 pub enum Message {
-    Ignore,
     Stop,
     EmitAnimationFrame,
     SetHand(Hand),
@@ -34,7 +33,6 @@ fn init() -> Model {
 
 fn update(message: Message, mut model: Model) -> Option<Model> {
     match message {
-        Message::Ignore => Some(model),
         Message::Stop => None,
         Message::EmitAnimationFrame => {
             (&mut model.summoner).update(Wish::Tick);
@@ -74,7 +72,7 @@ pub fn start<S: Star, F>(viewer: Viewer, star_builder: Arc<F>)
     thread::spawn(move || {
         let mut model = init();
         let star = star_builder();
-        model.summoner.summon(&mut model.id_source, &star, |_| Message::Ignore);
+        model.summoner.summon(&mut model.id_source, &star);
         view(&model, &viewer);
         loop {
             match rx.recv() {

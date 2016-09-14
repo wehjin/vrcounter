@@ -1,5 +1,4 @@
-use std::boxed::Box;
-use common::Wish;
+wuse common::Wish;
 use std::rc::Rc;
 
 #[derive(Clone)]
