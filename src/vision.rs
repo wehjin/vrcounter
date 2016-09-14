@@ -6,20 +6,21 @@ use mist::Mist;
 use beat::Beat;
 use common::Wish;
 
-pub struct Vision<T> {
-    pub adapter: Rc<Fn(Wish) -> Option<T>>,
+pub struct Vision<Msg> {
+    pub adapter: Rc<Fn(Wish) -> Option<Msg>>,
     pub patches: HashMap<u64, Patch>,
     pub mists: HashMap<u64, Mist>,
-    beats: HashMap<u64, Beat>,
+    pub beats: HashMap<u64, Beat>,
 }
 
-impl<T> Default for Vision<T> {
+impl<Msg> Default for Vision<Msg> {
     fn default() -> Self {
         Vision::new(|_| None)
     }
 }
 
 impl<Msg> Vision<Msg> {
+    // TODO: Should adapter take &Wish?
     pub fn new<F>(adapter: F) -> Self where F: Fn(Wish) -> Option<Msg> + 'static {
         Vision {
             adapter: Rc::new(adapter),
@@ -28,14 +29,29 @@ impl<Msg> Vision<Msg> {
             beats: HashMap::new(),
         }
     }
-    pub fn message_from_wish(&self, wish: Wish) -> Option<Msg> {
+    pub fn get_message_option(&self, wish: Wish) -> Option<Msg> {
         (*self.adapter)(wish)
+    }
+    pub fn add_vision<T>(&mut self, sub_vision: Vision<T>) {
+        // TODO: wrap ids.
+        for (id, patch) in sub_vision.patches {
+            self.patches.insert(id, patch);
+        }
+        for (id, mist) in sub_vision.mists {
+            self.mists.insert(id, mist);
+        }
+        for (id, beat) in sub_vision.beats {
+            self.beats.insert(id, beat);
+        }
     }
     pub fn add_patch(&mut self, patch: Patch) {
         self.patches.insert(patch.id, patch);
     }
     pub fn add_mist(&mut self, mist: Mist) {
         self.mists.insert(mist.id(), mist);
+    }
+    pub fn add_beat(&mut self, beat: Beat) {
+        self.beats.insert(beat.id(), beat);
     }
     pub fn find_mists(&self, x: f32, y: f32, z: f32) -> Vec<&Mist> {
         let mut mists = Vec::new();
@@ -46,9 +62,6 @@ impl<Msg> Vision<Msg> {
             }
         }
         mists
-    }
-    pub fn add_beat(&mut self, beat: Beat) {
-        self.beats.insert(beat.id(), beat);
     }
     pub fn find_beats(&self, instant: &Instant) -> Vec<&Beat> {
         let mut beats = Vec::new();

@@ -56,7 +56,7 @@ impl<S: Star> Sun for StarSun<S> where S::Msg: 'static {
 
     fn signal(&mut self, wish: Wish) -> (Vec<Wish>, bool) {
         let vision_rc = self.load_vision();
-        match vision_rc.as_ref().message_from_wish(wish) {
+        match vision_rc.as_ref().get_message_option(wish) {
             None => (vec![], false),
             Some(message) => {
                 let (model_op, wishes, outs) = self.star.update(message, self.model.as_ref().unwrap());
