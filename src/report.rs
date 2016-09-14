@@ -1,4 +1,4 @@
-wuse common::Wish;
+use common::Wish;
 use std::rc::Rc;
 
 #[derive(Clone)]
