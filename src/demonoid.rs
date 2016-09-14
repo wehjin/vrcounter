@@ -3,6 +3,7 @@ use demon::*;
 use std::rc::Rc;
 use common::Wish;
 use vision::Vision;
+use report::Well;
 use std::time::Instant;
 use star::Star;
 
@@ -73,7 +74,8 @@ impl<S: Star> Demon for Demonoid<S> where S: 'static {
 
     fn poke(&mut self, vision_message: Wish) -> DemonResult {
         if let Some(message) = self.get_message_from_wish(vision_message) {
-            let (model_option, _, _) = self.star.as_ref().update(message, &self.model);
+            let mut well = Well::new(|_| None) as Well<S::Out, ()>;
+            let model_option = self.star.as_ref().update(&self.model, message, &mut well);
             if let Some(model) = model_option {
                 self.model = model;
                 self.set_vision_adapter_option(Option::None);

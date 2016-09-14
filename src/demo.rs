@@ -6,6 +6,7 @@ use vrcounter::IdSource;
 use vrcounter::Summoner;
 use vrcounter::Wish;
 use vrcounter::Vision;
+use vrcounter::Well;
 use vrcounter::Star;
 use vrcounter::Hand;
 use std::sync::Arc;
@@ -58,7 +59,7 @@ impl Star for MyStar {
         (model, vec![Wish::SummonStar(Rc::new(summon))])
     }
 
-    fn update(&self, message: Self::Msg, model: &Model) -> (Option<Model>, Vec<Wish>, Vec<Outcome>) {
+    fn update<T>(&self, model: &Model, message: Message, well: &mut Well<Outcome, T>) -> Option<Model> {
         if let Message::SeeHand(hand) = message {
             let Offset { x, y, z } = hand.offset;
             let mut new_delta_z_option = None;
@@ -81,9 +82,10 @@ impl Star for MyStar {
                 new_model.color_index = model.color_index + 1;
             }
             new_model.delta_z_option = new_delta_z_option;
-            (Some(new_model), vec![], vec![])
+            // TODO: Deal with well.
+            Some(new_model)
         } else {
-            (None, vec![], vec![])
+            None
         }
     }
 

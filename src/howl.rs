@@ -8,6 +8,7 @@ use patch::{Patch, Sigil};
 use mist::Mist;
 use common::Wish;
 use color::WHITE;
+use report::Well;
 
 #[derive(Clone)]
 pub struct MistyStar {
@@ -68,17 +69,16 @@ impl Star for MistyStar {
         }
     }
 
-    fn update(&self, message: Message, model: &Misty) -> (Option<Misty>, Vec<Wish>, Vec<()>) {
+    fn update<T>(&self, model: &Misty, message: Message, well: &mut Well<(), T>) -> Option<Misty> {
         if model.is_silenced {
-            (None, vec![], vec![])
-        } else {
-            match message {
-                Message::Silence => {
-                    let mut clone = model.clone();
-                    clone.is_silenced = true;
-                    (Some(clone), vec![], vec![])
-                },
-            }
+            return None;
+        }
+        match message {
+            Message::Silence => {
+                let mut clone = model.clone();
+                clone.is_silenced = true;
+                Some(clone)
+            },
         }
     }
 }
@@ -96,15 +96,15 @@ impl Star for Howl {
     type Msg = Message;
     type Out = ();
 
-    fn init(&self) -> (Self::Mdl, Vec<Wish>) {
+    fn init(&self) -> (Cage, Vec<Wish>) {
         (self.cage, vec![])
     }
 
-    fn update(&self, _: Self::Msg, _: &Self::Mdl) -> (Option<Self::Mdl>, Vec<Wish>, Vec<Self::Out>) {
-        (None, vec![], vec![])
+    fn update<T>(&self, _: &Cage, _: Message, _: &mut Well<(), T>) -> Option<Cage> {
+        None
     }
 
-    fn view(&self, model: &Self::Mdl) -> Vision<Self::Msg> {
+    fn view(&self, model: &Cage) -> Vision<Message> {
         let mut vision = Vision::new(move |_| None);
         let patch = Patch::from_cage(&model, self.color, self.sigil, self.id);
         vision.add_patch(patch);

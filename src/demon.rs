@@ -1,6 +1,7 @@
 use patch::Patch;
 use mist::Mist;
 use vision::Vision;
+use report::Well;
 use std::boxed::Box;
 use std::collections::HashMap;
 use common::Wish;
@@ -59,12 +60,13 @@ impl<S: Star> Sun for StarSun<S> where S::Msg: 'static {
         match vision_rc.as_ref().get_message_option(wish) {
             None => (vec![], false),
             Some(message) => {
-                let (model_op, wishes, outs) = self.star.update(message, self.model.as_ref().unwrap());
+                let mut well = Well::new(|x| None) as Well<S::Out, bool>;
+                let model_op = self.star.update(self.model.as_ref().unwrap(), message, &mut well);
                 if let Some(model) = model_op {
                     self.model = Some(model);
-                }
-                    // Inspect out or wishes to determine true/false
-                    (wishes, false)
+                };
+                // TODO deal with messages in well.
+                (well.wishes, false)
             }
         }
     }

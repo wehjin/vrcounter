@@ -21,11 +21,6 @@ pub enum Wish {
     SenseHand(Hand),
 }
 
-pub struct Well<T> {
-    pub adapter: Rc<Fn(Wish) -> T>,
-    pub wishes: Vec<Wish>
-}
-
 #[derive(Debug)]
 pub struct RenderSize {
     pub width: u32,

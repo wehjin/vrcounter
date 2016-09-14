@@ -5,6 +5,7 @@ pub mod demo {
     use std::time::{Instant, Duration};
     use common::Wish;
     use star::Star;
+    use report::Well;
 
     #[derive(Clone)]
     pub struct Model {
@@ -42,13 +43,17 @@ pub mod demo {
             (model, vec![])
         }
 
-        fn update(&self, message: Self::Msg, model: &Self::Mdl) -> (Option<Self::Mdl>, Vec<Wish>, Vec<Self::Out>) {
+        fn update<T>(&self,
+                     model: &Model,
+                     message: Message,
+                     well: &mut Well<(), T>) -> Option<Model>
+        {
             if let Message::IncrementIndex = message {
                 let next_index = (model.index + 1) % self.colors.len();
                 let next_model = Model { index: next_index, end_instant: model.end_instant };
-                (Some(next_model), vec![], vec![])
+                Some(next_model)
             } else {
-                (None, vec![], vec![])
+                None
             }
         }
 
