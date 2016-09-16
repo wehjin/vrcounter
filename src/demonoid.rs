@@ -6,6 +6,7 @@ use report::Well;
 use std::time::Instant;
 use star::Star;
 use std::collections::VecDeque;
+use mist::Mist;
 
 #[derive(Clone)]
 pub struct Demonoid<S: Star> {
@@ -38,6 +39,13 @@ impl<S: Star> Demonoid<S>
                     }
                 }
             },
+            Wish::SenseHand(hand) => {
+                for (_, mist) in &vision.mists {
+                    if let Some(message) = vision.get_message_option(mist.id(), wish.clone()) {
+                        messages.push(message);
+                    }
+                }
+            }
             // TODO : Handle SendHand and maybe FitToCage
             _ => ()
         }
