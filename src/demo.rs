@@ -6,9 +6,10 @@ use vrcounter::IdSource;
 use vrcounter::Summoner;
 use vrcounter::Wish;
 use vrcounter::Vision;
-use vrcounter::Star;
+use vrcounter::{Star, Substar};
 use vrcounter::Hand;
 use std::sync::Arc;
+use std::rc::Rc;
 use cage::Cage;
 use cage::Offset;
 use vrcounter::{howl, scream, roar};
@@ -16,7 +17,7 @@ use vrcounter::color::*;
 use vrcounter::Sigil;
 use vrcounter::Patch;
 use vrcounter::Mist;
-use vrcounter::roar::demo::RainbowStar;
+use vrcounter::roar::RainbowStar;
 use std::collections::VecDeque;
 
 #[derive(Clone)]
@@ -33,21 +34,20 @@ pub struct Model {
     pub patch_id: u64,
     pub delta_z_option: Option<f32>,
     pub cage: Cage,
-    pub rainbow_star: RainbowStar,
-    pub rainbow_star_model: roar::demo::Model,
+    substar: Substar<RainbowStar>,
 }
 
 #[derive(Clone)]
 pub enum Message {
     SeeHand(Hand),
-    ForwardToRainbow(roar::demo::Message)
+    ForwardToRainbow(roar::Message)
 }
 
 impl MyStar {
-    fn forward_to_rainbow(&self, model: &Model, submessage: roar::demo::Message) -> Option<Model> {
-        if let Some(new_submodel) = model.rainbow_star.update(&model.rainbow_star_model, submessage) {
+    fn forward_to_rainbow(&self, model: &Model, submessage: roar::Message) -> Option<Model> {
+        if let Some(new_substar) = model.substar.update(submessage) {
             let mut new_model = model.clone();
-            new_model.rainbow_star_model = new_submodel;
+            new_model.substar = new_substar;
             Some(new_model)
         } else {
             None
@@ -89,7 +89,7 @@ impl Star for MyStar {
         let patch_id = rand::random::<u64>();
         let mist_id = rand::random::<u64>();
         let cage = Cage::from((-0.70, -0.50, -0.10, 0.10, 0.00, 0.20));
-        let rainbow_star = roar::demo::from(vec![GREEN, RED, BLUE, CYAN, MAGENTA, YELLOW]);
+        let rainbow_star = roar::from(vec![GREEN, RED, BLUE, CYAN, MAGENTA, YELLOW]);
         Model {
             colors: [BLUE, YELLOW],
             color_index: 0,
@@ -97,8 +97,7 @@ impl Star for MyStar {
             patch_id: patch_id,
             delta_z_option: None,
             cage: cage,
-            rainbow_star_model: rainbow_star.init(),
-            rainbow_star: rainbow_star,
+            substar: Substar::new(Rc::new(rainbow_star)),
         }
     }
 
@@ -113,7 +112,7 @@ impl Star for MyStar {
                 None
             }
         });
-        vision.add_vision(model.rainbow_star.view(&model.rainbow_star_model), |x| Some(Message::ForwardToRainbow(x)));
+        vision.add_vision(model.substar.view(), |x| Some(Message::ForwardToRainbow(x)));
         vision
     }
 

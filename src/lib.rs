@@ -53,6 +53,7 @@ pub use common::Wish;
 pub use vision::Vision;
 pub use report::Well;
 pub use star::Star;
+pub use star::Substar;
 pub use patch::Sigil;
 pub use patch::Patch;
 pub use mist::Mist;
