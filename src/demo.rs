@@ -21,17 +21,10 @@ use vrcounter::roar::demo::RainbowStar;
 use std::collections::VecDeque;
 
 #[derive(Clone)]
-pub enum Message {
-    Ignore,
-    Toggle,
-    SeeHand(Hand),
-}
+struct MyStar;
 
 #[derive(Clone)]
 pub struct Outcome;
-
-#[derive(Clone)]
-struct MyStar;
 
 #[derive(Clone, Debug)]
 pub struct Model {
@@ -45,6 +38,49 @@ pub struct Model {
     pub rainbow_star_model: roar::demo::Model,
 }
 
+#[derive(Clone)]
+pub enum Message {
+    SeeHand(Hand),
+    ForwardToRainbow(roar::demo::Message)
+}
+
+impl MyStar {
+    fn forward_to_rainbow(&self, model: &Model, submessage: roar::demo::Message) -> Option<Model> {
+        let mut well = Well::new(|_| None) as Well<(), Message>;
+        if let Some(new_submodel) = model.rainbow_star.update(&model.rainbow_star_model, submessage, &mut well) {
+            let mut new_model = model.clone();
+            new_model.rainbow_star_model = new_submodel;
+            Some(new_model)
+        } else {
+            None
+        }
+    }
+    fn see_hand(&self, model: &Model, hand: Hand) -> Option<Model> {
+        let Offset { x, y, z } = hand.offset;
+        let mut new_delta_z_option = None;
+        let mut did_toggle = false;
+        if model.cage.contains(x, y, z) {
+            let (_, _, _, _, f, n) = model.cage.limits();
+            let center_z = (f + n) / 2.0;
+            let delta_z = z - center_z;
+            new_delta_z_option = Some(delta_z);
+            if let Some(previous_delta_z) = model.delta_z_option {
+                const BIAS: f32 = 0.045;
+                if delta_z < BIAS && previous_delta_z >= BIAS {
+                    println!("See Toggle!");
+                    did_toggle = true;
+                }
+            }
+        }
+        let mut new_model = model.clone();
+        if did_toggle {
+            new_model.color_index = model.color_index + 1;
+        }
+        new_model.delta_z_option = new_delta_z_option;
+        // TODO: Deal with well.
+        Some(new_model)
+    }
+}
 
 impl Star for MyStar {
     type Mdl = Model;
@@ -79,7 +115,7 @@ impl Star for MyStar {
                 None
             }
         });
-        vision.add_vision(model.rainbow_star.view(&model.rainbow_star_model), |_| None);
+        vision.add_vision(model.rainbow_star.view(&model.rainbow_star_model), |x| Some(Message::ForwardToRainbow(x)));
         vision
     }
 
@@ -94,32 +130,8 @@ impl Star for MyStar {
                     None => model,
                 };
                 match message {
-                    Message::SeeHand(hand) => {
-                        let Offset { x, y, z } = hand.offset;
-                        let mut new_delta_z_option = None;
-                        let mut did_toggle = false;
-                        if current_model.cage.contains(x, y, z) {
-                            let (_, _, _, _, f, n) = current_model.cage.limits();
-                            let center_z = (f + n) / 2.0;
-                            let delta_z = z - center_z;
-                            new_delta_z_option = Some(delta_z);
-                            if let Some(previous_delta_z) = current_model.delta_z_option {
-                                const BIAS: f32 = 0.045;
-                                if delta_z < BIAS && previous_delta_z >= BIAS {
-                                    println!("See Toggle!");
-                                    did_toggle = true;
-                                }
-                            }
-                        }
-                        let mut new_model = model.clone();
-                        if did_toggle {
-                            new_model.color_index = model.color_index + 1;
-                        }
-                        new_model.delta_z_option = new_delta_z_option;
-                        // TODO: Deal with well.
-                        Some(new_model)
-                    },
-                    _ => None,
+                    Message::SeeHand(hand) => self.see_hand(model, hand),
+                    Message::ForwardToRainbow(submessage) => self.forward_to_rainbow(model, submessage),
                 }
             };
             if next_model_op.is_some() {

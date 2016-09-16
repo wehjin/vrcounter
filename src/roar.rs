@@ -42,10 +42,8 @@ pub mod demo {
             }
         }
 
-        fn update<T>(&self,
-                     model: &Model,
-                     message: Message,
-                     well: &mut Well<(), T>) -> Option<Model>
+        fn update<T>(&self, model: &Model, message: Message, well: &mut Well<(), T>)
+            -> Option<Model>
         {
             if let Message::IncrementIndex = message {
                 let next_index = (model.index + 1) % self.colors.len();
