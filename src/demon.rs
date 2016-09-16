@@ -1,11 +1,9 @@
 use patch::Patch;
 use mist::Mist;
 use vision::Vision;
-use report::Well;
 use std::boxed::Box;
 use std::collections::HashMap;
 use common::Wish;
-use star::Star;
 use std::rc::Rc;
 
 pub trait Sun {

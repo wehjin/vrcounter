@@ -2,11 +2,9 @@ use demon::*;
 use std::rc::Rc;
 use common::Wish;
 use vision::Vision;
-use report::Well;
 use std::time::Instant;
 use star::Star;
 use std::collections::VecDeque;
-use mist::Mist;
 
 #[derive(Clone)]
 pub struct Demonoid<S: Star> {
@@ -39,14 +37,14 @@ impl<S: Star> Demonoid<S>
                     }
                 }
             },
-            Wish::SenseHand(hand) => {
+            Wish::SenseHand(_) => {
                 for (_, mist) in &vision.mists {
                     if let Some(message) = vision.get_message_option(mist.id(), wish.clone()) {
                         messages.push(message);
                     }
                 }
             }
-            // TODO : Handle SendHand and maybe FitToCage
+            // TODO : Handle FitToCage
             _ => ()
         }
         messages
@@ -71,13 +69,10 @@ impl<S: Star> Demon for Demonoid<S> where S: 'static {
     fn poke(&mut self, wish: Wish) -> DemonResult {
         let mut messages = VecDeque::from(self.get_messages(wish));
         while let Some(message) = messages.pop_front() {
-            let mut well = Well::new(|_| None) as Well<S::Out, ()>;
-            // TODO Add real well adapter?
-            let model_option = self.star.as_ref().update(&self.model, message, &mut well);
+            let model_option = self.star.as_ref().update(&self.model, message);
             if let Some(model) = model_option {
                 self.model = model;
             };
-            // TODO Deal with wishes in the well
         }
         DemonResult::Keep
     }

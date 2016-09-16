@@ -5,7 +5,6 @@ pub mod demo {
     use std::time::{Instant, Duration};
     use common::Wish;
     use star::Star;
-    use report::Well;
 
     #[derive(Clone, Debug)]
     pub struct Model {
@@ -15,7 +14,6 @@ pub mod demo {
 
     #[derive(Clone)]
     pub enum Message {
-        Ignore,
         IncrementIndex,
     }
 
@@ -42,15 +40,13 @@ pub mod demo {
             }
         }
 
-        fn update<T>(&self, model: &Model, message: Message, well: &mut Well<(), T>)
-            -> Option<Model>
-        {
-            if let Message::IncrementIndex = message {
-                let next_index = (model.index + 1) % self.colors.len();
-                let next_model = Model { index: next_index, end_instant: model.end_instant };
-                Some(next_model)
-            } else {
-                None
+        fn update(&self, model: &Model, message: Message) -> Option<Model> {
+            match message {
+                Message::IncrementIndex => {
+                    let next_index = (model.index + 1) % self.colors.len();
+                    let next_model = Model { index: next_index, end_instant: model.end_instant };
+                    Some(next_model)
+                }
             }
         }
 

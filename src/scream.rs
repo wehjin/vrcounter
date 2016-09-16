@@ -1,10 +1,8 @@
 extern crate cage;
 
 use patch::{Patch};
-use common::Wish;
 use std::option::Option;
 use vision::Vision;
-use report::Well;
 use cage::Cage;
 use star::Star;
 use patch::Sigil;
@@ -16,7 +14,6 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug)]
 pub enum Message {
-    Ignore,
     FitToCage(Cage),
 }
 
@@ -33,16 +30,12 @@ impl Star for Scream {
     fn init(&self) -> Self::Mdl {
         Model { cage_option: None }
     }
-    fn update<T>(&self, _: &Model,
-                 message: Message,
-                 well: &mut Well<(), T>) -> Option<Model>
-    {
+    fn update(&self, _: &Model, message: Message) -> Option<Model> {
         match message {
             Message::FitToCage(cage) => {
                 let next = Model { cage_option: Some(cage) };
                 Some(next)
             }
-            _ => None
         }
     }
     fn view(&self, model: &Self::Mdl) -> Vision<Self::Msg> {

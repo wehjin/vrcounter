@@ -7,7 +7,6 @@ use cage::Cage;
 use patch::{Patch, Sigil};
 use mist::Mist;
 use color::WHITE;
-use report::Well;
 
 #[derive(Clone)]
 pub struct MistyStar {
@@ -65,7 +64,7 @@ impl Star for MistyStar {
         }
     }
 
-    fn update<T>(&self, model: &Misty, message: MistyMessage, well: &mut Well<(), T>) -> Option<Misty> {
+    fn update(&self, model: &Misty, message: MistyMessage) -> Option<Misty> {
         if model.is_silenced {
             return None;
         }
@@ -76,9 +75,7 @@ impl Star for MistyStar {
                 Some(clone)
             },
             MistyMessage::Forward(howl_message) => {
-                let mut well = Well::new(|_| None) as Well<(), MistyMessage>;
-                let new_submodel_op = self.sub_star.update(&model.sub_model, howl_message, &mut well);
-                // TODO Deal with message and wishes in the well
+                let new_submodel_op = self.sub_star.update(&model.sub_model, howl_message);
                 match new_submodel_op {
                     None => None,
                     Some(new_submodel) => {
@@ -114,7 +111,7 @@ impl Star for Howl {
         self.cage
     }
 
-    fn update<T>(&self, _: &Cage, _: Message, _: &mut Well<(), T>) -> Option<Cage> {
+    fn update(&self, _: &Cage, _: Message) -> Option<Cage> {
         None
     }
 

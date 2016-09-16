@@ -6,7 +6,6 @@ use vrcounter::IdSource;
 use vrcounter::Summoner;
 use vrcounter::Wish;
 use vrcounter::Vision;
-use vrcounter::Well;
 use vrcounter::Star;
 use vrcounter::Hand;
 use std::sync::Arc;
@@ -46,8 +45,7 @@ pub enum Message {
 
 impl MyStar {
     fn forward_to_rainbow(&self, model: &Model, submessage: roar::demo::Message) -> Option<Model> {
-        let mut well = Well::new(|_| None) as Well<(), Message>;
-        if let Some(new_submodel) = model.rainbow_star.update(&model.rainbow_star_model, submessage, &mut well) {
+        if let Some(new_submodel) = model.rainbow_star.update(&model.rainbow_star_model, submessage) {
             let mut new_model = model.clone();
             new_model.rainbow_star_model = new_submodel;
             Some(new_model)
@@ -119,7 +117,7 @@ impl Star for MyStar {
         vision
     }
 
-    fn update<T>(&self, model: &Model, message: Message, well: &mut Well<Outcome, T>) -> Option<Model> {
+    fn update(&self, model: &Model, message: Message) -> Option<Model> {
         let mut deque = VecDeque::new();
         deque.push_back(message);
         let mut current_model_op = None;
@@ -130,13 +128,13 @@ impl Star for MyStar {
                     None => model,
                 };
                 match message {
-                    Message::SeeHand(hand) => self.see_hand(model, hand),
-                    Message::ForwardToRainbow(submessage) => self.forward_to_rainbow(model, submessage),
+                    Message::SeeHand(hand) => self.see_hand(current_model, hand),
+                    Message::ForwardToRainbow(submessage) => self.forward_to_rainbow(current_model, submessage),
                 }
             };
             if next_model_op.is_some() {
                 current_model_op = next_model_op;
-            }
+            };
         }
         current_model_op
     }

@@ -9,5 +9,6 @@ pub trait Star: Clone {
 
     fn init(&self) -> Self::Mdl;
     fn view(&self, &Self::Mdl) -> Vision<Self::Msg>;
-    fn update<T>(&self, &Self::Mdl, Self::Msg, &mut Well<Self::Out, T>) -> Option<Self::Mdl>;
+    fn update(&self, &Self::Mdl, Self::Msg) -> Option<Self::Mdl>;
+    fn report<T>(&self, &Self::Mdl, &mut Well<Self::Out, T>) {}
 }
