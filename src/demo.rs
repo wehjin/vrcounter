@@ -35,12 +35,13 @@ pub struct Model {
     pub delta_z_option: Option<f32>,
     pub cage: Cage,
     substar: Substar<RainbowStar>,
+    scream1_substar: Substar<scream::Scream>,
 }
 
 #[derive(Clone)]
 pub enum Message {
     SeeHand(Hand),
-    ForwardToRainbow(roar::Message)
+    ForwardToRainbow(roar::Message),
 }
 
 impl MyStar {
@@ -90,6 +91,12 @@ impl Star for MyStar {
         let mist_id = rand::random::<u64>();
         let cage = Cage::from((-0.70, -0.50, -0.10, 0.10, 0.00, 0.20));
         let rainbow_star = roar::from(vec![GREEN, RED, BLUE, CYAN, MAGENTA, YELLOW]);
+        let scream1 = scream::from_color(rand::random::<u64>(), CYAN);
+        let scream1_substar = Substar::new(Rc::new(scream1));
+        let new_scream1_substar = match scream1_substar.update(scream::Message::FitToCage(Cage::from((-0.3, -0.2, -0.25, -0.15, 0.03, 0.03)))) {
+            Some(substar) => substar,
+            None => scream1_substar,
+        };
         Model {
             colors: [BLUE, YELLOW],
             color_index: 0,
@@ -98,6 +105,7 @@ impl Star for MyStar {
             delta_z_option: None,
             cage: cage,
             substar: Substar::new(Rc::new(rainbow_star)),
+            scream1_substar: new_scream1_substar,
         }
     }
 
@@ -113,6 +121,8 @@ impl Star for MyStar {
             }
         });
         vision.add_vision(model.substar.view(), |x| Some(Message::ForwardToRainbow(x)));
+        let scream1_vision = model.scream1_substar.view();
+        vision.add_vision(scream1_vision, |_| None);
         vision
     }
 
@@ -140,12 +150,6 @@ impl Star for MyStar {
 }
 
 fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
-    let scream_id1 = id_source.id();
-    let scream1 = scream::from_color(scream_id1, CYAN);
-    let screaming1 = summoner.summon(id_source, &scream1);
-    let cage1 = Cage::from((-0.3, -0.2, -0.25, -0.15, 0.03, 0.03));
-    summoner.update_one(screaming1, Wish::FitToCage(Cage::from(cage1)));
-
     let scream_id2 = id_source.id();
     let scream2 = scream::from_color(scream_id2, MAGENTA);
     let screaming2 = summoner.summon(id_source, &scream2);

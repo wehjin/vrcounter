@@ -17,7 +17,7 @@ pub enum Message {
     FitToCage(Cage),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Scream {
     id: u64,
     color: [f32; 4]
