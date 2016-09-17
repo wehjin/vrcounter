@@ -36,12 +36,76 @@ pub struct Model {
     pub cage: Cage,
     substar: Substar<RainbowStar>,
     scream1_substar: Substar<scream::Scream>,
+    scream2_substar: Substar<scream::Scream>,
 }
 
 #[derive(Clone)]
 pub enum Message {
     SeeHand(Hand),
     ForwardToRainbow(roar::Message),
+}
+
+impl Star for MyStar {
+    type Mdl = Model;
+    type Msg = Message;
+    type Out = Outcome;
+
+    fn init(&self) -> Model {
+        Model {
+            colors: [BLUE, YELLOW],
+            color_index: 0,
+            mist_id: rand::random::<u64>(),
+            patch_id: rand::random::<u64>(),
+            delta_z_option: None,
+            cage: Cage::from((-0.70, -0.50, -0.10, 0.10, 0.00, 0.20)),
+            substar: Substar::init(Rc::new(roar::from(vec![GREEN, RED, BLUE, CYAN, MAGENTA, YELLOW]))),
+            scream1_substar: Substar::init(Rc::new(scream::new(rand::random::<u64>(), CYAN)))
+                .update(scream::Message::FitToCage(Cage::from((-0.3, -0.2, -0.25, -0.15, 0.03, 0.03))))
+                .unwrap(),
+            scream2_substar: Substar::init(Rc::new(scream::new(rand::random::<u64>(), MAGENTA)))
+                .update(scream::Message::FitToCage(Cage::from((-0.4, -0.3, -0.25, -0.15, 0.03, 0.03))))
+                .unwrap(),
+        }
+    }
+
+    fn view(&self, model: &Model) -> Vision<Message> {
+        let mut vision = Vision::new();
+        let color = model.colors[model.color_index % model.colors.len()];
+        vision.add_patch(Patch::from_cage(&model.cage, color, Sigil::Fill, model.patch_id));
+        vision.add_mist(Mist::new(model.mist_id, model.cage), |wish| {
+            if let Wish::SenseHand(hand) = wish {
+                Some(Message::SeeHand(hand))
+            } else {
+                None
+            }
+        });
+        vision.add_vision(model.substar.view(), |x| Some(Message::ForwardToRainbow(x)));
+        vision.add_vision(model.scream1_substar.view(), |_| None);
+        vision.add_vision(model.scream2_substar.view(), |_| None);
+        vision
+    }
+
+    fn update(&self, model: &Model, message: Message) -> Option<Model> {
+        let mut deque = VecDeque::new();
+        deque.push_back(message);
+        let mut current_model_op = None;
+        while let Some(message) = deque.pop_front() {
+            let next_model_op = {
+                let current_model = match current_model_op {
+                    Some(ref model) => model,
+                    None => model,
+                };
+                match message {
+                    Message::SeeHand(hand) => self.see_hand(current_model, hand),
+                    Message::ForwardToRainbow(submessage) => self.forward_to_rainbow(current_model, submessage),
+                }
+            };
+            if next_model_op.is_some() {
+                current_model_op = next_model_op;
+            };
+        }
+        current_model_op
+    }
 }
 
 impl MyStar {
@@ -81,82 +145,9 @@ impl MyStar {
     }
 }
 
-impl Star for MyStar {
-    type Mdl = Model;
-    type Msg = Message;
-    type Out = Outcome;
-
-    fn init(&self) -> Model {
-        let patch_id = rand::random::<u64>();
-        let mist_id = rand::random::<u64>();
-        let cage = Cage::from((-0.70, -0.50, -0.10, 0.10, 0.00, 0.20));
-        let rainbow_star = roar::from(vec![GREEN, RED, BLUE, CYAN, MAGENTA, YELLOW]);
-        let scream1 = scream::from_color(rand::random::<u64>(), CYAN);
-        let scream1_substar = Substar::new(Rc::new(scream1));
-        let new_scream1_substar = match scream1_substar.update(scream::Message::FitToCage(Cage::from((-0.3, -0.2, -0.25, -0.15, 0.03, 0.03)))) {
-            Some(substar) => substar,
-            None => scream1_substar,
-        };
-        Model {
-            colors: [BLUE, YELLOW],
-            color_index: 0,
-            mist_id: mist_id,
-            patch_id: patch_id,
-            delta_z_option: None,
-            cage: cage,
-            substar: Substar::new(Rc::new(rainbow_star)),
-            scream1_substar: new_scream1_substar,
-        }
-    }
-
-    fn view(&self, model: &Model) -> Vision<Message> {
-        let mut vision = Vision::new();
-        let color = model.colors[model.color_index % model.colors.len()];
-        vision.add_patch(Patch::from_cage(&model.cage, color, Sigil::Fill, model.patch_id));
-        vision.add_mist(Mist::new(model.mist_id, model.cage), |wish| {
-            if let Wish::SenseHand(hand) = wish {
-                Some(Message::SeeHand(hand))
-            } else {
-                None
-            }
-        });
-        vision.add_vision(model.substar.view(), |x| Some(Message::ForwardToRainbow(x)));
-        let scream1_vision = model.scream1_substar.view();
-        vision.add_vision(scream1_vision, |_| None);
-        vision
-    }
-
-    fn update(&self, model: &Model, message: Message) -> Option<Model> {
-        let mut deque = VecDeque::new();
-        deque.push_back(message);
-        let mut current_model_op = None;
-        while let Some(message) = deque.pop_front() {
-            let next_model_op = {
-                let current_model = match current_model_op {
-                    Some(ref model) => model,
-                    None => model,
-                };
-                match message {
-                    Message::SeeHand(hand) => self.see_hand(current_model, hand),
-                    Message::ForwardToRainbow(submessage) => self.forward_to_rainbow(current_model, submessage),
-                }
-            };
-            if next_model_op.is_some() {
-                current_model_op = next_model_op;
-            };
-        }
-        current_model_op
-    }
-}
-
 fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
-    let scream_id2 = id_source.id();
-    let scream2 = scream::from_color(scream_id2, MAGENTA);
-    let screaming2 = summoner.summon(id_source, &scream2);
-    let cage2 = Cage::from((-0.4, -0.3, -0.25, -0.15, 0.03, 0.03));
-    summoner.update_one(screaming2, Wish::FitToCage(Cage::from(cage2)));
     let scream_id3 = id_source.id();
-    let screaming3 = summoner.summon(id_source, &scream::from_color(scream_id3, YELLOW));
+    let screaming3 = summoner.summon(id_source, &scream::new(scream_id3, YELLOW));
     let cage3 = Cage::from((-0.5, -0.4, -0.25, -0.15, 0.03, 0.03));
     summoner.update_one(screaming3, Wish::FitToCage(Cage::from(cage3)));
     let howls = vec![

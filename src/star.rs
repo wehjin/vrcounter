@@ -20,7 +20,7 @@ pub struct Substar<S: Star> {
 }
 
 impl<S: Star> Substar<S> {
-    pub fn new(star_rc: Rc<S>) -> Self {
+    pub fn init(star_rc: Rc<S>) -> Self {
         Substar {
             star_rc: star_rc.clone(),
             model: star_rc.as_ref().init(),

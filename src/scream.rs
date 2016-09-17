@@ -48,6 +48,6 @@ impl Star for Scream {
     }
 }
 
-pub fn from_color(id: u64, color: [f32; 4]) -> Scream {
+pub fn new(id: u64, color: [f32; 4]) -> Scream {
     Scream { id: id, color: color }
 }
