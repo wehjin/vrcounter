@@ -11,10 +11,19 @@ pub struct CompositeSubstar<S: Star>
 
 impl<S: Star> CompositeSubstar<S>
 where S: Debug, < S as Star >::Mdl: Debug, < S as Star >::Msg: 'static {
-    pub fn init(substar_inits: Vec<(Rc<S>, S::Msg)>) -> Self {
+    pub fn init_up(substar_inits: Vec<(Rc<S>, S::Msg)>) -> Self {
         let mut substars = Vec::new();
         for (star, message) in substar_inits {
             substars.push(Substar::init(star).update(message).unwrap());
+        }
+        CompositeSubstar {
+            substars: substars
+        }
+    }
+    pub fn init(substar_inits: Vec<Rc<S>>) -> Self {
+        let mut substars = Vec::new();
+        for star in substar_inits {
+            substars.push(Substar::init(star));
         }
         CompositeSubstar {
             substars: substars
