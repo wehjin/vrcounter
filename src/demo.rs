@@ -6,7 +6,7 @@ use vrcounter::IdSource;
 use vrcounter::Summoner;
 use vrcounter::Wish;
 use vrcounter::Vision;
-use vrcounter::{Star, Substar, CompositeSubstar};
+use vrcounter::{Star, Substar};
 use vrcounter::Hand;
 use std::sync::Arc;
 use std::rc::Rc;
@@ -48,18 +48,21 @@ pub enum Message {
 pub enum ComponentStar {
     Scream(scream::Scream, < scream::Scream as Star >::Msg),
     Howl(howl::Howl),
+    Misty(howl::MistyStar)
 }
 
 #[derive(Clone, Debug)]
 pub enum ComponentMessage {
     Scream(< scream::Scream as Star >::Msg),
     Howl(< howl::Howl as Star >::Msg),
+    Misty(< howl::MistyStar as Star >::Msg),
 }
 
 #[derive(Clone, Debug)]
 enum ComponentSubstar {
     Scream(Substar<scream::Scream>),
     Howl(Substar<howl::Howl>),
+    Misty(Substar<howl::MistyStar>)
 }
 
 #[derive(Clone, Debug)]
@@ -78,6 +81,9 @@ impl ComponentCompositeSubstar {
                 ComponentStar::Howl(howl) => {
                     ComponentSubstar::Howl(Substar::init(Rc::new(howl)))
                 },
+                ComponentStar::Misty(misty) => {
+                    ComponentSubstar::Misty(Substar::init(Rc::new(misty)))
+                }
             };
             component_substars.push(component_substar);
         }
@@ -91,6 +97,7 @@ impl ComponentCompositeSubstar {
             match substars {
                 &ComponentSubstar::Scream(ref substar) => vision.add_vision(substar.view(), |_| None),
                 &ComponentSubstar::Howl(ref substar) => vision.add_vision(substar.view(), |_| None),
+                &ComponentSubstar::Misty(ref substar) => vision.add_vision(substar.view(), |_| None),
             }
         };
         vision
@@ -123,6 +130,7 @@ impl Star for MyStar {
                 ComponentStar::Howl(howl::new(rand::random::<u64>(), GREEN, Cage::from((0.25, 0.75, 0.0, 0.5, -0.01, -0.01)), Sigil::Fill)),
                 ComponentStar::Howl(howl::new(rand::random::<u64>(), CYAN, Cage::from((-0.06, 0.00, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('J'))),
                 ComponentStar::Howl(howl::new(rand::random::<u64>(), YELLOW, Cage::from((0.00, 0.06, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('y'))),
+                ComponentStar::Misty(howl::misty(rand::random::<u64>(), Default::default())),
             ]),
         }
     }
@@ -201,11 +209,6 @@ impl MyStar {
         // TODO: Deal with well.
         Some(new_model)
     }
-}
-
-fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
-    let howl_id = id_source.id();
-    summoner.summon(id_source, &howl::misty(howl_id, Default::default()));
 }
 
 fn main() {

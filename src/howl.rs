@@ -8,7 +8,7 @@ use patch::{Patch, Sigil};
 use mist::Mist;
 use color::WHITE;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MistyStar {
     id: u64,
     cage: Cage,
@@ -33,7 +33,7 @@ pub enum MistyMessage {
     Forward(Message),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Misty {
     pub is_silenced: bool,
     pub sub_model: Cage,
