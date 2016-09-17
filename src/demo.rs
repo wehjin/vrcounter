@@ -170,14 +170,12 @@ pub struct Model {
     pub patch_id: u64,
     pub delta_z_option: Option<f32>,
     pub cage: Cage,
-    substar: Substar<roar::RainbowStar>,
     composite_substar: ComponentCompositeSubstar,
 }
 
 #[derive(Clone)]
 pub enum Message {
     SeeHand(Hand),
-    ForwardToRainbow(roar::Message),
     ForwardToComponent(ComponentMessage),
 }
 
@@ -194,7 +192,6 @@ impl Star for MyStar {
             patch_id: rand::random::<u64>(),
             delta_z_option: None,
             cage: Cage::from((-0.70, -0.50, -0.10, 0.10, 0.00, 0.20)),
-            substar: Substar::init(Rc::new(roar::from(vec![GREEN, RED, BLUE, CYAN, MAGENTA, YELLOW]))),
             composite_substar: ComponentCompositeSubstar::init(vec![
                 ComponentStar::Scream(scream::new(rand::random::<u64>(), CYAN), scream::Message::FitToCage(Cage::from((-0.3, -0.2, -0.25, -0.15, 0.03, 0.03)))),
                 ComponentStar::Scream(scream::new(rand::random::<u64>(), MAGENTA), scream::Message::FitToCage(Cage::from((-0.4, -0.3, -0.25, -0.15, 0.03, 0.03)))),
@@ -204,6 +201,7 @@ impl Star for MyStar {
                 ComponentStar::Howl(howl::new(rand::random::<u64>(), CYAN, Cage::from((-0.06, 0.00, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('J'))),
                 ComponentStar::Howl(howl::new(rand::random::<u64>(), YELLOW, Cage::from((0.00, 0.06, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('y'))),
                 ComponentStar::Misty(howl::misty(rand::random::<u64>(), Default::default())),
+                ComponentStar::Rainbow(roar::from(vec![GREEN, RED, BLUE, CYAN, MAGENTA, YELLOW])),
             ]),
         }
     }
@@ -219,7 +217,6 @@ impl Star for MyStar {
                 None
             }
         });
-        vision.add_vision(model.substar.view(), |x| Some(Message::ForwardToRainbow(x)));
         vision.add_vision(model.composite_substar.view(), |x| Some(Message::ForwardToComponent(x)));
         vision
     }
@@ -236,7 +233,6 @@ impl Star for MyStar {
                 };
                 match message {
                     Message::SeeHand(hand) => self.see_hand(current_model, hand),
-                    Message::ForwardToRainbow(submessage) => self.forward_to_rainbow(current_model, submessage),
                     Message::ForwardToComponent(component_submessage) => self.forward_to_component(current_model, component_submessage),
                 }
             };
@@ -249,15 +245,6 @@ impl Star for MyStar {
 }
 
 impl MyStar {
-    fn forward_to_rainbow(&self, model: &Model, submessage: roar::Message) -> Option<Model> {
-        if let Some(new_substar) = model.substar.update(submessage) {
-            let mut new_model = model.clone();
-            new_model.substar = new_substar;
-            Some(new_model)
-        } else {
-            None
-        }
-    }
     fn forward_to_component(&self, model: &Model, submessage: ComponentMessage) -> Option<Model> {
         if let Some(new_composite_substar) = model.composite_substar.update(submessage) {
             let mut new_model = model.clone();
