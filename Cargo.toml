@@ -18,8 +18,3 @@ rand = "0.3"
 [lib]
 name = "vrcounter"
 path = "src/lib.rs"
-
-[[bin]]
-name = "demo"
-path = "src/demo.rs"
-
