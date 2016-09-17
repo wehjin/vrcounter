@@ -13,8 +13,8 @@ impl<S: Star> CompositeSubstar<S>
 where S: Debug, < S as Star >::Mdl: Debug, < S as Star >::Msg: 'static {
     pub fn init_up(substar_inits: Vec<(Rc<S>, S::Msg)>) -> Self {
         let mut substars = Vec::new();
-        for (star, message) in substar_inits {
-            substars.push(Substar::init(star).update(message).unwrap());
+        for (ref star, ref message) in substar_inits {
+            substars.push(Substar::init(star.clone()).update(message).unwrap());
         }
         CompositeSubstar {
             substars: substars
@@ -58,7 +58,7 @@ impl<S: Star> Substar<S> {
     pub fn view(&self) -> Vision<S::Msg> {
         self.star_rc.as_ref().view(&self.model)
     }
-    pub fn update(&self, message: S::Msg) -> Option<Self> {
+    pub fn update(&self, message: &S::Msg) -> Option<Self> {
         if let Some(new_model) = self.star_rc.as_ref().update(&self.model, message) {
             Some(Substar { star_rc: self.star_rc.clone(), model: new_model })
         } else {
@@ -74,6 +74,6 @@ pub trait Star: Clone {
 
     fn init(&self) -> Self::Mdl;
     fn view(&self, &Self::Mdl) -> Vision<Self::Msg>;
-    fn update(&self, &Self::Mdl, Self::Msg) -> Option<Self::Mdl>;
+    fn update(&self, &Self::Mdl, &Self::Msg) -> Option<Self::Mdl>;
     fn report<T>(&self, &Self::Mdl, &mut Well<Self::Out, T>) {}
 }

@@ -30,9 +30,9 @@ impl Star for Scream {
     fn init(&self) -> Self::Mdl {
         Model { cage_option: None }
     }
-    fn update(&self, _: &Model, message: Message) -> Option<Model> {
+    fn update(&self, _: &Model, message: &Message) -> Option<Model> {
         match message {
-            Message::FitToCage(cage) => {
+            &Message::FitToCage(cage) => {
                 let next = Model { cage_option: Some(cage) };
                 Some(next)
             }
