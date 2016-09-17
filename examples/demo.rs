@@ -93,83 +93,32 @@ impl ComponentCompositeSubstar {
         };
         vision
     }
-    fn update(&self, message: &ComponentMessage) -> Option<Self> {
+    fn update(&self, message: &ComponentMessage) -> Self {
         let mut new_component_substars = Vec::new();
-        let mut updates = 0;
         for component_substar in &self.component_substars {
-            if let Some(new_component_substar) = match component_substar {
-                &ComponentSubstar::Scream(ref index, ref substar) => {
-                    if let &ComponentMessage::Scream(ref target_index, ref submessage) = message {
-                        if target_index == index {
-                            if let Some(new_substar) = substar.update(submessage) {
-                                Some(ComponentSubstar::Scream(*index, new_substar))
+            macro_rules! new_component_substar {
+            ($x:ident,$z:ident,$($y:ident),*) => (
+                let $x = match $z {
+                    $(
+                    &ComponentSubstar::$y(ref index, ref substar) => {
+                        let new_substar = if let &ComponentMessage::$y(ref target_index, ref submessage) = message {
+                            if target_index == index {
+                                substar.update(submessage)
                             } else {
-                                None
+                                substar.clone()
                             }
                         } else {
-                            None
-                        }
-                    } else {
-                        None
+                            substar.clone()
+                        };
+                        ComponentSubstar::$y(*index, new_substar)
                     }
-                },
-                &ComponentSubstar::Howl(ref index, ref substar) => {
-                    if let &ComponentMessage::Howl(ref target_index, ref submessage) = message {
-                        if target_index == index {
-                            if let Some(new_substar) = substar.update(submessage) {
-                                Some(ComponentSubstar::Howl(*index, new_substar))
-                            } else {
-                                None
-                            }
-                        } else {
-                            None
-                        }
-                    } else {
-                        None
-                    }
-                },
-                &ComponentSubstar::Misty(ref index, ref substar) => {
-                    if let &ComponentMessage::Misty(ref target_index, ref submessage) = message {
-                        if target_index == index {
-                            if let Some(new_substar) = substar.update(submessage) {
-                                Some(ComponentSubstar::Misty(*index, new_substar))
-                            } else {
-                                None
-                            }
-                        } else {
-                            None
-                        }
-                    } else {
-                        None
-                    }
-                },
-                &ComponentSubstar::Rainbow(ref index, ref substar) => {
-                    if let &ComponentMessage::Rainbow(ref target_index, ref submessage) = message {
-                        if target_index == index {
-                            if let Some(new_substar) = substar.update(submessage) {
-                                Some(ComponentSubstar::Rainbow(*index, new_substar))
-                            } else {
-                                None
-                            }
-                        } else {
-                            None
-                        }
-                    } else {
-                        None
-                    }
-                },
-            } {
-                new_component_substars.push(new_component_substar);
-                updates += 1;
-            } else {
-                new_component_substars.push(component_substar.clone());
-            }
+                    ),*
+                };
+            )}
+            new_component_substar!(new_component_substar, component_substar, Scream, Howl, Misty, Rainbow);
+            new_component_substars.push(new_component_substar);
         };
-        if updates > 0 {
-            Some(ComponentCompositeSubstar { component_substars: new_component_substars })
-        } else {
-            None
-        }
+        ComponentCompositeSubstar { component_substars: new_component_substars }
     }
 }
 
@@ -229,9 +178,7 @@ impl Star for MyStar {
         ];
         for update in &updates {
             let message = Message::ForwardToComponent(update.clone());
-            if let Some(new_model) = self.update(&model, &message) {
-                model = new_model;
-            }
+            model = self.update(&model, &message);
         }
         model
     }
@@ -251,40 +198,30 @@ impl Star for MyStar {
         vision
     }
 
-    fn update(&self, model: &Model, message: &Message) -> Option<Model> {
+    fn update(&self, model: &Model, message: &Message) -> Model {
         let mut deque = VecDeque::new();
         deque.push_back(message);
-        let mut current_model_op = None;
+        let mut current_model = model.clone();
         while let Some(message) = deque.pop_front() {
-            let next_model_op = {
-                let current_model = match current_model_op {
-                    Some(ref model) => model,
-                    None => model,
-                };
+            current_model = {
                 match message {
-                    &Message::SeeHand(hand) => self.see_hand(current_model, hand),
-                    &Message::ForwardToComponent(ref component_submessage) => self.forward_to_component(current_model, component_submessage),
+                    &Message::SeeHand(hand) => self.see_hand(&current_model, hand),
+                    &Message::ForwardToComponent(ref component_submessage) => self.forward_to_component(&current_model, component_submessage),
                 }
             };
-            if next_model_op.is_some() {
-                current_model_op = next_model_op;
-            };
         }
-        current_model_op
+        current_model
     }
 }
 
 impl MyStar {
-    fn forward_to_component(&self, model: &Model, submessage: &ComponentMessage) -> Option<Model> {
-        if let Some(new_composite_substar) = model.composite_substar.update(submessage) {
-            let mut new_model = model.clone();
-            new_model.composite_substar = new_composite_substar;
-            Some(new_model)
-        } else {
-            None
-        }
+    fn forward_to_component(&self, model: &Model, submessage: &ComponentMessage) -> Model {
+        let new_composite_substar = model.composite_substar.update(submessage);
+        let mut new_model = model.clone();
+        new_model.composite_substar = new_composite_substar;
+        new_model
     }
-    fn see_hand(&self, model: &Model, hand: Hand) -> Option<Model> {
+    fn see_hand(&self, model: &Model, hand: Hand) -> Model {
         let Offset { x, y, z } = hand.offset;
         let mut new_delta_z_option = None;
         let mut did_toggle = false;
@@ -306,7 +243,7 @@ impl MyStar {
             new_model.color_index = model.color_index + 1;
         }
         new_model.delta_z_option = new_delta_z_option;
-        Some(new_model)
+        new_model
     }
 }
 

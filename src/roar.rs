@@ -42,12 +42,11 @@ impl Star for RainbowStar {
         }
     }
 
-    fn update(&self, model: &Model, message: &Message) -> Option<Model> {
+    fn update(&self, model: &Model, message: &Message) -> Model {
         match message {
             &Message::IncrementIndex => {
                 let next_index = (model.index + 1) % self.colors.len();
-                let next_model = Model { index: next_index, end_instant: model.end_instant };
-                Some(next_model)
+                Model { index: next_index, end_instant: model.end_instant }
             }
         }
     }

@@ -64,26 +64,20 @@ impl Star for MistyStar {
         }
     }
 
-    fn update(&self, model: &Misty, message: &MistyMessage) -> Option<Misty> {
+    fn update(&self, model: &Misty, message: &MistyMessage) -> Misty {
         if model.is_silenced {
-            return None;
+            return model.clone();
         }
         match message {
             &MistyMessage::Silence => {
                 let mut clone = model.clone();
                 clone.is_silenced = true;
-                Some(clone)
+                clone
             },
             &MistyMessage::Forward(ref howl_message) => {
-                let new_submodel_op = self.sub_star.update(&model.sub_model, howl_message);
-                match new_submodel_op {
-                    None => None,
-                    Some(new_submodel) => {
-                        let mut new_model = model.clone();
-                        new_model.sub_model = new_submodel;
-                        Some(new_model)
-                    }
-                }
+                let mut new_model = model.clone();
+                new_model.sub_model = self.sub_star.update(&model.sub_model, howl_message);
+                new_model
             },
         }
     }
@@ -111,8 +105,8 @@ impl Star for Howl {
         self.cage
     }
 
-    fn update(&self, _: &Cage, _: &Message) -> Option<Cage> {
-        None
+    fn update(&self, cage: &Cage, _: &Message) -> Cage {
+        cage.clone()
     }
 
     fn view(&self, model: &Cage) -> Vision<Message> {

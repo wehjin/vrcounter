@@ -11,15 +11,6 @@ pub struct CompositeSubstar<S: Star>
 
 impl<S: Star> CompositeSubstar<S>
 where S: Debug, < S as Star >::Mdl: Debug, < S as Star >::Msg: 'static {
-    pub fn init_up(substar_inits: Vec<(Rc<S>, S::Msg)>) -> Self {
-        let mut substars = Vec::new();
-        for (ref star, ref message) in substar_inits {
-            substars.push(Substar::init(star.clone()).update(message).unwrap());
-        }
-        CompositeSubstar {
-            substars: substars
-        }
-    }
     pub fn init(substar_inits: Vec<Rc<S>>) -> Self {
         let mut substars = Vec::new();
         for star in substar_inits {
@@ -36,8 +27,8 @@ where S: Debug, < S as Star >::Mdl: Debug, < S as Star >::Msg: 'static {
         };
         vision
     }
-    pub fn update(&self, _: S::Msg) -> Option<Self> {
-        None
+    pub fn update(&self, _: S::Msg) -> Self {
+        self.clone()
     }
 }
 
@@ -45,25 +36,22 @@ where S: Debug, < S as Star >::Mdl: Debug, < S as Star >::Msg: 'static {
 #[derive(Clone, Debug)]
 pub struct Substar<S: Star> {
     star_rc: Rc<S>,
-    model: S::Mdl,
+    star_model: S::Mdl,
 }
 
 impl<S: Star> Substar<S> {
     pub fn init(star_rc: Rc<S>) -> Self {
         Substar {
             star_rc: star_rc.clone(),
-            model: star_rc.as_ref().init(),
+            star_model: star_rc.as_ref().init(),
         }
     }
     pub fn view(&self) -> Vision<S::Msg> {
-        self.star_rc.as_ref().view(&self.model)
+        self.star_rc.as_ref().view(&self.star_model)
     }
-    pub fn update(&self, message: &S::Msg) -> Option<Self> {
-        if let Some(new_model) = self.star_rc.as_ref().update(&self.model, message) {
-            Some(Substar { star_rc: self.star_rc.clone(), model: new_model })
-        } else {
-            None
-        }
+    pub fn update(&self, message: &S::Msg) -> Self {
+        let new_star_model = self.star_rc.as_ref().update(&self.star_model, message);
+        Substar { star_rc: self.star_rc.clone(), star_model: new_star_model }
     }
 }
 
@@ -74,6 +62,6 @@ pub trait Star: Clone {
 
     fn init(&self) -> Self::Mdl;
     fn view(&self, &Self::Mdl) -> Vision<Self::Msg>;
-    fn update(&self, &Self::Mdl, &Self::Msg) -> Option<Self::Mdl>;
+    fn update(&self, &Self::Mdl, &Self::Msg) -> Self::Mdl;
     fn report<T>(&self, &Self::Mdl, &mut Well<Self::Out, T>) {}
 }
