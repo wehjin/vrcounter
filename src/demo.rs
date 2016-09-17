@@ -66,19 +66,73 @@ impl ComponentCompositeSubstar {
             component_substars: component_substars
         }
     }
-    fn view(&self) -> Vision<()> {
+    fn view(&self) -> Vision<ComponentMessage> {
         let mut vision = Vision::new();
         for substars in &self.component_substars {
             match substars {
-                &ComponentSubstar::Scream(ref substar) => vision.add_vision(substar.view(), |_| None),
-                &ComponentSubstar::Howl(ref substar) => vision.add_vision(substar.view(), |_| None),
-                &ComponentSubstar::Misty(ref substar) => vision.add_vision(substar.view(), |_| None),
+                &ComponentSubstar::Scream(ref substar) => {
+                    vision.add_vision(substar.view(), |x| Some(ComponentMessage::Scream(x)))
+                },
+                &ComponentSubstar::Howl(ref substar) => {
+                    vision.add_vision(substar.view(), |x| Some(ComponentMessage::Howl(x)))
+                },
+                &ComponentSubstar::Misty(ref substar) => {
+                    vision.add_vision(substar.view(), |x| Some(ComponentMessage::Misty(x)))
+                },
             }
         };
         vision
     }
-    fn update(&self, _: ComponentMessage) -> Option<Self> {
-        None
+    fn update(&self, message: ComponentMessage) -> Option<Self> {
+        let mut new_component_substars = Vec::new();
+        let mut updates = 0;
+        for component_substar in &self.component_substars {
+            if let Some(new_component_substar) = match component_substar {
+                &ComponentSubstar::Scream(ref substar) => {
+                    if let ComponentMessage::Scream(submessage) = message {
+                        if let Some(new_substar) = substar.update(submessage) {
+                            Some(ComponentSubstar::Scream(new_substar))
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                },
+                &ComponentSubstar::Howl(ref substar) => {
+                    if let ComponentMessage::Howl(submessage) = message {
+                        if let Some(new_substar) = substar.update(submessage) {
+                            Some(ComponentSubstar::Howl(new_substar))
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                },
+                &ComponentSubstar::Misty(ref substar) => {
+                    if let ComponentMessage::Misty(submessage) = message {
+                        if let Some(new_substar) = substar.update(submessage) {
+                            Some(ComponentSubstar::Misty(new_substar))
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                },
+            } {
+                new_component_substars.push(new_component_substar);
+                updates += 1;
+            } else {
+                new_component_substars.push(component_substar.clone());
+            }
+        };
+        if updates > 0 {
+            Some(ComponentCompositeSubstar { component_substars: new_component_substars })
+        } else {
+            None
+        }
     }
 }
 
@@ -105,6 +159,7 @@ pub struct Model {
 pub enum Message {
     SeeHand(Hand),
     ForwardToRainbow(roar::Message),
+    ForwardToComponent(ComponentMessage),
 }
 
 impl Star for MyStar {
@@ -146,7 +201,7 @@ impl Star for MyStar {
             }
         });
         vision.add_vision(model.substar.view(), |x| Some(Message::ForwardToRainbow(x)));
-        vision.add_vision(model.composite_substar.view(), |_| None);
+        vision.add_vision(model.composite_substar.view(), |x| Some(Message::ForwardToComponent(x)));
         vision
     }
 
@@ -163,6 +218,7 @@ impl Star for MyStar {
                 match message {
                     Message::SeeHand(hand) => self.see_hand(current_model, hand),
                     Message::ForwardToRainbow(submessage) => self.forward_to_rainbow(current_model, submessage),
+                    Message::ForwardToComponent(component_submessage) => self.forward_to_component(current_model, component_submessage),
                 }
             };
             if next_model_op.is_some() {
@@ -178,6 +234,15 @@ impl MyStar {
         if let Some(new_substar) = model.substar.update(submessage) {
             let mut new_model = model.clone();
             new_model.substar = new_substar;
+            Some(new_model)
+        } else {
+            None
+        }
+    }
+    fn forward_to_component(&self, model: &Model, submessage: ComponentMessage) -> Option<Model> {
+        if let Some(new_composite_substar) = model.composite_substar.update(submessage) {
+            let mut new_model = model.clone();
+            new_model.composite_substar = new_composite_substar;
             Some(new_model)
         } else {
             None
