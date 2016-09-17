@@ -15,7 +15,6 @@ use vrcounter::color::*;
 use vrcounter::Sigil;
 use vrcounter::Patch;
 use vrcounter::Mist;
-use vrcounter::roar::RainbowStar;
 use std::collections::VecDeque;
 
 
@@ -23,7 +22,8 @@ use std::collections::VecDeque;
 pub enum ComponentStar {
     Scream(scream::Scream, < scream::Scream as Star >::Msg),
     Howl(howl::Howl),
-    Misty(howl::MistyStar)
+    Misty(howl::MistyStar),
+    Rainbow(roar::RainbowStar),
 }
 
 #[derive(Clone, Debug)]
@@ -31,13 +31,15 @@ pub enum ComponentMessage {
     Scream(< scream::Scream as Star >::Msg),
     Howl(< howl::Howl as Star >::Msg),
     Misty(< howl::MistyStar as Star >::Msg),
+    Rainbow(< roar::RainbowStar as Star >::Msg),
 }
 
 #[derive(Clone, Debug)]
 enum ComponentSubstar {
     Scream(Substar<scream::Scream>),
     Howl(Substar<howl::Howl>),
-    Misty(Substar<howl::MistyStar>)
+    Misty(Substar<howl::MistyStar>),
+    Rainbow(Substar<roar::RainbowStar>)
 }
 
 #[derive(Clone, Debug)]
@@ -50,14 +52,17 @@ impl ComponentCompositeSubstar {
         let mut component_substars = Vec::new();
         for component in stars {
             let component_substar = match component {
-                ComponentStar::Scream(scream, message) => {
-                    ComponentSubstar::Scream(Substar::init(Rc::new(scream)).update(message).unwrap())
+                ComponentStar::Scream(star, message) => {
+                    ComponentSubstar::Scream(Substar::init(Rc::new(star)).update(message).unwrap())
                 },
-                ComponentStar::Howl(howl) => {
-                    ComponentSubstar::Howl(Substar::init(Rc::new(howl)))
+                ComponentStar::Howl(star) => {
+                    ComponentSubstar::Howl(Substar::init(Rc::new(star)))
                 },
-                ComponentStar::Misty(misty) => {
-                    ComponentSubstar::Misty(Substar::init(Rc::new(misty)))
+                ComponentStar::Misty(star) => {
+                    ComponentSubstar::Misty(Substar::init(Rc::new(star)))
+                },
+                ComponentStar::Rainbow(star) => {
+                    ComponentSubstar::Rainbow(Substar::init(Rc::new(star)))
                 }
             };
             component_substars.push(component_substar);
@@ -79,6 +84,9 @@ impl ComponentCompositeSubstar {
                 &ComponentSubstar::Misty(ref substar) => {
                     vision.add_vision(substar.view(), |x| Some(ComponentMessage::Misty(x)))
                 },
+                &ComponentSubstar::Rainbow(ref substar) => {
+                    vision.add_vision(substar.view(), |x| Some(ComponentMessage::Rainbow(x)))
+                },
             }
         };
         vision
@@ -89,8 +97,8 @@ impl ComponentCompositeSubstar {
         for component_substar in &self.component_substars {
             if let Some(new_component_substar) = match component_substar {
                 &ComponentSubstar::Scream(ref substar) => {
-                    if let ComponentMessage::Scream(submessage) = message {
-                        if let Some(new_substar) = substar.update(submessage) {
+                    if let &ComponentMessage::Scream(ref submessage) = &message {
+                        if let Some(new_substar) = substar.update(submessage.clone()) {
                             Some(ComponentSubstar::Scream(new_substar))
                         } else {
                             None
@@ -100,8 +108,8 @@ impl ComponentCompositeSubstar {
                     }
                 },
                 &ComponentSubstar::Howl(ref substar) => {
-                    if let ComponentMessage::Howl(submessage) = message {
-                        if let Some(new_substar) = substar.update(submessage) {
+                    if let &ComponentMessage::Howl(ref submessage) = &message {
+                        if let Some(new_substar) = substar.update(submessage.clone()) {
                             Some(ComponentSubstar::Howl(new_substar))
                         } else {
                             None
@@ -111,9 +119,20 @@ impl ComponentCompositeSubstar {
                     }
                 },
                 &ComponentSubstar::Misty(ref substar) => {
-                    if let ComponentMessage::Misty(submessage) = message {
-                        if let Some(new_substar) = substar.update(submessage) {
+                    if let &ComponentMessage::Misty(ref submessage) = &message {
+                        if let Some(new_substar) = substar.update(submessage.clone()) {
                             Some(ComponentSubstar::Misty(new_substar))
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                },
+                &ComponentSubstar::Rainbow(ref substar) => {
+                    if let &ComponentMessage::Rainbow(ref submessage) = &message {
+                        if let Some(new_substar) = substar.update(submessage.clone()) {
+                            Some(ComponentSubstar::Rainbow(new_substar))
                         } else {
                             None
                         }
@@ -151,7 +170,7 @@ pub struct Model {
     pub patch_id: u64,
     pub delta_z_option: Option<f32>,
     pub cage: Cage,
-    substar: Substar<RainbowStar>,
+    substar: Substar<roar::RainbowStar>,
     composite_substar: ComponentCompositeSubstar,
 }
 

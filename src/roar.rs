@@ -11,7 +11,7 @@ pub struct Model {
     pub end_instant: Instant,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Message {
     IncrementIndex,
 }
