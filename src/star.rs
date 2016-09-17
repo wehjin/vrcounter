@@ -29,7 +29,6 @@ where S: Debug, < S as Star >::Mdl: Debug, < S as Star >::Msg: 'static {
             substars: substars
         }
     }
-
     pub fn view(&self) -> Vision<()> {
         let mut vision = Vision::new();
         for substar in &self.substars {

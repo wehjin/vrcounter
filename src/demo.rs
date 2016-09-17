@@ -35,8 +35,7 @@ pub struct Model {
     pub delta_z_option: Option<f32>,
     pub cage: Cage,
     substar: Substar<RainbowStar>,
-    composite_scream: CompositeSubstar<scream::Scream>,
-    composite_howl: CompositeSubstar<howl::Howl>,
+    component_composite_substar: ComponentCompositeSubstar,
 }
 
 #[derive(Clone)]
@@ -44,6 +43,63 @@ pub enum Message {
     SeeHand(Hand),
     ForwardToRainbow(roar::Message),
 }
+
+#[derive(Clone, Debug)]
+pub enum ComponentStar {
+    Scream(scream::Scream, < scream::Scream as Star >::Msg),
+    Howl(howl::Howl),
+}
+
+#[derive(Clone, Debug)]
+pub enum ComponentMessage {
+    Scream(< scream::Scream as Star >::Msg),
+    Howl(< howl::Howl as Star >::Msg),
+}
+
+#[derive(Clone, Debug)]
+enum ComponentSubstar {
+    Scream(Substar<scream::Scream>),
+    Howl(Substar<howl::Howl>),
+}
+
+#[derive(Clone, Debug)]
+pub struct ComponentCompositeSubstar {
+    component_substars: Vec<ComponentSubstar>
+}
+
+impl ComponentCompositeSubstar {
+    fn init(stars: Vec<ComponentStar>) -> Self {
+        let mut component_substars = Vec::new();
+        for component in stars {
+            let component_substar = match component {
+                ComponentStar::Scream(scream, message) => {
+                    ComponentSubstar::Scream(Substar::init(Rc::new(scream)).update(message).unwrap())
+                },
+                ComponentStar::Howl(howl) => {
+                    ComponentSubstar::Howl(Substar::init(Rc::new(howl)))
+                },
+            };
+            component_substars.push(component_substar);
+        }
+        ComponentCompositeSubstar {
+            component_substars: component_substars
+        }
+    }
+    fn view(&self) -> Vision<()> {
+        let mut vision = Vision::new();
+        for substars in &self.component_substars {
+            match substars {
+                &ComponentSubstar::Scream(ref substar) => vision.add_vision(substar.view(), |_| None),
+                &ComponentSubstar::Howl(ref substar) => vision.add_vision(substar.view(), |_| None),
+            }
+        };
+        vision
+    }
+    fn update(&self, _: ComponentMessage) -> Option<Self> {
+        None
+    }
+}
+
 
 impl Star for MyStar {
     type Mdl = Model;
@@ -59,17 +115,15 @@ impl Star for MyStar {
             delta_z_option: None,
             cage: Cage::from((-0.70, -0.50, -0.10, 0.10, 0.00, 0.20)),
             substar: Substar::init(Rc::new(roar::from(vec![GREEN, RED, BLUE, CYAN, MAGENTA, YELLOW]))),
-            composite_scream: CompositeSubstar::init_up(vec![
-                (Rc::new(scream::new(rand::random::<u64>(), CYAN)), scream::Message::FitToCage(Cage::from((-0.3, -0.2, -0.25, -0.15, 0.03, 0.03)))),
-                (Rc::new(scream::new(rand::random::<u64>(), MAGENTA)), scream::Message::FitToCage(Cage::from((-0.4, -0.3, -0.25, -0.15, 0.03, 0.03)))),
-                (Rc::new(scream::new(rand::random::<u64>(), YELLOW)), scream::Message::FitToCage(Cage::from((-0.5, -0.4, -0.25, -0.15, 0.03, 0.03)))),
+            component_composite_substar: ComponentCompositeSubstar::init(vec![
+                ComponentStar::Scream(scream::new(rand::random::<u64>(), CYAN), scream::Message::FitToCage(Cage::from((-0.3, -0.2, -0.25, -0.15, 0.03, 0.03)))),
+                ComponentStar::Scream(scream::new(rand::random::<u64>(), MAGENTA), scream::Message::FitToCage(Cage::from((-0.4, -0.3, -0.25, -0.15, 0.03, 0.03)))),
+                ComponentStar::Scream(scream::new(rand::random::<u64>(), YELLOW), scream::Message::FitToCage(Cage::from((-0.5, -0.4, -0.25, -0.15, 0.03, 0.03)))),
+                ComponentStar::Howl(howl::new(rand::random::<u64>(), RED, Cage::from((-0.5, 0.5, -0.25, 0.25, 0.0, 0.0)), Sigil::Fill)),
+                ComponentStar::Howl(howl::new(rand::random::<u64>(), GREEN, Cage::from((0.25, 0.75, 0.0, 0.5, -0.01, -0.01)), Sigil::Fill)),
+                ComponentStar::Howl(howl::new(rand::random::<u64>(), CYAN, Cage::from((-0.06, 0.00, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('J'))),
+                ComponentStar::Howl(howl::new(rand::random::<u64>(), YELLOW, Cage::from((0.00, 0.06, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('y'))),
             ]),
-            composite_howl: CompositeSubstar::init(vec![
-                Rc::new(howl::new(rand::random::<u64>(), RED, Cage::from((-0.5, 0.5, -0.25, 0.25, 0.0, 0.0)), Sigil::Fill)),
-                Rc::new(howl::new(rand::random::<u64>(), GREEN, Cage::from((0.25, 0.75, 0.0, 0.5, -0.01, -0.01)), Sigil::Fill)),
-                Rc::new(howl::new(rand::random::<u64>(), CYAN, Cage::from((-0.06, 0.00, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('J'))),
-                Rc::new(howl::new(rand::random::<u64>(), YELLOW, Cage::from((0.00, 0.06, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('y'))),
-            ])
         }
     }
 
@@ -85,8 +139,7 @@ impl Star for MyStar {
             }
         });
         vision.add_vision(model.substar.view(), |x| Some(Message::ForwardToRainbow(x)));
-        vision.add_vision(model.composite_scream.view(), |_| None);
-        vision.add_vision(model.composite_howl.view(), |_| None);
+        vision.add_vision(model.component_composite_substar.view(), |_| None);
         vision
     }
 
