@@ -6,7 +6,7 @@ use vrcounter::IdSource;
 use vrcounter::Summoner;
 use vrcounter::Wish;
 use vrcounter::Vision;
-use vrcounter::{Star, Substar};
+use vrcounter::{Star, Substar, CompositeSubstar};
 use vrcounter::Hand;
 use std::sync::Arc;
 use std::rc::Rc;
@@ -35,8 +35,7 @@ pub struct Model {
     pub delta_z_option: Option<f32>,
     pub cage: Cage,
     substar: Substar<RainbowStar>,
-    scream1_substar: Substar<scream::Scream>,
-    scream2_substar: Substar<scream::Scream>,
+    composite_scream: CompositeSubstar<scream::Scream>,
 }
 
 #[derive(Clone)]
@@ -59,12 +58,9 @@ impl Star for MyStar {
             delta_z_option: None,
             cage: Cage::from((-0.70, -0.50, -0.10, 0.10, 0.00, 0.20)),
             substar: Substar::init(Rc::new(roar::from(vec![GREEN, RED, BLUE, CYAN, MAGENTA, YELLOW]))),
-            scream1_substar: Substar::init(Rc::new(scream::new(rand::random::<u64>(), CYAN)))
-                .update(scream::Message::FitToCage(Cage::from((-0.3, -0.2, -0.25, -0.15, 0.03, 0.03))))
-                .unwrap(),
-            scream2_substar: Substar::init(Rc::new(scream::new(rand::random::<u64>(), MAGENTA)))
-                .update(scream::Message::FitToCage(Cage::from((-0.4, -0.3, -0.25, -0.15, 0.03, 0.03))))
-                .unwrap(),
+            composite_scream: CompositeSubstar::init(vec![
+                (Rc::new(scream::new(rand::random::<u64>(), CYAN)), scream::Message::FitToCage(Cage::from((-0.3, -0.2, -0.25, -0.15, 0.03, 0.03)))),
+                 (Rc::new(scream::new(rand::random::<u64>(), MAGENTA)), scream::Message::FitToCage(Cage::from((-0.4, -0.3, -0.25, -0.15, 0.03, 0.03)))) ])
         }
     }
 
@@ -80,8 +76,7 @@ impl Star for MyStar {
             }
         });
         vision.add_vision(model.substar.view(), |x| Some(Message::ForwardToRainbow(x)));
-        vision.add_vision(model.scream1_substar.view(), |_| None);
-        vision.add_vision(model.scream2_substar.view(), |_| None);
+        vision.add_vision(model.composite_scream.view(), |_| None);
         vision
     }
 
