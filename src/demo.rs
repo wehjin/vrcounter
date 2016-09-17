@@ -58,9 +58,16 @@ impl Star for MyStar {
             delta_z_option: None,
             cage: Cage::from((-0.70, -0.50, -0.10, 0.10, 0.00, 0.20)),
             substar: Substar::init(Rc::new(roar::from(vec![GREEN, RED, BLUE, CYAN, MAGENTA, YELLOW]))),
-            composite_scream: CompositeSubstar::init(vec![
-                (Rc::new(scream::new(rand::random::<u64>(), CYAN)), scream::Message::FitToCage(Cage::from((-0.3, -0.2, -0.25, -0.15, 0.03, 0.03)))),
-                 (Rc::new(scream::new(rand::random::<u64>(), MAGENTA)), scream::Message::FitToCage(Cage::from((-0.4, -0.3, -0.25, -0.15, 0.03, 0.03)))) ])
+            composite_scream: CompositeSubstar::init(
+                vec![
+                (Rc::new(scream::new(rand::random::<u64>(), CYAN)),
+                 scream::Message::FitToCage(Cage::from((-0.3, -0.2, -0.25, -0.15, 0.03, 0.03)))),
+                 (Rc::new(scream::new(rand::random::<u64>(), MAGENTA)),
+                  scream::Message::FitToCage(Cage::from((-0.4, -0.3, -0.25, -0.15, 0.03, 0.03)))),
+                 (Rc::new(scream::new(rand::random::<u64>(), YELLOW)),
+                  scream::Message::FitToCage(Cage::from((-0.5, -0.4, -0.25, -0.15, 0.03, 0.03)))),
+                   ]
+            )
         }
     }
 
@@ -141,10 +148,6 @@ impl MyStar {
 }
 
 fn summon(id_source: &mut IdSource, summoner: &mut Summoner) {
-    let scream_id3 = id_source.id();
-    let screaming3 = summoner.summon(id_source, &scream::new(scream_id3, YELLOW));
-    let cage3 = Cage::from((-0.5, -0.4, -0.25, -0.15, 0.03, 0.03));
-    summoner.update_one(screaming3, Wish::FitToCage(Cage::from(cage3)));
     let howls = vec![
         howl::create(id_source.id(), RED, Cage::from((-0.5, 0.5, -0.25, 0.25, 0.0, 0.0)), Sigil::Fill),
         howl::create(id_source.id(), GREEN, Cage::from((0.25, 0.75, 0.0, 0.5, -0.01, -0.01)), Sigil::Fill),
