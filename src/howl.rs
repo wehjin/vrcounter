@@ -20,10 +20,10 @@ pub fn misty(id: u64, cage: Cage) -> MistyStar {
     MistyStar {
         id: id,
         cage: cage,
-        sub_star: new(rand::random::<u64>(),
-                      WHITE,
-                      Cage::from((-0.7, -0.5, 0.25, 0.45, 0.25, 0.25)),
-                      Sigil::Letter('S')),
+        sub_star: Howl::new(rand::random::<u64>(),
+                            WHITE,
+                            Cage::from((-0.7, -0.5, 0.25, 0.45, 0.25, 0.25)),
+                            Sigil::Letter('S')),
     }
 }
 
@@ -116,6 +116,9 @@ impl Star for Howl {
     }
 }
 
-pub fn new(id: u64, color: [f32; 4], cage: Cage, sigil: Sigil) -> Howl {
-    Howl { id: id, color: color, cage: cage, sigil: sigil }
+impl Howl {
+    pub fn new(id: u64, color: [f32; 4], cage: Cage, sigil: Sigil) -> Howl {
+        Howl { id: id, color: color, cage: cage, sigil: sigil }
+    }
 }
+

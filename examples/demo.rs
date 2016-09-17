@@ -2,26 +2,19 @@ extern crate vrcounter;
 extern crate cage;
 extern crate rand;
 
-use vrcounter::Wish;
-use vrcounter::Vision;
-use vrcounter::{Star, Substar};
-use vrcounter::Hand;
+use vrcounter::*;
 use std::sync::Arc;
 use std::rc::Rc;
 use cage::Cage;
 use cage::Offset;
-use vrcounter::{howl, scream, roar};
 use vrcounter::color::*;
-use vrcounter::Sigil;
-use vrcounter::Patch;
-use vrcounter::Mist;
 use std::collections::VecDeque;
 
 
 #[derive(Clone, Debug)]
 pub enum ComponentStar {
     Scream(scream::Scream),
-    Howl(howl::Howl),
+    Howl(Howl),
     Misty(howl::MistyStar),
     Rainbow(roar::RainbowStar),
 }
@@ -29,7 +22,7 @@ pub enum ComponentStar {
 #[derive(Clone, Debug)]
 pub enum ComponentMessage {
     Scream(u32, < scream::Scream as Star >::Msg),
-    Howl(u32, < howl::Howl as Star >::Msg),
+    Howl(u32, < Howl as Star >::Msg),
     Misty(u32, < howl::MistyStar as Star >::Msg),
     Rainbow(u32, < roar::RainbowStar as Star >::Msg),
 }
@@ -37,7 +30,7 @@ pub enum ComponentMessage {
 #[derive(Clone, Debug)]
 enum ComponentSubstar {
     Scream(u32, Substar<scream::Scream>),
-    Howl(u32, Substar<howl::Howl>),
+    Howl(u32, Substar<Howl>),
     Misty(u32, Substar<howl::MistyStar>),
     Rainbow(u32, Substar<roar::RainbowStar>)
 }
@@ -163,10 +156,10 @@ impl Star for MyStar {
                 ComponentStar::Scream(scream::new(rand::random::<u64>(), CYAN)),
                 ComponentStar::Scream(scream::new(rand::random::<u64>(), MAGENTA)),
                 ComponentStar::Scream(scream::new(rand::random::<u64>(), YELLOW)),
-                ComponentStar::Howl(howl::new(rand::random::<u64>(), RED, Cage::from((-0.5, 0.5, -0.25, 0.25, 0.0, 0.0)), Sigil::Fill)),
-                ComponentStar::Howl(howl::new(rand::random::<u64>(), GREEN, Cage::from((0.25, 0.75, 0.0, 0.5, -0.01, -0.01)), Sigil::Fill)),
-                ComponentStar::Howl(howl::new(rand::random::<u64>(), CYAN, Cage::from((-0.06, 0.00, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('J'))),
-                ComponentStar::Howl(howl::new(rand::random::<u64>(), YELLOW, Cage::from((0.00, 0.06, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('y'))),
+                ComponentStar::Howl(Howl::new(rand::random::<u64>(), RED, Cage::from((-0.5, 0.5, -0.25, 0.25, 0.0, 0.0)), Sigil::Fill)),
+                ComponentStar::Howl(Howl::new(rand::random::<u64>(), GREEN, Cage::from((0.25, 0.75, 0.0, 0.5, -0.01, -0.01)), Sigil::Fill)),
+                ComponentStar::Howl(Howl::new(rand::random::<u64>(), CYAN, Cage::from((-0.06, 0.00, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('J'))),
+                ComponentStar::Howl(Howl::new(rand::random::<u64>(), YELLOW, Cage::from((0.00, 0.06, -0.03, 0.03, 0.005, 0.005)), Sigil::Letter('y'))),
                 ComponentStar::Misty(howl::misty(rand::random::<u64>(), Default::default())),
                 ComponentStar::Rainbow(roar::from(vec![GREEN, RED, BLUE, CYAN, MAGENTA, YELLOW])),
             ]),
