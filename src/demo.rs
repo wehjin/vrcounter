@@ -2,8 +2,6 @@ extern crate vrcounter;
 extern crate cage;
 extern crate rand;
 
-use vrcounter::IdSource;
-use vrcounter::Summoner;
 use vrcounter::Wish;
 use vrcounter::Vision;
 use vrcounter::{Star, Substar};
@@ -20,29 +18,6 @@ use vrcounter::Mist;
 use vrcounter::roar::RainbowStar;
 use std::collections::VecDeque;
 
-#[derive(Clone)]
-struct MyStar;
-
-#[derive(Clone)]
-pub struct Outcome;
-
-#[derive(Clone, Debug)]
-pub struct Model {
-    pub colors: [[f32; 4]; 2],
-    pub color_index: usize,
-    pub mist_id: u64,
-    pub patch_id: u64,
-    pub delta_z_option: Option<f32>,
-    pub cage: Cage,
-    substar: Substar<RainbowStar>,
-    component_composite_substar: ComponentCompositeSubstar,
-}
-
-#[derive(Clone)]
-pub enum Message {
-    SeeHand(Hand),
-    ForwardToRainbow(roar::Message),
-}
 
 #[derive(Clone, Debug)]
 pub enum ComponentStar {
@@ -108,6 +83,30 @@ impl ComponentCompositeSubstar {
 }
 
 
+#[derive(Clone)]
+struct MyStar;
+
+#[derive(Clone)]
+pub struct Outcome;
+
+#[derive(Clone, Debug)]
+pub struct Model {
+    pub colors: [[f32; 4]; 2],
+    pub color_index: usize,
+    pub mist_id: u64,
+    pub patch_id: u64,
+    pub delta_z_option: Option<f32>,
+    pub cage: Cage,
+    substar: Substar<RainbowStar>,
+    composite_substar: ComponentCompositeSubstar,
+}
+
+#[derive(Clone)]
+pub enum Message {
+    SeeHand(Hand),
+    ForwardToRainbow(roar::Message),
+}
+
 impl Star for MyStar {
     type Mdl = Model;
     type Msg = Message;
@@ -122,7 +121,7 @@ impl Star for MyStar {
             delta_z_option: None,
             cage: Cage::from((-0.70, -0.50, -0.10, 0.10, 0.00, 0.20)),
             substar: Substar::init(Rc::new(roar::from(vec![GREEN, RED, BLUE, CYAN, MAGENTA, YELLOW]))),
-            component_composite_substar: ComponentCompositeSubstar::init(vec![
+            composite_substar: ComponentCompositeSubstar::init(vec![
                 ComponentStar::Scream(scream::new(rand::random::<u64>(), CYAN), scream::Message::FitToCage(Cage::from((-0.3, -0.2, -0.25, -0.15, 0.03, 0.03)))),
                 ComponentStar::Scream(scream::new(rand::random::<u64>(), MAGENTA), scream::Message::FitToCage(Cage::from((-0.4, -0.3, -0.25, -0.15, 0.03, 0.03)))),
                 ComponentStar::Scream(scream::new(rand::random::<u64>(), YELLOW), scream::Message::FitToCage(Cage::from((-0.5, -0.4, -0.25, -0.15, 0.03, 0.03)))),
@@ -147,7 +146,7 @@ impl Star for MyStar {
             }
         });
         vision.add_vision(model.substar.view(), |x| Some(Message::ForwardToRainbow(x)));
-        vision.add_vision(model.component_composite_substar.view(), |_| None);
+        vision.add_vision(model.composite_substar.view(), |_| None);
         vision
     }
 
@@ -206,7 +205,6 @@ impl MyStar {
             new_model.color_index = model.color_index + 1;
         }
         new_model.delta_z_option = new_delta_z_option;
-        // TODO: Deal with well.
         Some(new_model)
     }
 }
