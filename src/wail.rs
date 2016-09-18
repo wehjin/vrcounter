@@ -27,6 +27,7 @@ pub trait Wail: Clone + Debug {
 }
 
 pub trait Wailing: Clone + Debug {
+    fn report_frame(&self) -> Frame;
     fn update(&self, message: &WailIn) -> Self;
     fn view(&self) -> Vision<WailIn>;
 }
@@ -68,11 +69,21 @@ where TLeft: Wail, TRight: Wail
 
     fn summon(self) -> ExpandRightWailing<TLeft, TRight> {
         let left_wailing = self.left_wail.clone().summon();
-        let right_wailing = self.right_wail
-            .clone()
-            .summon()
-            .update(&WailIn::Offset(Offset::from((0.25, 0.0, 0.0))));
-        ExpandRightWailing { expand_right_wail: self, left_wailing: left_wailing, right_wailing: right_wailing }
+        let left_frame = left_wailing.report_frame();
+        let right_wailing = self.right_wail.clone().summon();
+        let right_frame = right_wailing.report_frame();
+        let frame = Frame::from((left_frame.w + right_frame.w,
+                                 left_frame.h.max(right_frame.h),
+                                 left_frame.d.max(right_frame.d)));
+        // TODO Deal with mis-matched y and z in offsets.
+        let right_offset = Offset::from((frame.w / 2.0 - right_frame.w / 2.0, 0.0, 0.0));
+        let left_offset = Offset::from((-frame.w / 2.0 + left_frame.w / 2.0, 0.0, 0.0));
+        ExpandRightWailing {
+            expand_right_wail: self,
+            frame: frame,
+            left_wailing: left_wailing.update(&WailIn::Offset(left_offset)),
+            right_wailing: right_wailing.update(&WailIn::Offset(right_offset))
+        }
     }
 }
 
@@ -81,6 +92,7 @@ pub struct ExpandRightWailing<TLeft, TRight>
     where TLeft: Wail + Clone, TRight: Wail + Clone
 {
     expand_right_wail: ExpandRightWail<TLeft, TRight>,
+    frame: Frame,
     left_wailing: TLeft::Mdl,
     right_wailing: TRight::Mdl,
 }
@@ -94,6 +106,9 @@ where TLeft: Wail, TRight: Wail
     fn view(&self) -> Vision<WailIn> {
         self.expand_right_wail.view(self)
     }
+    fn report_frame(&self) -> Frame {
+        self.frame.clone()
+    }
 }
 
 
@@ -105,9 +120,10 @@ pub struct LeafWail {
 
 #[derive(Clone, Debug)]
 pub struct LeafWailing {
+    leaf_wail: LeafWail,
+    frame: Frame,
     offset: Offset,
     patch_id: u64,
-    leaf_wail: LeafWail,
 }
 
 impl Wailing for LeafWailing {
@@ -116,6 +132,9 @@ impl Wailing for LeafWailing {
     }
     fn view(&self) -> Vision<WailIn> {
         self.leaf_wail.view(self)
+    }
+    fn report_frame(&self) -> Frame {
+        self.frame.clone()
     }
 }
 
@@ -138,7 +157,7 @@ impl Wail for LeafWail {
         new_model
     }
     fn view(&self, model: &LeafWailing) -> Vision<WailIn> {
-        let cage = Cage::from((self.frame, model.offset));
+        let cage = Cage::from((model.frame, model.offset));
         let patch = Patch::from_cage(&cage, self.color, Sigil::Fill, model.patch_id);
         let mut vision = Vision::new();
         vision.add_patch(patch);
@@ -147,6 +166,12 @@ impl Wail for LeafWail {
     fn summon(self) -> LeafWailing {
         let patch_id = rand::random::<u64>();
         let offset = Offset::default();
-        LeafWailing { offset: offset, patch_id: patch_id, leaf_wail: self }
+        let frame = self.frame.clone();
+        LeafWailing {
+            leaf_wail: self,
+            frame: frame,
+            offset: offset,
+            patch_id: patch_id,
+        }
     }
 }
