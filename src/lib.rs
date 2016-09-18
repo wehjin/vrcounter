@@ -49,8 +49,8 @@ mod wail;
 use std::sync::Arc;
 
 pub use common::IdSource;
-pub use summoner::Summoner;
 pub use common::Wish;
+pub use summoner::Summoner;
 pub use vision::Vision;
 pub use report::Well;
 pub use star::*;

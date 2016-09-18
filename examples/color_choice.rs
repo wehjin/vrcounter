@@ -5,6 +5,7 @@ extern crate rand;
 use vrcounter::*;
 use vrcounter::color::*;
 use std::sync::Arc;
+use std::rc::Rc;
 use rand::random;
 use cage::{Frame};
 
@@ -21,7 +22,7 @@ struct App;
 struct Model {
     patch_id: u64,
     beat_id: u64,
-    wailing: Box<LeafWailModel>,
+    wailing: Rc<Wailing>,
 }
 
 impl Star for App {
@@ -30,12 +31,14 @@ impl Star for App {
     type Out = Out;
 
     fn init(&self) -> Model {
-        let wail = LeafWail::new(CYAN, Frame::from((0.20, 0.20, 0.20)));
+        let frame = Frame::from((0.20, 0.20, 0.20));
+        let wail = LeafWail::new(CYAN, frame);
+        //.expand_right(LeafWail::new(MAGENTA, frame));
         let wailing = wail.summon();
         Model {
             patch_id: random::<u64>(),
             beat_id: random::<u64>(),
-            wailing: wailing
+            wailing: Rc::new(wailing)
         }
     }
 
