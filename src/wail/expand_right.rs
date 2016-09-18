@@ -26,9 +26,9 @@ where TLeft: Wail, TRight: Wail
 {
     type Mdl = ExpandRightWailing<TLeft, TRight>;
 
-    fn update(&self, model: &ExpandRightWailing<TLeft, TRight>, _: &WailIn) -> ExpandRightWailing<TLeft, TRight> {
-        // TODO Implement!
-        (*model).clone()
+    fn update(&self, model: ExpandRightWailing<TLeft, TRight>, _: &WailIn) -> ExpandRightWailing<TLeft, TRight> {
+        // TODO Implement WailIn::Offset
+        model
     }
 
     fn view(&self, model: &ExpandRightWailing<TLeft, TRight>) -> Vision<WailIn> {
@@ -60,7 +60,7 @@ where TLeft: Wail, TRight: Wail
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct ExpandRightWailing<TLeft, TRight>
     where TLeft: Wail + Clone, TRight: Wail + Clone
 {
@@ -73,8 +73,9 @@ pub struct ExpandRightWailing<TLeft, TRight>
 impl<TLeft, TRight> Wailing for ExpandRightWailing<TLeft, TRight>
 where TLeft: Wail, TRight: Wail
 {
-    fn update(&self, message: &WailIn) -> Self {
-        self.expand_right_wail.update(self, message)
+    fn update(self, message: &WailIn) -> Self {
+        let expand_right_wail = self.expand_right_wail.clone();
+        expand_right_wail.update(self, message)
     }
     fn view(&self) -> Vision<WailIn> {
         self.expand_right_wail.view(self)

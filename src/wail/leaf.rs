@@ -12,7 +12,7 @@ pub struct LeafWail {
     frame: Frame,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct LeafWailing {
     leaf_wail: LeafWail,
     frame: Frame,
@@ -21,8 +21,9 @@ pub struct LeafWailing {
 }
 
 impl Wailing for LeafWailing {
-    fn update(&self, message: &WailIn) -> Self {
-        self.leaf_wail.update(self, message)
+    fn update(self, message: &WailIn) -> Self {
+        let leaf_wail = self.leaf_wail.clone();
+        leaf_wail.update(self, message)
     }
     fn view(&self) -> Vision<WailIn> {
         self.leaf_wail.view(self)
@@ -41,8 +42,8 @@ impl LeafWail {
 impl Wail for LeafWail {
     type Mdl = LeafWailing;
 
-    fn update(&self, model: &LeafWailing, message: &WailIn) -> LeafWailing {
-        let mut new_model = (*model).clone();
+    fn update(&self, model: LeafWailing, message: &WailIn) -> LeafWailing {
+        let mut new_model = model;
         match message {
             &WailIn::Offset(offset) => {
                 new_model.offset = offset;
