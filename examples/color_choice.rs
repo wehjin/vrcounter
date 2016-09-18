@@ -9,14 +9,6 @@ use rand::random;
 use cage::{Frame};
 
 #[derive(Clone, Debug)]
-struct Model {
-    patch_id: u64,
-    beat_id: u64,
-    wail: Wail,
-    wail_model: WailModel,
-}
-
-#[derive(Clone, Debug)]
 struct In;
 
 #[derive(Clone, Debug)]
@@ -25,25 +17,31 @@ struct Out;
 #[derive(Clone, Debug)]
 struct App;
 
+#[derive(Clone, Debug)]
+struct Model {
+    patch_id: u64,
+    beat_id: u64,
+    wailing: Box<LeafWailModel>,
+}
+
 impl Star for App {
     type Mdl = Model;
     type Msg = In;
     type Out = Out;
 
     fn init(&self) -> Model {
-        let wail = Wail::new(CYAN, Frame::from((0.20, 0.20, 0.20)));
-        let wail_model = wail.init();
+        let wail = LeafWail::new(CYAN, Frame::from((0.20, 0.20, 0.20)));
+        let wailing = wail.summon();
         Model {
             patch_id: random::<u64>(),
             beat_id: random::<u64>(),
-            wail: wail,
-            wail_model: wail_model
+            wailing: wailing
         }
     }
 
     fn view(&self, model: &Model) -> Vision<In> {
         let mut vision = Vision::new();
-        let wail_vision = model.wail.view(&model.wail_model);
+        let wail_vision = model.wailing.as_ref().view();
         vision.add_vision(wail_vision, |_| None);
         vision
     }
