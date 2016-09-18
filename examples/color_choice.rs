@@ -22,7 +22,7 @@ struct App;
 struct Model {
     patch_id: u64,
     beat_id: u64,
-    wailing: Rc<Wailing>,
+    wailing: Rc<ExpandRightWailing<LeafWail, LeafWail>>,
 }
 
 impl Star for App {
@@ -32,8 +32,8 @@ impl Star for App {
 
     fn init(&self) -> Model {
         let frame = Frame::from((0.20, 0.20, 0.20));
-        let wail = LeafWail::new(CYAN, frame);
-        //.expand_right(LeafWail::new(MAGENTA, frame));
+        let wail = LeafWail::new(CYAN, frame)
+            .expand_right(LeafWail::new(MAGENTA, frame));
         let wailing = wail.summon();
         Model {
             patch_id: random::<u64>(),
