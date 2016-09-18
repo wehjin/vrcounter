@@ -21,13 +21,13 @@ pub trait Wail: Clone + Debug {
     fn expand_right<TRight: Wail>(self, right_wail: TRight) -> ExpandRightWail<Self, TRight> {
         ExpandRightWail::new(self, right_wail)
     }
-    fn update(&self, model: Self::Mdl, message: &WailIn) -> Self::Mdl;
+    fn update(&self, model: &mut Self::Mdl, message: &WailIn);
     fn view(&self, model: &Self::Mdl) -> Vision<WailIn>;
     fn summon(self) -> Self::Mdl;
 }
 
 pub trait Wailing: Debug {
     fn report_frame(&self) -> Frame;
-    fn update(self, message: &WailIn) -> Self;
+    fn update(&mut self, message: &WailIn);
     fn view(&self) -> Vision<WailIn>;
 }
