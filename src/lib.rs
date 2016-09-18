@@ -44,6 +44,7 @@ mod vr;
 mod demon;
 mod demonoid;
 pub mod star;
+mod wail;
 
 use std::sync::Arc;
 
@@ -59,6 +60,7 @@ pub use mist::Mist;
 pub use beat::Beat;
 pub use hand::Hand;
 pub use howl::Howl;
+pub use wail::*;
 
 pub fn start<S: Star, F>(star_builder: Arc<F>) where S: Clone + 'static,
                                                      F: Fn() -> S + Send + Sync + 'static

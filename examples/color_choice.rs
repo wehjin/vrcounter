@@ -6,12 +6,14 @@ use vrcounter::*;
 use vrcounter::color::*;
 use std::sync::Arc;
 use rand::random;
-use std::time::{Instant, Duration};
+use cage::{Frame};
 
 #[derive(Clone, Debug)]
 struct Model {
     patch_id: u64,
     beat_id: u64,
+    wail: Wail,
+    wail_model: WailModel,
 }
 
 #[derive(Clone, Debug)]
@@ -29,16 +31,20 @@ impl Star for App {
     type Out = Out;
 
     fn init(&self) -> Model {
-        Model { patch_id: random::<u64>(), beat_id: random::<u64>() }
+        let wail = Wail::new(CYAN, Frame::from((0.20, 0.20, 0.20)));
+        let wail_model = wail.init();
+        Model {
+            patch_id: random::<u64>(),
+            beat_id: random::<u64>(),
+            wail: wail,
+            wail_model: wail_model
+        }
     }
 
     fn view(&self, model: &Model) -> Vision<In> {
         let mut vision = Vision::new();
-        vision.add_patch(Patch::new(model.patch_id, -0.5, 0.5, -0.5, 0.5, 0.0, BLUE, Sigil::Fill));
-        vision.add_beat(Beat::until_instant(model.beat_id, Instant::now() + Duration::from_secs(60)), |_|{
-            println!("In adapter");
-            None
-        });
+        let wail_vision = model.wail.view(&model.wail_model);
+        vision.add_vision(wail_vision, |_| None);
         vision
     }
 
