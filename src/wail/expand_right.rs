@@ -22,7 +22,7 @@ where TLeft: Wail, TRight: Wail
 }
 
 impl<TLeft, TRight> Wail for ExpandRightWail<TLeft, TRight>
-where TLeft: Wail, TRight: Wail
+where TLeft: Wail + 'static, TRight: Wail + 'static
 {
     type Mdl = ExpandRightWailing<TLeft, TRight>;
 
@@ -31,8 +31,8 @@ where TLeft: Wail, TRight: Wail
     }
 
     fn view(&self, model: &ExpandRightWailing<TLeft, TRight>) -> Vision<WailIn> {
-        let left_vision = self.left_wail.view(&model.left_wailing);
-        let right_vision = self.right_wail.view(&model.right_wailing);
+        let left_vision = model.left_wailing.as_ref().view();
+        let right_vision = model.right_wailing.as_ref().view();
         let mut vision = Vision::new() as Vision<WailIn>;
         vision.add_vision(left_vision, |_| None);
         vision.add_vision(right_vision, |_| None);
@@ -40,8 +40,6 @@ where TLeft: Wail, TRight: Wail
     }
 
     fn summon(self) -> ExpandRightWailing<TLeft, TRight> {
-        let x: Option<Box<Wailing>> = None;
-
         let mut left_wailing = self.left_wail.clone().summon();
         let mut right_wailing = self.right_wail.clone().summon();
         let left_frame = left_wailing.report_frame();
@@ -57,8 +55,8 @@ where TLeft: Wail, TRight: Wail
         ExpandRightWailing {
             expand_right_wail: self,
             frame: frame,
-            left_wailing: left_wailing,
-            right_wailing: right_wailing
+            left_wailing: Box::new(left_wailing) as Box<Wailing>,
+            right_wailing: Box::new(right_wailing) as Box<Wailing>,
         }
     }
 }
@@ -69,12 +67,12 @@ pub struct ExpandRightWailing<TLeft, TRight>
 {
     expand_right_wail: ExpandRightWail<TLeft, TRight>,
     frame: Frame,
-    left_wailing: TLeft::Mdl,
-    right_wailing: TRight::Mdl,
+    left_wailing: Box<Wailing>,
+    right_wailing: Box<Wailing>,
 }
 
 impl<TLeft, TRight> Wailing for ExpandRightWailing<TLeft, TRight>
-where TLeft: Wail, TRight: Wail
+where TLeft: Wail + 'static, TRight: Wail + 'static
 {
     fn update(&mut self, message: &WailIn) {
         let expand_right_wail = self.expand_right_wail.clone();

@@ -17,7 +17,8 @@ pub enum WailOut {
 }
 
 pub trait Wail: Clone + Debug {
-    type Mdl: Wailing;
+    type Mdl: Wailing + 'static;
+
     fn expand_right<TRight: Wail>(self, right_wail: TRight) -> ExpandRightWail<Self, TRight> {
         ExpandRightWail::new(self, right_wail)
     }
