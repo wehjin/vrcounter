@@ -11,7 +11,7 @@ pub enum Error {
     NoCompositor,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Wish {
     Tick,
     FitToCage(Cage),

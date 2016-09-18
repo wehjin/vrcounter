@@ -56,6 +56,7 @@ pub use star::*;
 pub use patch::Sigil;
 pub use patch::Patch;
 pub use mist::Mist;
+pub use beat::Beat;
 pub use hand::Hand;
 pub use howl::Howl;
 

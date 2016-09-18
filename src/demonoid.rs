@@ -67,10 +67,13 @@ impl<S: Star> Demon for Demonoid<S> where S: 'static {
     }
 
     fn poke(&mut self, wish: Wish) -> DemonResult {
-        let mut messages = VecDeque::from(self.get_messages(wish));
-        while let Some(ref message) = messages.pop_front() {
-            let new_model = self.star.as_ref().update(&self.model, message);
-            self.model = new_model;
+        let messages = self.get_messages(wish);
+        if messages.len() > 0 {
+            let mut queue = VecDeque::from(messages);
+            while let Some(ref message) = queue.pop_front() {
+                let new_model = self.star.as_ref().update(&self.model, message);
+                self.model = new_model;
+            }
         }
         DemonResult::Keep
     }
