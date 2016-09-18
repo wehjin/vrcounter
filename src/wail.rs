@@ -27,6 +27,7 @@ pub trait Wail: Clone + Debug {
 }
 
 pub trait Wailing: Clone + Debug {
+    fn update(&self, message: &WailIn) -> Self;
     fn view(&self) -> Vision<WailIn>;
 }
 
@@ -67,7 +68,10 @@ where TLeft: Wail, TRight: Wail
 
     fn summon(self) -> ExpandRightWailing<TLeft, TRight> {
         let left_wailing = self.left_wail.clone().summon();
-        let right_wailing = self.right_wail.clone().summon();
+        let right_wailing = self.right_wail
+            .clone()
+            .summon()
+            .update(&WailIn::Offset(Offset::from((0.25, 0.0, 0.0))));
         ExpandRightWailing { expand_right_wail: self, left_wailing: left_wailing, right_wailing: right_wailing }
     }
 }
@@ -84,6 +88,9 @@ pub struct ExpandRightWailing<TLeft, TRight>
 impl<TLeft, TRight> Wailing for ExpandRightWailing<TLeft, TRight>
 where TLeft: Wail, TRight: Wail
 {
+    fn update(&self, message: &WailIn) -> Self {
+        self.expand_right_wail.update(self, message)
+    }
     fn view(&self) -> Vision<WailIn> {
         self.expand_right_wail.view(self)
     }
@@ -104,6 +111,9 @@ pub struct LeafWailing {
 }
 
 impl Wailing for LeafWailing {
+    fn update(&self, message: &WailIn) -> Self {
+        self.leaf_wail.update(self, message)
+    }
     fn view(&self) -> Vision<WailIn> {
         self.leaf_wail.view(self)
     }
