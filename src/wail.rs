@@ -6,12 +6,6 @@ use cage::{Frame, Offset, Cage};
 use star::Star;
 use patch::{Sigil, Patch};
 
-#[derive(Clone, Debug)]
-pub struct WailModel {
-    offset: Offset,
-    patch_id: u64,
-}
-
 #[derive(Copy, Clone, Debug)]
 pub enum WailIn {
     Offset(Offset),
@@ -26,6 +20,12 @@ pub enum WailOut {
 pub struct Wail {
     color: [f32; 4],
     frame: Frame,
+}
+
+#[derive(Clone, Debug)]
+pub struct WailModel {
+    offset: Offset,
+    patch_id: u64,
 }
 
 impl Wail {
