@@ -4,44 +4,45 @@ extern crate rand;
 use vision::Vision;
 use cage::{Frame, Offset};
 use super::*;
+use std::rc::Rc;
 
-#[derive(Clone, Debug)]
-pub struct ExpandRightWail<TLeft, TRight>
-    where TLeft: Wail + Clone, TRight: Wail + Clone
+#[derive(Debug)]
+pub struct ExpandRightWailModel
 {
-    left_wail: TLeft,
-    right_wail: TRight,
+    frame: Frame,
+    left_wailing: Wailing,
+    right_wailing: Wailing,
 }
 
-impl<TLeft, TRight> ExpandRightWail<TLeft, TRight>
-where TLeft: Wail + Clone, TRight: Wail + Clone
-{
-    pub fn new(left: TLeft, right: TRight) -> Self {
+#[derive(Clone, Debug)]
+pub struct ExpandRightWail {
+    left_wail: Rc<Subwail>,
+    right_wail: Rc<Subwail>,
+}
+
+impl ExpandRightWail {
+    pub fn new(left: Rc<Subwail>, right: Rc<Subwail>) -> Self {
         ExpandRightWail { left_wail: left, right_wail: right }
     }
 }
 
-impl<TLeft, TRight> Wail for ExpandRightWail<TLeft, TRight>
-where TLeft: Wail + 'static + Clone, TRight: Wail + 'static + Clone
-{
-    type Mdl = ExpandRightWailing<TLeft, TRight>;
+impl Wail for ExpandRightWail {
+    type Mdl = ExpandRightWailModel;
 
-    fn update(&self, _: &mut ExpandRightWailing<TLeft, TRight>, _: &WailIn) {
+    fn update(&self, _: &mut ExpandRightWailModel, _: &WailIn) {
         // TODO Implement WailIn::Offset
     }
-
-    fn view(&self, model: &ExpandRightWailing<TLeft, TRight>) -> Vision<WailIn> {
-        let left_vision = model.left_wailing.as_ref().view();
-        let right_vision = model.right_wailing.as_ref().view();
+    fn view(&self, model: &ExpandRightWailModel) -> Vision<WailIn> {
+        let left_vision = model.left_wailing.view();
+        let right_vision = model.right_wailing.view();
         let mut vision = Vision::new() as Vision<WailIn>;
         vision.add_vision(left_vision, |_| None);
         vision.add_vision(right_vision, |_| None);
         vision
     }
-
-    fn summon(&self) -> ExpandRightWailing<TLeft, TRight> {
-        let mut left_wailing = self.left_wail.clone().summon();
-        let mut right_wailing = self.right_wail.clone().summon();
+    fn init(&self) -> ExpandRightWailModel {
+        let mut left_wailing = self.left_wail.as_ref().summon();
+        let mut right_wailing = self.right_wail.as_ref().summon();
         let left_frame = left_wailing.report_frame();
         let right_frame = right_wailing.report_frame();
         let frame = Frame::from((left_frame.w + right_frame.w,
@@ -52,36 +53,56 @@ where TLeft: Wail + 'static + Clone, TRight: Wail + 'static + Clone
         let left_offset = Offset::from((-frame.w / 2.0 + left_frame.w / 2.0, 0.0, 0.0));
         left_wailing.update(&WailIn::Offset(left_offset));
         right_wailing.update(&WailIn::Offset(right_offset));
-        ExpandRightWailing {
-            expand_right_wail: self.clone(),
+        ExpandRightWailModel {
             frame: frame,
-            left_wailing: Box::new(left_wailing) as Box<Wailing>,
-            right_wailing: Box::new(right_wailing) as Box<Wailing>,
+            left_wailing: left_wailing,
+            right_wailing: right_wailing,
         }
+    }
+    fn to_subwail(&self) -> Rc<Subwail> {
+        Rc::new(ExpandRightSubwail { wail: self.clone(), wail_model: None }) as Rc<Subwail>
     }
 }
 
 #[derive(Debug)]
-pub struct ExpandRightWailing<TLeft, TRight>
-    where TLeft: Wail + 'static + Clone, TRight: Wail + 'static + Clone
-{
-    expand_right_wail: ExpandRightWail<TLeft, TRight>,
-    frame: Frame,
-    left_wailing: Box<Wailing>,
-    right_wailing: Box<Wailing>,
+pub struct ExpandRightSubwail {
+    wail: ExpandRightWail,
+    wail_model: Option<ExpandRightWailModel>,
 }
 
-impl<TLeft, TRight> Wailing for ExpandRightWailing<TLeft, TRight>
-where TLeft: Wail + 'static + Clone, TRight: Wail + 'static + Clone
-{
+impl Subwail for ExpandRightSubwail {
+    fn report_frame(&self) -> Frame {
+        if let Some(ref wail_model) = self.wail_model {
+            wail_model.frame.clone()
+        } else {
+            panic!("Must summon");
+        }
+    }
     fn update(&mut self, message: &WailIn) {
-        let expand_right_wail = self.expand_right_wail.clone();
-        expand_right_wail.update(self, message);
+        if let Some(ref mut wail_model) = self.wail_model {
+            self.wail.update(wail_model, message);
+        } else {
+            panic!("Must summon");
+        }
     }
     fn view(&self) -> Vision<WailIn> {
-        self.expand_right_wail.view(self)
+        if let Some(ref wail_model) = self.wail_model {
+            self.wail.view(wail_model)
+        } else {
+            panic!("Must summon");
+        }
     }
-    fn report_frame(&self) -> Frame {
-        self.frame.clone()
+    fn summon(&self) -> Wailing {
+        if self.wail_model.is_some() {
+            panic!("Already summoned");
+        } else {
+            Wailing {
+                subwail: Box::new(ExpandRightSubwail {
+                    wail: self.wail.clone(),
+                    wail_model: Some(self.wail.init())
+                }) as Box<Subwail>
+            }
+        }
     }
 }
+
