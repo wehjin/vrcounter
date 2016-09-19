@@ -35,6 +35,7 @@ impl Wailing for LeafWailing {
 
 impl LeafWail {
     pub fn new(color: [f32; 4], frame: Frame) -> Self {
+        let wail_box :Option<Box<Wail<Mdl=LeafWailing>>> = None;
         LeafWail { color: color, frame: frame }
     }
 }

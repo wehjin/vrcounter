@@ -20,8 +20,9 @@ pub enum WailOut {
 pub trait Wail: Debug {
     type Mdl: Wailing + 'static;
 
-    fn expand_right<TRight: Wail>(self, right_wail: TRight) -> ExpandRightWail<Self, TRight> where Self: Sized {
-        ExpandRightWail::new(self, right_wail)
+    fn expand_right<TRight: Wail>(self, right_wail: TRight) -> ExpandRightWail<Self, TRight>
+        where Self: Sized + Clone, TRight: Clone {
+        ExpandRightWail::new(self.clone(), right_wail.clone())
     }
     fn update(&self, model: &mut Self::Mdl, message: &WailIn);
     fn view(&self, model: &Self::Mdl) -> Vision<WailIn>;

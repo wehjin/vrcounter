@@ -7,14 +7,14 @@ use super::*;
 
 #[derive(Clone, Debug)]
 pub struct ExpandRightWail<TLeft, TRight>
-    where TLeft: Wail, TRight: Wail
+    where TLeft: Wail + Clone, TRight: Wail + Clone
 {
     left_wail: TLeft,
     right_wail: TRight,
 }
 
 impl<TLeft, TRight> ExpandRightWail<TLeft, TRight>
-where TLeft: Wail, TRight: Wail
+where TLeft: Wail + Clone, TRight: Wail + Clone
 {
     pub fn new(left: TLeft, right: TRight) -> Self {
         ExpandRightWail { left_wail: left, right_wail: right }
@@ -63,7 +63,7 @@ where TLeft: Wail + 'static + Clone, TRight: Wail + 'static + Clone
 
 #[derive(Debug)]
 pub struct ExpandRightWailing<TLeft, TRight>
-    where TLeft: Wail + 'static, TRight: Wail + 'static
+    where TLeft: Wail + 'static + Clone, TRight: Wail + 'static + Clone
 {
     expand_right_wail: ExpandRightWail<TLeft, TRight>,
     frame: Frame,
