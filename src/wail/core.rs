@@ -5,6 +5,7 @@ use vision::Vision;
 use cage::{Frame, Offset};
 use std::fmt::Debug;
 use super::expand_right::*;
+use std::marker::Sized;
 
 #[derive(Copy, Clone, Debug)]
 pub enum WailIn {
@@ -16,10 +17,10 @@ pub enum WailOut {
     Frame(Frame),
 }
 
-pub trait Wail: Clone + Debug {
+pub trait Wail: Debug {
     type Mdl: Wailing + 'static;
 
-    fn expand_right<TRight: Wail>(self, right_wail: TRight) -> ExpandRightWail<Self, TRight> {
+    fn expand_right<TRight: Wail>(self, right_wail: TRight) -> ExpandRightWail<Self, TRight> where Self: Sized {
         ExpandRightWail::new(self, right_wail)
     }
     fn update(&self, model: &mut Self::Mdl, message: &WailIn);

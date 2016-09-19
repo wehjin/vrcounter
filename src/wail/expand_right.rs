@@ -22,7 +22,7 @@ where TLeft: Wail, TRight: Wail
 }
 
 impl<TLeft, TRight> Wail for ExpandRightWail<TLeft, TRight>
-where TLeft: Wail + 'static, TRight: Wail + 'static
+where TLeft: Wail + 'static + Clone, TRight: Wail + 'static + Clone
 {
     type Mdl = ExpandRightWailing<TLeft, TRight>;
 
@@ -63,7 +63,7 @@ where TLeft: Wail + 'static, TRight: Wail + 'static
 
 #[derive(Debug)]
 pub struct ExpandRightWailing<TLeft, TRight>
-    where TLeft: Wail + Clone, TRight: Wail + Clone
+    where TLeft: Wail + 'static, TRight: Wail + 'static
 {
     expand_right_wail: ExpandRightWail<TLeft, TRight>,
     frame: Frame,
@@ -72,7 +72,7 @@ pub struct ExpandRightWailing<TLeft, TRight>
 }
 
 impl<TLeft, TRight> Wailing for ExpandRightWailing<TLeft, TRight>
-where TLeft: Wail + 'static, TRight: Wail + 'static
+where TLeft: Wail + 'static + Clone, TRight: Wail + 'static + Clone
 {
     fn update(&mut self, message: &WailIn) {
         let expand_right_wail = self.expand_right_wail.clone();
