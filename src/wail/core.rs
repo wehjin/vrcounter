@@ -20,7 +20,7 @@ pub enum WailOut {
 pub trait Wail: Debug {
     type Mdl: Wailing + 'static;
 
-    fn expand_right<TRight: Wail>(self, right_wail: TRight) -> ExpandRightWail<Self, TRight>
+    fn expand_right<TRight: Wail>(&self, right_wail: TRight) -> ExpandRightWail<Self, TRight>
         where Self: Sized + Clone, TRight: Clone {
         ExpandRightWail::new(self.clone(), right_wail.clone())
     }
