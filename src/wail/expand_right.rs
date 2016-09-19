@@ -12,6 +12,7 @@ pub struct ExpandRightWailModel
     frame: Frame,
     left_wailing: Wailing,
     right_wailing: Wailing,
+    base_offsets: (Offset, Offset)
 }
 
 #[derive(Clone, Debug)]
@@ -26,11 +27,23 @@ impl ExpandRightWail {
     }
 }
 
+fn add_offsets(a: &Offset, b: &Offset) -> Offset {
+    a.shift(b.x, b.y, b.z)
+}
+
 impl Wail for ExpandRightWail {
     type Mdl = ExpandRightWailModel;
 
-    fn update(&self, _: &mut ExpandRightWailModel, _: &WailIn) {
-        // TODO Implement WailIn::Offset
+    fn update(&self, model: &mut ExpandRightWailModel, message: &WailIn) {
+        match message {
+            &WailIn::Offset(offset) => {
+                let (left_base, right_base) = model.base_offsets;
+                let (left_full, right_full) = (add_offsets(&left_base, &offset),
+                                               add_offsets(&right_base, &offset));
+                model.left_wailing.update(&WailIn::Offset(left_full));
+                model.right_wailing.update(&WailIn::Offset(right_full));
+            }
+        }
     }
     fn view(&self, model: &ExpandRightWailModel) -> Vision<WailIn> {
         let left_vision = model.left_wailing.view();
@@ -57,6 +70,7 @@ impl Wail for ExpandRightWail {
             frame: frame,
             left_wailing: left_wailing,
             right_wailing: right_wailing,
+            base_offsets: (left_offset, right_offset)
         }
     }
     fn to_subwail(&self) -> Rc<Subwail> {
