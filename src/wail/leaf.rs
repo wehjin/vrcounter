@@ -57,12 +57,12 @@ impl Wail for LeafWail {
         vision.add_patch(patch);
         vision
     }
-    fn summon(self) -> LeafWailing {
+    fn summon(&self) -> LeafWailing {
         let patch_id = rand::random::<u64>();
         let offset = Offset::default();
         let frame = self.frame.clone();
         LeafWailing {
-            leaf_wail: self,
+            leaf_wail: self.clone(),
             frame: frame,
             offset: offset,
             patch_id: patch_id,

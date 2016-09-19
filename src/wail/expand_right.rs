@@ -39,7 +39,7 @@ where TLeft: Wail + 'static + Clone, TRight: Wail + 'static + Clone
         vision
     }
 
-    fn summon(self) -> ExpandRightWailing<TLeft, TRight> {
+    fn summon(&self) -> ExpandRightWailing<TLeft, TRight> {
         let mut left_wailing = self.left_wail.clone().summon();
         let mut right_wailing = self.right_wail.clone().summon();
         let left_frame = left_wailing.report_frame();
@@ -53,7 +53,7 @@ where TLeft: Wail + 'static + Clone, TRight: Wail + 'static + Clone
         left_wailing.update(&WailIn::Offset(left_offset));
         right_wailing.update(&WailIn::Offset(right_offset));
         ExpandRightWailing {
-            expand_right_wail: self,
+            expand_right_wail: self.clone(),
             frame: frame,
             left_wailing: Box::new(left_wailing) as Box<Wailing>,
             right_wailing: Box::new(right_wailing) as Box<Wailing>,

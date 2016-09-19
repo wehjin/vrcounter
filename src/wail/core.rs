@@ -26,7 +26,7 @@ pub trait Wail: Debug {
     }
     fn update(&self, model: &mut Self::Mdl, message: &WailIn);
     fn view(&self, model: &Self::Mdl) -> Vision<WailIn>;
-    fn summon(self) -> Self::Mdl;
+    fn summon(&self) -> Self::Mdl;
 }
 
 pub trait Wailing: Debug {
