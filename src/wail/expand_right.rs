@@ -78,45 +78,5 @@ impl Wail for ExpandRightWail {
     }
 }
 
-#[derive(Debug)]
-pub struct ExpandRightSubwail {
-    wail: ExpandRightWail,
-    wail_model: Option<ExpandRightWailModel>,
-}
-
-impl Subwail for ExpandRightSubwail {
-    fn report_frame(&self) -> Frame {
-        if let Some(ref wail_model) = self.wail_model {
-            wail_model.frame.clone()
-        } else {
-            panic!("Must summon");
-        }
-    }
-    fn update(&mut self, message: &WailIn) {
-        if let Some(ref mut wail_model) = self.wail_model {
-            self.wail.update(wail_model, message);
-        } else {
-            panic!("Must summon");
-        }
-    }
-    fn view(&self) -> Vision<WailIn> {
-        if let Some(ref wail_model) = self.wail_model {
-            self.wail.view(wail_model)
-        } else {
-            panic!("Must summon");
-        }
-    }
-    fn summon(&self) -> Wailing {
-        if self.wail_model.is_some() {
-            panic!("Already summoned");
-        } else {
-            Wailing {
-                subwail: Box::new(ExpandRightSubwail {
-                    wail: self.wail.clone(),
-                    wail_model: Some(self.wail.init())
-                }) as Box<Subwail>
-            }
-        }
-    }
-}
+subwail!(ExpandRightSubwail,ExpandRightWail,ExpandRightWailModel);
 
