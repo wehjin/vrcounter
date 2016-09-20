@@ -5,6 +5,7 @@ use vision::Vision;
 use cage::{Frame, Offset};
 use std::fmt::Debug;
 use super::expand_right::*;
+use super::in_front_of::*;
 use std::rc::Rc;
 
 #[derive(Copy, Clone, Debug)]
@@ -22,24 +23,32 @@ pub enum Biopt<A, B> {
     SomeB(B),
 }
 
-pub trait Wailer<E>: Clone where E: Clone + Debug + 'static {
+pub trait Wailer<O>: Clone where O: Clone + Debug + 'static {
     type Mdl: 'static;
 
-    fn expand_right<B, ENew, BWailer, F>(&self, right_wail: BWailer, adapt: F)
-        -> ExpandRightWailer<E, B, ENew>
+    fn in_front_of<A, ENext, AWailer, F>(&self, far_wail: AWailer, adapt: F)
+        -> InFrontOfWailer<O, A, ENext>
+        where A: Clone + Debug + 'static,
+              ENext: Clone + Debug + 'static,
+              AWailer: Wailer<A>,
+              F: 'static + Fn(Biopt<O, A>) -> ENext {
+        InFrontOfWailer::new(self.to_subwail(), far_wail.to_subwail(), adapt)
+    }
+    fn expand_right<B, ONext, BWailer, F>(&self, right_wail: BWailer, adapt: F)
+        -> ExpandRightWailer<O, B, ONext>
         where B: Clone + Debug + 'static,
-              ENew: Clone + Debug + 'static,
+              ONext: Clone + Debug + 'static,
               BWailer: Wailer<B>,
-              F: 'static + Fn(Biopt<E, B>) -> ENew {
+              F: 'static + Fn(Biopt<O, B>) -> ONext {
         ExpandRightWailer::new(self.to_subwail(), right_wail.to_subwail(), adapt)
     }
-    fn report(&self, model: &Self::Mdl) -> Vec<E>;
+    fn report(&self, model: &Self::Mdl) -> Vec<O>;
     fn update(&self, model: &mut Self::Mdl, message: &WailerIn);
     fn view(&self, model: &Self::Mdl) -> Vision<WailerIn>;
     fn init(&self) -> Self::Mdl;
 
-    fn to_subwail(&self) -> Rc<Subwailer<E>>;
-    fn summon(&self) -> Wailing<E> {
+    fn to_subwail(&self) -> Rc<Subwailer<O>>;
+    fn summon(&self) -> Wailing<O> {
         self.to_subwail().as_ref().summon()
     }
 }
@@ -58,7 +67,7 @@ pub struct Wailing<E> {
 }
 
 impl<E> Wailing<E> {
-    fn report(&self) -> Vec<E> {
+    pub fn report(&self) -> Vec<E> {
         self.subwail.as_ref().report()
     }
     pub fn report_frame(&self) -> Frame {

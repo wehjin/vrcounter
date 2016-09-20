@@ -10,8 +10,8 @@ use std::fmt::Debug;
 pub struct ExpandRightWailerModel<A, B> where A: Clone + Debug + 'static, B: Clone + Debug + 'static,
 {
     frame: Frame,
-    left_wailing: Wailing<A>,
-    right_wailing: Wailing<B>,
+    a_wailing: Wailing<A>,
+    b_wailing: Wailing<B>,
     base_offsets: (Offset, Offset)
 }
 
@@ -34,11 +34,18 @@ fn add_offsets(a: &Offset, b: &Offset) -> Offset {
     a.shift(b.x, b.y, b.z)
 }
 
-impl<A, B, E> Wailer<E> for ExpandRightWailer<A, B, E> where A: Clone + Debug + 'static, B: Clone + Debug + 'static, E: Clone + Debug + 'static {
+impl<A, B, O> Wailer<O> for ExpandRightWailer<A, B, O> where A: Clone + Debug + 'static, B: Clone + Debug + 'static, O: Clone + Debug + 'static {
     type Mdl = ExpandRightWailerModel<A, B>;
 
-    fn report(&self, model: &ExpandRightWailerModel<A, B>) -> Vec<E> {
-        vec![]
+    fn report(&self, model: &ExpandRightWailerModel<A, B>) -> Vec<O> {
+        let mut out = Vec::new();
+        for a in model.a_wailing.report() {
+            out.push((*self.adapt)(Biopt::SomeA(a)));
+        }
+        for b in model.b_wailing.report() {
+            out.push((*self.adapt)(Biopt::SomeB(b)));
+        }
+        out
     }
     fn update(&self, model: &mut ExpandRightWailerModel<A, B>, message: &WailerIn) {
         match message {
@@ -46,14 +53,14 @@ impl<A, B, E> Wailer<E> for ExpandRightWailer<A, B, E> where A: Clone + Debug + 
                 let (left_base, right_base) = model.base_offsets;
                 let (left_full, right_full) = (add_offsets(&left_base, &offset),
                                                add_offsets(&right_base, &offset));
-                model.left_wailing.update(&WailerIn::Offset(left_full));
-                model.right_wailing.update(&WailerIn::Offset(right_full));
+                model.a_wailing.update(&WailerIn::Offset(left_full));
+                model.b_wailing.update(&WailerIn::Offset(right_full));
             }
         }
     }
     fn view(&self, model: &ExpandRightWailerModel<A, B>) -> Vision<WailerIn> {
-        let left_vision = model.left_wailing.view();
-        let right_vision = model.right_wailing.view();
+        let left_vision = model.a_wailing.view();
+        let right_vision = model.b_wailing.view();
         let mut vision = Vision::new() as Vision<WailerIn>;
         vision.add_vision(left_vision, |_| None);
         vision.add_vision(right_vision, |_| None);
@@ -74,13 +81,13 @@ impl<A, B, E> Wailer<E> for ExpandRightWailer<A, B, E> where A: Clone + Debug + 
         right_wailing.update(&WailerIn::Offset(right_offset));
         ExpandRightWailerModel {
             frame: frame,
-            left_wailing: left_wailing,
-            right_wailing: right_wailing,
+            a_wailing: left_wailing,
+            b_wailing: right_wailing,
             base_offsets: (left_offset, right_offset)
         }
     }
-    fn to_subwail(&self) -> Rc<Subwailer<E>> {
-        Rc::new(ExpandRightSubwailer { wail: self.clone(), wail_model: None }) as Rc<Subwailer<E>>
+    fn to_subwail(&self) -> Rc<Subwailer<O>> {
+        Rc::new(ExpandRightSubwailer { wail: self.clone(), wail_model: None }) as Rc<Subwailer<O>>
     }
 }
 

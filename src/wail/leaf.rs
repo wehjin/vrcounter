@@ -6,7 +6,6 @@ use cage::{Frame, Offset, Cage};
 use patch::{Sigil, Patch};
 use super::*;
 use std::rc::Rc;
-use std::fmt::Debug;
 
 #[derive(Clone, Debug)]
 pub struct LeafWailerModel {
@@ -30,7 +29,7 @@ impl LeafWailer {
 impl Wailer<()> for LeafWailer {
     type Mdl = LeafWailerModel;
 
-    fn report(&self, model: &LeafWailerModel) -> Vec<()> {
+    fn report(&self, _: &LeafWailerModel) -> Vec<()> {
         vec![]
     }
     fn update(&self, model: &mut LeafWailerModel, message: &WailerIn) {
