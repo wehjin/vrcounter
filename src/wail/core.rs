@@ -17,36 +17,43 @@ pub enum WailerOut {
     Frame(Frame),
 }
 
-pub trait Wailer: Clone + Debug {
+pub trait Wailer<E>: Clone + Debug where E: Clone + Debug + 'static {
     type Mdl: 'static;
 
-    fn expand_right<TRight: Wailer>(&self, right_wail: TRight) -> ExpandRightWailer {
+    fn expand_right<B, ENew, TRight: Wailer<B>>(&self, right_wail: TRight) -> ExpandRightWailer<E, B, ENew>
+        where B: Clone + Debug + 'static, ENew: Clone + Debug + 'static,
+    {
         ExpandRightWailer::new(self.to_subwail(), right_wail.to_subwail())
     }
+    fn report(&self, model: &Self::Mdl) -> Vec<E>;
     fn update(&self, model: &mut Self::Mdl, message: &WailerIn);
     fn view(&self, model: &Self::Mdl) -> Vision<WailerIn>;
     fn init(&self) -> Self::Mdl;
 
-    fn to_subwail(&self) -> Rc<Subwailer>;
-    fn summon(&self) -> Wailing {
+    fn to_subwail(&self) -> Rc<Subwailer<E>>;
+    fn summon(&self) -> Wailing<E> {
         self.to_subwail().as_ref().summon()
     }
 }
 
 // Do not add Clone. We need to box this trait.
-pub trait Subwailer: Debug {
+pub trait Subwailer<E>: Debug {
+    fn report(&self) -> Vec<E>;
     fn report_frame(&self) -> Frame;
     fn update(&mut self, message: &WailerIn);
     fn view(&self) -> Vision<WailerIn>;
-    fn summon(&self) -> Wailing;
+    fn summon(&self) -> Wailing<E>;
 }
 
 #[derive(Debug)]
-pub struct Wailing {
-    pub subwail: Box<Subwailer>
+pub struct Wailing<E> {
+    pub subwail: Box<Subwailer<E>>
 }
 
-impl Wailing {
+impl<E> Wailing<E> {
+    fn report(&self) -> Vec<E> {
+        self.subwail.as_ref().report()
+    }
     pub fn report_frame(&self) -> Frame {
         self.subwail.as_ref().report_frame()
     }
@@ -66,7 +73,14 @@ pub struct $subwail {
     wail_model: Option<$model>,
 }
 
-impl Subwailer for $subwail {
+impl <E> Subwailer<E> for $subwail {
+    fn report(&self) -> Vec<E> {
+        if let Some(ref wail_model) = self.wail_model {
+            self.wail.report(wail_model)
+        } else {
+            panic!("Must summon");
+        }
+    }
     fn report_frame(&self) -> Frame {
         if let Some(ref wail_model) = self.wail_model {
             wail_model.frame.clone()
@@ -88,7 +102,7 @@ impl Subwailer for $subwail {
             panic!("Must summon");
         }
     }
-    fn summon(&self) -> Wailing {
+    fn summon(&self) -> Wailing<E> {
         if self.wail_model.is_some() {
             panic!("Already summoned");
         } else {
@@ -96,7 +110,7 @@ impl Subwailer for $subwail {
                 subwail: Box::new($subwail {
                     wail: self.wail.clone(),
                     wail_model: Some(self.wail.init())
-                }) as Box<Subwailer>
+                }) as Box<Subwailer<E>>
             }
         }
     }
