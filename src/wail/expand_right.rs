@@ -7,7 +7,7 @@ use super::*;
 use std::rc::Rc;
 
 #[derive(Debug)]
-pub struct ExpandRightWailModel
+pub struct ExpandRightWailerModel
 {
     frame: Frame,
     left_wailing: Wailing,
@@ -16,14 +16,14 @@ pub struct ExpandRightWailModel
 }
 
 #[derive(Clone, Debug)]
-pub struct ExpandRightWail {
-    left_wail: Rc<Subwail>,
-    right_wail: Rc<Subwail>,
+pub struct ExpandRightWailer {
+    left_wail: Rc<Subwailer>,
+    right_wail: Rc<Subwailer>,
 }
 
-impl ExpandRightWail {
-    pub fn new(left: Rc<Subwail>, right: Rc<Subwail>) -> Self {
-        ExpandRightWail { left_wail: left, right_wail: right }
+impl ExpandRightWailer {
+    pub fn new(left: Rc<Subwailer>, right: Rc<Subwailer>) -> Self {
+        ExpandRightWailer { left_wail: left, right_wail: right }
     }
 }
 
@@ -31,29 +31,29 @@ fn add_offsets(a: &Offset, b: &Offset) -> Offset {
     a.shift(b.x, b.y, b.z)
 }
 
-impl Wail for ExpandRightWail {
-    type Mdl = ExpandRightWailModel;
+impl Wailer for ExpandRightWailer {
+    type Mdl = ExpandRightWailerModel;
 
-    fn update(&self, model: &mut ExpandRightWailModel, message: &WailIn) {
+    fn update(&self, model: &mut ExpandRightWailerModel, message: &WailerIn) {
         match message {
-            &WailIn::Offset(offset) => {
+            &WailerIn::Offset(offset) => {
                 let (left_base, right_base) = model.base_offsets;
                 let (left_full, right_full) = (add_offsets(&left_base, &offset),
                                                add_offsets(&right_base, &offset));
-                model.left_wailing.update(&WailIn::Offset(left_full));
-                model.right_wailing.update(&WailIn::Offset(right_full));
+                model.left_wailing.update(&WailerIn::Offset(left_full));
+                model.right_wailing.update(&WailerIn::Offset(right_full));
             }
         }
     }
-    fn view(&self, model: &ExpandRightWailModel) -> Vision<WailIn> {
+    fn view(&self, model: &ExpandRightWailerModel) -> Vision<WailerIn> {
         let left_vision = model.left_wailing.view();
         let right_vision = model.right_wailing.view();
-        let mut vision = Vision::new() as Vision<WailIn>;
+        let mut vision = Vision::new() as Vision<WailerIn>;
         vision.add_vision(left_vision, |_| None);
         vision.add_vision(right_vision, |_| None);
         vision
     }
-    fn init(&self) -> ExpandRightWailModel {
+    fn init(&self) -> ExpandRightWailerModel {
         let mut left_wailing = self.left_wail.as_ref().summon();
         let mut right_wailing = self.right_wail.as_ref().summon();
         let left_frame = left_wailing.report_frame();
@@ -64,19 +64,19 @@ impl Wail for ExpandRightWail {
         // TODO Deal with mis-matched y and z in offsets.
         let right_offset = Offset::from((frame.w / 2.0 - right_frame.w / 2.0, 0.0, 0.0));
         let left_offset = Offset::from((-frame.w / 2.0 + left_frame.w / 2.0, 0.0, 0.0));
-        left_wailing.update(&WailIn::Offset(left_offset));
-        right_wailing.update(&WailIn::Offset(right_offset));
-        ExpandRightWailModel {
+        left_wailing.update(&WailerIn::Offset(left_offset));
+        right_wailing.update(&WailerIn::Offset(right_offset));
+        ExpandRightWailerModel {
             frame: frame,
             left_wailing: left_wailing,
             right_wailing: right_wailing,
             base_offsets: (left_offset, right_offset)
         }
     }
-    fn to_subwail(&self) -> Rc<Subwail> {
-        Rc::new(ExpandRightSubwail { wail: self.clone(), wail_model: None }) as Rc<Subwail>
+    fn to_subwail(&self) -> Rc<Subwailer> {
+        Rc::new(ExpandRightSubwailer { wail: self.clone(), wail_model: None }) as Rc<Subwailer>
     }
 }
 
-subwail!(ExpandRightSubwail,ExpandRightWail,ExpandRightWailModel);
+subwail!(ExpandRightSubwailer, ExpandRightWailer, ExpandRightWailerModel);
 
