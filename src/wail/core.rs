@@ -17,13 +17,21 @@ pub enum WailerOut {
     Frame(Frame),
 }
 
-pub trait Wailer<E>: Clone + Debug where E: Clone + Debug + 'static {
+pub enum Biopt<A, B> {
+    SomeA(A),
+    SomeB(B),
+}
+
+pub trait Wailer<E>: Clone where E: Clone + Debug + 'static {
     type Mdl: 'static;
 
-    fn expand_right<B, ENew, TRight: Wailer<B>>(&self, right_wail: TRight) -> ExpandRightWailer<E, B, ENew>
-        where B: Clone + Debug + 'static, ENew: Clone + Debug + 'static,
-    {
-        ExpandRightWailer::new(self.to_subwail(), right_wail.to_subwail())
+    fn expand_right<B, ENew, BWailer, F>(&self, right_wail: BWailer, adapt: F)
+        -> ExpandRightWailer<E, B, ENew>
+        where B: Clone + Debug + 'static,
+              ENew: Clone + Debug + 'static,
+              BWailer: Wailer<B>,
+              F: 'static + Fn(Biopt<E, B>) -> ENew {
+        ExpandRightWailer::new(self.to_subwail(), right_wail.to_subwail(), adapt)
     }
     fn report(&self, model: &Self::Mdl) -> Vec<E>;
     fn update(&self, model: &mut Self::Mdl, message: &WailerIn);
@@ -37,7 +45,7 @@ pub trait Wailer<E>: Clone + Debug where E: Clone + Debug + 'static {
 }
 
 // Do not add Clone. We need to box this trait.
-pub trait Subwailer<E>: Debug {
+pub trait Subwailer<E> {
     fn report(&self) -> Vec<E>;
     fn report_frame(&self) -> Frame;
     fn update(&mut self, message: &WailerIn);
@@ -45,7 +53,6 @@ pub trait Subwailer<E>: Debug {
     fn summon(&self) -> Wailing<E>;
 }
 
-#[derive(Debug)]
 pub struct Wailing<E> {
     pub subwail: Box<Subwailer<E>>
 }

@@ -7,7 +7,6 @@ use super::*;
 use std::rc::Rc;
 use std::fmt::Debug;
 
-#[derive(Debug)]
 pub struct ExpandRightWailerModel<A, B> where A: Clone + Debug + 'static, B: Clone + Debug + 'static,
 {
     frame: Frame,
@@ -16,16 +15,18 @@ pub struct ExpandRightWailerModel<A, B> where A: Clone + Debug + 'static, B: Clo
     base_offsets: (Offset, Offset)
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ExpandRightWailer<A, B, E> where A: Clone + Debug + 'static, B: Clone + Debug + 'static, E: Clone + Debug + 'static {
     left_wail: Rc<Subwailer<A>>,
     right_wail: Rc<Subwailer<B>>,
-    report: Vec<E>
+    adapt: Rc<Fn(Biopt<A, B>) -> E>,
 }
 
 impl<A, B, E> ExpandRightWailer<A, B, E> where A: Clone + Debug + 'static, B: Clone + Debug + 'static, E: Clone + Debug + 'static {
-    pub fn new(left: Rc<Subwailer<A>>, right: Rc<Subwailer<B>>) -> Self {
-        ExpandRightWailer { left_wail: left, right_wail: right, report: vec![] }
+    pub fn new<F>(left: Rc<Subwailer<A>>, right: Rc<Subwailer<B>>, adapt: F)
+        -> Self where F: 'static + Fn(Biopt<A, B>) -> E
+    {
+        ExpandRightWailer { left_wail: left, right_wail: right, adapt: Rc::new(adapt) }
     }
 }
 
@@ -83,7 +84,6 @@ impl<A, B, E> Wailer<E> for ExpandRightWailer<A, B, E> where A: Clone + Debug + 
     }
 }
 
-#[derive(Debug)]
 pub struct ExpandRightSubwailer<A, B, E> where A: Clone + Debug + 'static, B: Clone + Debug + 'static, E: Clone + Debug + 'static {
     wail: ExpandRightWailer<A, B, E>,
     wail_model: Option<ExpandRightWailerModel<A, B>>,

@@ -18,7 +18,7 @@ struct Out;
 #[derive(Clone, Debug)]
 struct App;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 struct Model {
     patch_id: u64,
     beat_id: u64,
@@ -32,11 +32,9 @@ impl Star for App {
 
     fn init(&self) -> Model {
         let frame = Frame::from((0.20, 0.20, 0.20));
-        let leaf1 = LeafWailer::new(CYAN, frame) as LeafWailer;
-        let leaf2 = LeafWailer::new(MAGENTA, frame) as LeafWailer;
-        let leaf3 = LeafWailer::new(YELLOW, frame) as LeafWailer;
-        let expand1 = leaf1.expand_right(leaf2) as ExpandRightWailer<(), (), ()>;
-        let wail = expand1.expand_right(leaf3) as ExpandRightWailer<(), (), ()>;
+        let wail = LeafWailer::new(CYAN, frame)
+            .expand_right(LeafWailer::new(MAGENTA, frame), |_| ())
+            .expand_right(LeafWailer::new(YELLOW, frame), |_| ());
         let wailing = wail.summon();
         Model {
             patch_id: random::<u64>(),
