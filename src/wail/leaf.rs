@@ -16,22 +16,21 @@ pub struct LeafWailerModel {
 }
 
 #[derive(Clone, Debug)]
-pub struct LeafWailer<E> where E: Clone + Debug + 'static {
+pub struct LeafWailer {
     color: [f32; 4],
-    frame: Frame,
-    report: Vec<E>
+    frame: Frame
 }
 
-impl<E> LeafWailer<E> where E: Clone + Debug + 'static {
+impl LeafWailer {
     pub fn new(color: [f32; 4], frame: Frame) -> Self {
-        LeafWailer { color: color, frame: frame, report: vec![] }
+        LeafWailer { color: color, frame: frame }
     }
 }
 
-impl<E> Wailer<E> for LeafWailer<E> where E: Clone + Debug + 'static {
+impl Wailer<()> for LeafWailer {
     type Mdl = LeafWailerModel;
 
-    fn report(&self, model: &LeafWailerModel) -> Vec<E> {
+    fn report(&self, model: &LeafWailerModel) -> Vec<()> {
         vec![]
     }
     fn update(&self, model: &mut LeafWailerModel, message: &WailerIn) {
@@ -58,19 +57,19 @@ impl<E> Wailer<E> for LeafWailer<E> where E: Clone + Debug + 'static {
             patch_id: patch_id,
         }
     }
-    fn to_subwail(&self) -> Rc<Subwailer<E>> {
-        Rc::new(LeafSubwailer { wail: self.clone(), wail_model: None }) as Rc<Subwailer<E>>
+    fn to_subwail(&self) -> Rc<Subwailer<()>> {
+        Rc::new(LeafSubwailer { wail: self.clone(), wail_model: None }) as Rc<Subwailer<()>>
     }
 }
 
 #[derive(Debug)]
-pub struct LeafSubwailer<E> where E: Clone + Debug + 'static {
-    wail: LeafWailer<E>,
+pub struct LeafSubwailer {
+    wail: LeafWailer,
     wail_model: Option<LeafWailerModel>,
 }
 
-impl<E> Subwailer<E> for LeafSubwailer<E> where E: Clone + Debug + 'static {
-    fn report(&self) -> Vec<E> {
+impl Subwailer<()> for LeafSubwailer {
+    fn report(&self) -> Vec<()> {
         if let Some(ref wail_model) = self.wail_model {
             self.wail.report(wail_model)
         } else {
@@ -98,7 +97,7 @@ impl<E> Subwailer<E> for LeafSubwailer<E> where E: Clone + Debug + 'static {
             panic!("Must summon");
         }
     }
-    fn summon(&self) -> Wailing<E> {
+    fn summon(&self) -> Wailing<()> {
         if self.wail_model.is_some() {
             panic!("Already summoned");
         } else {
@@ -106,7 +105,7 @@ impl<E> Subwailer<E> for LeafSubwailer<E> where E: Clone + Debug + 'static {
                 subwail: Box::new(LeafSubwailer {
                     wail: self.wail.clone(),
                     wail_model: Some(self.wail.init())
-                }) as Box<Subwailer<E>>
+                }) as Box<Subwailer<()>>
             }
         }
     }
