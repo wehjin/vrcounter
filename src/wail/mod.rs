@@ -5,8 +5,10 @@ extern crate rand;
 mod leaf;
 mod expand_right;
 mod in_front_of;
+mod enable_hand;
 
 pub use wail::core::*;
 pub use wail::leaf::*;
 pub use wail::expand_right::*;
 pub use wail::in_front_of::*;
+pub use wail::enable_hand::*;

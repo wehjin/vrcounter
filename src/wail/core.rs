@@ -6,6 +6,8 @@ use cage::{Frame, Offset};
 use std::fmt::Debug;
 use super::expand_right::*;
 use super::in_front_of::*;
+use super::enable_hand::*;
+
 use std::rc::Rc;
 
 #[derive(Copy, Clone, Debug)]
@@ -26,20 +28,19 @@ pub enum Biopt<A, B> {
 pub trait Wailer<O>: Clone where O: Clone + Debug + 'static {
     type Mdl: 'static;
 
-    fn in_front_of<A, ENext, AWailer, F>(&self, far_wail: AWailer, adapt: F)
-        -> InFrontOfWailer<O, A, ENext>
-        where A: Clone + Debug + 'static,
-              ENext: Clone + Debug + 'static,
-              AWailer: Wailer<A>,
-              F: 'static + Fn(Biopt<O, A>) -> ENext {
+    fn enable_hand<ONext, F>(&self, adapt: F) -> EnableHandWailer<O, ONext>
+        where ONext: Clone + Debug + 'static, F: 'static + Fn(O) -> ONext
+    {
+        EnableHandWailer::new(self.to_subwail(), adapt)
+    }
+    fn in_front_of<A, ONext, AWailer, F>(&self, far_wail: AWailer, adapt: F) -> InFrontOfWailer<O, A, ONext>
+        where A: Clone + Debug + 'static, ONext: Clone + Debug + 'static, AWailer: Wailer<A>, F: 'static + Fn(Biopt<O, A>) -> ONext
+    {
         InFrontOfWailer::new(self.to_subwail(), far_wail.to_subwail(), adapt)
     }
-    fn expand_right<B, ONext, BWailer, F>(&self, right_wail: BWailer, adapt: F)
-        -> ExpandRightWailer<O, B, ONext>
-        where B: Clone + Debug + 'static,
-              ONext: Clone + Debug + 'static,
-              BWailer: Wailer<B>,
-              F: 'static + Fn(Biopt<O, B>) -> ONext {
+    fn expand_right<B, ONext, BWailer, F>(&self, right_wail: BWailer, adapt: F) -> ExpandRightWailer<O, B, ONext>
+        where B: Clone + Debug + 'static, ONext: Clone + Debug + 'static, BWailer: Wailer<B>, F: 'static + Fn(Biopt<O, B>) -> ONext
+    {
         ExpandRightWailer::new(self.to_subwail(), right_wail.to_subwail(), adapt)
     }
     fn report(&self, model: &Self::Mdl) -> Vec<O>;
