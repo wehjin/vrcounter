@@ -35,7 +35,7 @@ impl Star for App {
 
     fn init(&self) -> Model {
         let frame = Frame::from((0.20, 0.20, 0.20));
-        let wail = ColorWail { frame: frame, color: CYAN };
+        let wail = color_wail(CYAN, frame);
         let wailing = wail.summon();
         Model {
             patch_id: random::<u64>(),
