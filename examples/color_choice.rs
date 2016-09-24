@@ -35,26 +35,14 @@ impl Star for App {
 
     fn init(&self) -> Model {
         let frame = Frame::from((0.20, 0.20, 0.20));
-        let wail = color_wail(CYAN, frame).add_touch();
+        let wail = color_wail(CYAN, frame).add_touch()
+                                          .place_before(color_wail(RED, Frame::default()));
         let wailing = wail.summon();
         Model {
             patch_id: random::<u64>(),
             beat_id: random::<u64>(),
             wailing: Rc::new(RefCell::new(wailing))
         }
-    }
-
-    fn view(&self, model: &Model) -> Vision<Msg> {
-        let mut vision = Vision::new();
-        let wailing_mut = model.wailing.as_ref().borrow_mut();
-        let wail_vision = wailing_mut.view();
-        vision.add_vision(wail_vision, |wailing_msg| {
-            match wailing_msg {
-                WailingIn::Hand(hand) => Some(Msg::SendToWailing(WailingIn::Hand(hand))),
-                _ => None
-            }
-        });
-        vision
     }
 
     fn update(&self, model: &Model, msg: &Msg) -> Model {
@@ -73,6 +61,19 @@ impl Star for App {
                 model.clone()
             }
         }
+    }
+
+    fn view(&self, model: &Model) -> Vision<Msg> {
+        let mut vision = Vision::new();
+        let wailing_mut = model.wailing.as_ref().borrow_mut();
+        let wail_vision = wailing_mut.view();
+        vision.add_vision(wail_vision, |wailing_msg| {
+            match wailing_msg {
+                WailingIn::Hand(hand) => Some(Msg::SendToWailing(WailingIn::Hand(hand))),
+                _ => None
+            }
+        });
+        vision
     }
 }
 

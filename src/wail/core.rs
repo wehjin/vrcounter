@@ -25,7 +25,7 @@ impl<Out> Wail2<Out> where Out: Clone + 'static {
         (*self.on_summon)()
     }
     pub fn add_touch(&self) -> Wail2<TouchMsg> {
-        let base_wail: Self = (*self).clone();
+        let base_wail = (*self).clone();
         Wail2::create(Rc::new(move || {
             let base_wailing = base_wail.summon();
             Box::new(TouchWailing {
@@ -33,6 +33,20 @@ impl<Out> Wail2<Out> where Out: Clone + 'static {
                 mist_id: rand::random::<u64>(),
                 base_wailing: base_wailing,
             }) as Box<Wailing<TouchMsg>>
+        }))
+    }
+    pub fn place_before<ExtOut>(&self, ext_wail: Wail2<ExtOut>) -> Wail2<Out> where ExtOut: Clone + 'static {
+        let base_wail = (*self).clone();
+        Wail2::create(Rc::new(move || {
+            let ext_wailing = ext_wail.summon();
+            let base_offset = Offset::from((0.0, 0.0, 0.10));
+            let mut base_wailing = base_wail.summon();
+            base_wailing.update(&WailingIn::Offset(base_offset.clone()));
+            Box::new(BaseBeforeExtWailing {
+                base_offset: base_offset,
+                base_wailing: base_wailing,
+                ext_wailing: ext_wailing,
+            }) as Box<Wailing<Out>>
         }))
     }
 }
@@ -46,10 +60,41 @@ pub fn color_wail(color: [f32; 4], frame: Frame) -> Wail2<()> {
     }))
 }
 
-#[derive(Clone, Debug)]
-pub enum TouchMsg {
-    None,
-    TouchMove
+pub struct BaseBeforeExtWailing<BaseOut, ExtOut> {
+    base_offset: Offset,
+    base_wailing: Box<Wailing<BaseOut>>,
+    ext_wailing: Box<Wailing<ExtOut>>,
+}
+
+impl<BaseOut, ExtOut> Wailing<BaseOut> for BaseBeforeExtWailing<BaseOut, ExtOut> {
+    fn size(&self) -> Frame {
+        let base_frame = (*self.base_wailing).size();
+        let ext_frame = (*self.ext_wailing).size();
+        Frame::from((base_frame.w.max(ext_frame.w),
+                     base_frame.h.max(ext_frame.h),
+                     base_frame.d.max(ext_frame.d)))
+    }
+
+    fn view(&self) -> Vision<WailingIn> {
+        let mut vision = Vision::new();
+        let base_vision = (*self.base_wailing).view();
+        vision.add_vision(base_vision, |x| Some(x));
+        let ext_vision = (*self.ext_wailing).view();
+        vision.add_vision(ext_vision, |_| None);
+        vision
+    }
+
+    fn update(&mut self, message: &WailingIn) -> BaseOut {
+        if let &WailingIn::Offset(offset) = message {
+            (*self.ext_wailing).update(&WailingIn::Offset(offset.clone()));
+            (*self.base_wailing).update(&WailingIn::Offset(offset.shift(self.base_offset.x,
+                                                                        self.base_offset.y,
+                                                                        self.base_offset.z)))
+        } else {
+            (*self.ext_wailing).update(message);
+            (*self.base_wailing).update(message)
+        }
+    }
 }
 
 pub struct TouchWailing<BaseOut> {
@@ -85,7 +130,7 @@ impl<BaseOut> Wailing<TouchMsg> for TouchWailing<BaseOut> {
                 (*self.base_wailing).update(&WailingIn::Offset(offset));
                 TouchMsg::None
             },
-            &WailingIn::Hand(hand) => {
+            &WailingIn::Hand(_) => {
                 TouchMsg::TouchMove
             },
         }
@@ -128,6 +173,12 @@ pub trait Wailing<MsgOut> {
     fn size(&self) -> Frame;
     fn view(&self) -> Vision<WailingIn>;
     fn update(&mut self, message: &WailingIn) -> MsgOut;
+}
+
+#[derive(Clone, Debug)]
+pub enum TouchMsg {
+    None,
+    TouchMove
 }
 
 #[derive(Copy, Clone, Debug)]
