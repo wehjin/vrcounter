@@ -5,12 +5,15 @@ extern crate rand;
 use vrcounter::*;
 use vrcounter::color::*;
 use std::sync::Arc;
+use std::cell::RefCell;
 use std::rc::Rc;
 use rand::random;
 use cage::{Frame};
 
 #[derive(Clone, Debug)]
-struct In;
+enum Msg {
+    SendToWailing(WailerIn)
+}
 
 #[derive(Clone, Debug)]
 struct Out;
@@ -22,34 +25,48 @@ struct App;
 struct Model {
     patch_id: u64,
     beat_id: u64,
-    wailing: Rc<Wailing<()>>,
+    wailing: Rc<RefCell<Wailing<()>>>,
 }
 
 impl Star for App {
     type Mdl = Model;
-    type Msg = In;
+    type Msg = Msg;
     type Out = Out;
 
     fn init(&self) -> Model {
         let frame = Frame::from((0.20, 0.20, 0.20));
-        let wail = LeafWailer::new(CYAN, frame);
+        let wail = LeafWailer::new(CYAN, frame).enable_hand(|_| ());
         let wailing = wail.summon();
         Model {
             patch_id: random::<u64>(),
             beat_id: random::<u64>(),
-            wailing: Rc::new(wailing)
+            wailing: Rc::new(RefCell::new(wailing))
         }
     }
 
-    fn view(&self, model: &Model) -> Vision<In> {
+    fn view(&self, model: &Model) -> Vision<Msg> {
         let mut vision = Vision::new();
-        let wail_vision = model.wailing.as_ref().view();
-        vision.add_vision(wail_vision, |_| None);
+        let wailing_mut = model.wailing.as_ref().borrow_mut();
+        let wail_vision = wailing_mut.view();
+        vision.add_vision(wail_vision, |wailing_msg| {
+            match wailing_msg {
+                WailerIn::Hand(hand) => Some(Msg::SendToWailing(WailerIn::Hand(hand))),
+                _ => None
+            }
+        });
         vision
     }
 
-    fn update(&self, model: &Model, _: &In) -> Model {
-        model.clone()
+    fn update(&self, model: &Model, msg: &Msg) -> Model {
+        match msg {
+            &Msg::SendToWailing(wailing_in) => {
+                {
+                    let mut wailing_mut = model.wailing.as_ref().borrow_mut();
+                    wailing_mut.update(&wailing_in);
+                }
+                model.clone()
+            }
+        }
     }
 }
 
