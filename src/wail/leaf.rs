@@ -36,7 +36,8 @@ impl Wailer<()> for LeafWailer {
         match message {
             &WailerIn::Offset(offset) => {
                 model.offset = offset;
-            }
+            },
+            &WailerIn::Hand(_) => ()
         }
     }
     fn view(&self, model: &LeafWailerModel) -> Vision<WailerIn> {

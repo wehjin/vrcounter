@@ -40,8 +40,8 @@ impl<Msg> Vision<Msg> {
         self.adapters.insert(beat.id(), Rc::new(adapter));
         self.beats.insert(beat.id(), beat);
     }
-    pub fn add_vision<T, F>(&mut self, sub_vision: Vision<T>, adapter: F)
-        where T: 'static, F: Fn(T) -> Option<Msg> + 'static
+    pub fn add_vision<SubMsg, F>(&mut self, sub_vision: Vision<SubMsg>, adapter: F)
+        where SubMsg: 'static, F: Fn(SubMsg) -> Option<Msg> + 'static
     {
         for (id, patch) in sub_vision.patches {
             self.patches.insert(id, patch);

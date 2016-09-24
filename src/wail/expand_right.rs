@@ -10,9 +10,10 @@ use std::fmt::Debug;
 pub struct ExpandRightWailerModel<A, B> where A: Clone + Debug + 'static, B: Clone + Debug + 'static,
 {
     frame: Frame,
+    offset: Offset,
     a_wailing: Wailing<A>,
     b_wailing: Wailing<B>,
-    base_offsets: (Offset, Offset)
+    suboffsets: (Offset, Offset)
 }
 
 #[derive(Clone)]
@@ -50,11 +51,18 @@ impl<A, B, O> Wailer<O> for ExpandRightWailer<A, B, O> where A: Clone + Debug + 
     fn update(&self, model: &mut ExpandRightWailerModel<A, B>, message: &WailerIn) {
         match message {
             &WailerIn::Offset(offset) => {
-                let (left_base, right_base) = model.base_offsets;
-                let (left_full, right_full) = (add_offsets(&left_base, &offset),
-                                               add_offsets(&right_base, &offset));
-                model.a_wailing.update(&WailerIn::Offset(left_full));
-                model.b_wailing.update(&WailerIn::Offset(right_full));
+                let (a_suboffset, b_suboffset) = model.suboffsets;
+                let (a_offset, b_offset) = (add_offsets(&a_suboffset, &offset), add_offsets(&b_suboffset, &offset));
+                model.offset = offset;
+                model.a_wailing.update(&WailerIn::Offset(a_offset));
+                model.b_wailing.update(&WailerIn::Offset(b_offset));
+            },
+            &WailerIn::Hand(hand) => {
+                // TODO check if hand is in subcages?
+                let (a_suboffset, b_suboffset) = model.suboffsets;
+                let (a_offset, b_offset) = (add_offsets(&a_suboffset, &model.offset), add_offsets(&b_suboffset, &model.offset));
+                model.a_wailing.update(&WailerIn::Hand(hand.minus_offset(&a_offset)));
+                model.b_wailing.update(&WailerIn::Hand(hand.minus_offset(&b_offset)));
             }
         }
     }
@@ -74,16 +82,18 @@ impl<A, B, O> Wailer<O> for ExpandRightWailer<A, B, O> where A: Clone + Debug + 
         let frame = Frame::from((left_frame.w + right_frame.w,
                                  left_frame.h.max(right_frame.h),
                                  left_frame.d.max(right_frame.d)));
+        let offset = Offset::default();
         // TODO Deal with mis-matched y and z in offsets.
-        let right_offset = Offset::from((frame.w / 2.0 - right_frame.w / 2.0, 0.0, 0.0));
-        let left_offset = Offset::from((-frame.w / 2.0 + left_frame.w / 2.0, 0.0, 0.0));
-        left_wailing.update(&WailerIn::Offset(left_offset));
-        right_wailing.update(&WailerIn::Offset(right_offset));
+        let right_suboffset = Offset::from((frame.w / 2.0 - right_frame.w / 2.0, 0.0, 0.0));
+        let left_suboffset = Offset::from((-frame.w / 2.0 + left_frame.w / 2.0, 0.0, 0.0));
+        left_wailing.update(&WailerIn::Offset(left_suboffset));
+        right_wailing.update(&WailerIn::Offset(right_suboffset));
         ExpandRightWailerModel {
             frame: frame,
+            offset: offset,
             a_wailing: left_wailing,
             b_wailing: right_wailing,
-            base_offsets: (left_offset, right_offset)
+            suboffsets: (left_suboffset, right_suboffset)
         }
     }
     fn to_subwail(&self) -> Rc<Subwailer<O>> {

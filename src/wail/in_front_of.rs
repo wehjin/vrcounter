@@ -10,9 +10,10 @@ use std::fmt::Debug;
 pub struct InFrontOfWailerModel<A, B> where A: Clone + Debug + 'static, B: Clone + Debug + 'static,
 {
     frame: Frame,
+    offset: Offset,
     a_wailing: Wailing<A>,
     b_wailing: Wailing<B>,
-    base_offsets: (Offset, Offset)
+    suboffsets: (Offset, Offset)
 }
 
 #[derive(Clone)]
@@ -53,11 +54,18 @@ impl<A, B, O> Wailer<O> for InFrontOfWailer<A, B, O> where A: Clone + Debug + 's
     fn update(&self, model: &mut InFrontOfWailerModel<A, B>, message: &WailerIn) {
         match message {
             &WailerIn::Offset(offset) => {
-                let (a_base_offset, b_base_offset) = model.base_offsets;
-                let (a_offset, b_offset) = (add_offsets(&a_base_offset, &offset),
-                                            add_offsets(&b_base_offset, &offset));
+                let (a_suboffset, b_suboffset) = model.suboffsets;
+                let (a_offset, b_offset) = (add_offsets(&a_suboffset, &offset),
+                                            add_offsets(&b_suboffset, &offset));
+                model.offset = offset;
                 model.a_wailing.update(&WailerIn::Offset(a_offset));
                 model.b_wailing.update(&WailerIn::Offset(b_offset));
+            },
+            &WailerIn::Hand(hand) => {
+                let (a_suboffset, b_suboffset) = model.suboffsets;
+                let (a_offset, b_offset) = (add_offsets(&a_suboffset, &model.offset), add_offsets(&b_suboffset, &model.offset));
+                model.a_wailing.update(&WailerIn::Hand(hand.minus_offset(&a_offset)));
+                model.b_wailing.update(&WailerIn::Hand(hand.minus_offset(&b_offset)));
             }
         }
     }
@@ -78,15 +86,17 @@ impl<A, B, O> Wailer<O> for InFrontOfWailer<A, B, O> where A: Clone + Debug + 's
         let frame = Frame::from((a_frame.w.max(b_frame.w),
                                  a_frame.h.max(b_frame.h),
                                  a_frame.d.max(b_frame.d)));
+        let offset = Offset::default();
         let (a_offset, b_offset) = (Offset::from((0.0, 0.0, 0.05)),
                                     Offset::from((0.0, 0.0, 0.00)));
         a_wailing.update(&WailerIn::Offset(a_offset));
         b_wailing.update(&WailerIn::Offset(b_offset));
         InFrontOfWailerModel {
             frame: frame,
+            offset: offset,
             a_wailing: a_wailing,
             b_wailing: b_wailing,
-            base_offsets: (a_offset, b_offset)
+            suboffsets: (a_offset, b_offset)
         }
     }
     fn to_subwail(&self) -> Rc<Subwailer<O>> {

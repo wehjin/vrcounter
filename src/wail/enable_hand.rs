@@ -1,67 +1,87 @@
 extern crate cage;
 extern crate rand;
 
-use vision::Vision;
-use cage::{Frame, Offset};
 use super::*;
+use vision::Vision;
+use hand::Hand;
+use mist::Mist;
+use cage::{Frame, Offset, Cage};
 use std::rc::Rc;
 use std::fmt::Debug;
+use common::Wish;
 
-pub struct EnableHandWailerModel<A> where A: Clone + Debug + 'static
+pub enum EnableHandOut {
+    Hand(Hand)
+}
+
+pub struct EnableHandModel<A> where A: Clone + Debug + 'static
 {
     frame: Frame,
     a_wailing: Wailing<A>,
-    base_offset: Offset
+    offset: Offset,
+    mist_id: u64
 }
 
 #[derive(Clone)]
 pub struct EnableHandWailer<A, O> where A: Clone + Debug + 'static, O: Clone + Debug + 'static
 {
     a_wailer: Rc<Subwailer<A>>,
-    adapt: Rc<Fn(A) -> O>,
+    adapt: Rc<Fn(Biopt<A, EnableHandOut>) -> O>,
 }
 
 impl<A, O> EnableHandWailer<A, O> where A: Clone + Debug + 'static, O: Clone + Debug + 'static
 {
-    pub fn new<F>(a_wailer: Rc<Subwailer<A>>, adapt: F) -> Self where F: 'static + Fn(A) -> O {
+    pub fn new<F>(a_wailer: Rc<Subwailer<A>>, adapt: F) -> Self where F: 'static + Fn(Biopt<A, EnableHandOut>) -> O {
         EnableHandWailer { a_wailer: a_wailer, adapt: Rc::new(adapt) }
     }
 }
 
 impl<A, O> Wailer<O> for EnableHandWailer<A, O> where A: Clone + Debug + 'static, O: Clone + Debug + 'static {
-    type Mdl = EnableHandWailerModel<A>;
+    type Mdl = EnableHandModel<A>;
 
-    fn report(&self, model: &EnableHandWailerModel<A>) -> Vec<O> {
+    fn report(&self, model: &EnableHandModel<A>) -> Vec<O> {
         let mut out = Vec::new();
         for a in model.a_wailing.report() {
-            out.push((*self.adapt)(a));
+            out.push((*self.adapt)(Biopt::SomeA(a)));
         }
         // TODO Add hand reports?
         out
     }
-    fn update(&self, model: &mut EnableHandWailerModel<A>, message: &WailerIn) {
+    fn update(&self, model: &mut EnableHandModel<A>, message: &WailerIn) {
         match message {
             &WailerIn::Offset(offset) => {
-                let a_base_offset = model.base_offset;
-                let a_offset = a_base_offset.shift(offset.x, offset.y, offset.z);
-                model.a_wailing.update(&WailerIn::Offset(a_offset));
+                model.offset = offset;
+                model.a_wailing.update(&WailerIn::Offset(offset));
+            },
+            &WailerIn::Hand(hand) => {
+                println!("Updated hand: {:?}", hand);
+                // TODO create hand report.
             }
         }
     }
-    fn view(&self, model: &EnableHandWailerModel<A>) -> Vision<WailerIn> {
+    fn view(&self, model: &EnableHandModel<A>) -> Vision<WailerIn> {
         let a_vision = model.a_wailing.view();
         let mut vision = Vision::new() as Vision<WailerIn>;
-        // TODO Add Mist to vision
+        let frame = model.a_wailing.report_frame();
+        let offset = model.offset;
+        let cage = Cage::from((frame, offset));
+        let mist = Mist::new(model.mist_id, cage);
+        vision.add_mist(mist, |wish| match wish {
+            Wish::SenseHand(hand) => {
+                println!("Adapted hand: {:?}", hand);
+                Some(WailerIn::Hand(hand))
+            },
+            _ => None
+        });
         vision.add_vision(a_vision, |_| None);
         vision
     }
-    fn init(&self) -> EnableHandWailerModel<A> {
+    fn init(&self) -> EnableHandModel<A> {
         let mut a_wailing = self.a_wailer.as_ref().summon();
-        let a_frame = a_wailing.report_frame();
-        let frame = Frame::from((a_frame.w, a_frame.h, a_frame.d));
-        let a_offset = Offset::from((0.0, 0.0, 0.0));
-        a_wailing.update(&WailerIn::Offset(a_offset));
-        EnableHandWailerModel { frame: frame, a_wailing: a_wailing, base_offset: a_offset }
+        let frame = a_wailing.report_frame();
+        let offset = cage::OFFSET_ZERO;
+        a_wailing.update(&WailerIn::Offset(offset));
+        EnableHandModel { frame: frame, offset: offset, a_wailing: a_wailing, mist_id: rand::random::<u64>() }
     }
     fn to_subwail(&self) -> Rc<Subwailer<O>> {
         Rc::new(EnableHandSubwailer { wailer: self.clone(), wailer_model: None }) as Rc<Subwailer<O>>
@@ -70,7 +90,7 @@ impl<A, O> Wailer<O> for EnableHandWailer<A, O> where A: Clone + Debug + 'static
 
 pub struct EnableHandSubwailer<A, O> where A: Clone + Debug + 'static, O: Clone + Debug + 'static {
     wailer: EnableHandWailer<A, O>,
-    wailer_model: Option<EnableHandWailerModel<A>>,
+    wailer_model: Option<EnableHandModel<A>>,
 }
 
 impl<A, O> Subwailer<O> for EnableHandSubwailer<A, O> where A: Clone + Debug + 'static, O: Clone + Debug + 'static {

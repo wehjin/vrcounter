@@ -1,9 +1,11 @@
 extern crate cage;
 extern crate rand;
 
+use hand::Hand;
 use vision::Vision;
 use cage::{Frame, Offset};
 use std::fmt::Debug;
+use std::marker::PhantomData;
 use super::expand_right::*;
 use super::in_front_of::*;
 use super::enable_hand::*;
@@ -13,6 +15,7 @@ use std::rc::Rc;
 #[derive(Copy, Clone, Debug)]
 pub enum WailerIn {
     Offset(Offset),
+    Hand(Hand),
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -29,7 +32,7 @@ pub trait Wailer<O>: Clone where O: Clone + Debug + 'static {
     type Mdl: 'static;
 
     fn enable_hand<ONext, F>(&self, adapt: F) -> EnableHandWailer<O, ONext>
-        where ONext: Clone + Debug + 'static, F: 'static + Fn(O) -> ONext
+        where ONext: Clone + Debug + 'static, F: 'static + Fn(Biopt<O, EnableHandOut>) -> ONext
     {
         EnableHandWailer::new(self.to_subwail(), adapt)
     }
@@ -67,7 +70,13 @@ pub struct Wailing<E> {
     pub subwail: Box<Subwailer<E>>
 }
 
-impl<E> Wailing<E> {
+
+impl<E> Wailing<E> where E: 'static {
+    pub fn empty() -> Self {
+        let subwailer = EmptySubwailer::new() as EmptySubwailer<E>;
+        subwailer.summon()
+    }
+
     pub fn report(&self) -> Vec<E> {
         self.subwail.as_ref().report()
     }
@@ -82,54 +91,34 @@ impl<E> Wailing<E> {
     }
 }
 
-macro_rules! subwail {
-($subwail:ident, $wail:ident, $model:ident) => (
-#[derive(Debug)]
-pub struct $subwail {
-    wail: $wail,
-    wail_model: Option<$model>,
+pub struct EmptySubwailer<E> {
+    report_type: PhantomData<E>
 }
 
-impl <E> Subwailer<E> for $subwail {
-    fn report(&self) -> Vec<E> {
-        if let Some(ref wail_model) = self.wail_model {
-            self.wail.report(wail_model)
-        } else {
-            panic!("Must summon");
-        }
-    }
-    fn report_frame(&self) -> Frame {
-        if let Some(ref wail_model) = self.wail_model {
-            wail_model.frame.clone()
-        } else {
-            panic!("Must summon");
-        }
-    }
-    fn update(&mut self, message: &WailerIn) {
-        if let Some(ref mut wail_model) = self.wail_model {
-            self.wail.update(wail_model, message);
-        } else {
-            panic!("Must summon");
-        }
-    }
-    fn view(&self) -> Vision<WailerIn> {
-        if let Some(ref wail_model) = self.wail_model {
-            self.wail.view(wail_model)
-        } else {
-            panic!("Must summon");
-        }
-    }
-    fn summon(&self) -> Wailing<E> {
-        if self.wail_model.is_some() {
-            panic!("Already summoned");
-        } else {
-            Wailing {
-                subwail: Box::new($subwail {
-                    wail: self.wail.clone(),
-                    wail_model: Some(self.wail.init())
-                }) as Box<Subwailer<E>>
-            }
-        }
+impl<E> EmptySubwailer<E> {
+    fn new() -> Self {
+        EmptySubwailer { report_type: PhantomData }
     }
 }
-)}
+
+impl<E> Subwailer<E> for EmptySubwailer<E> where E: 'static {
+    fn report(&self) -> Vec<E> {
+        vec![]
+    }
+
+    fn report_frame(&self) -> Frame {
+        Frame::default()
+    }
+
+    fn update(&mut self, _: &WailerIn) {
+        // Do nothing
+    }
+
+    fn view(&self) -> Vision<WailerIn> {
+        Vision::default()
+    }
+
+    fn summon(&self) -> Wailing<E> {
+        Wailing { subwail: Box::new(EmptySubwailer::new()) as Box<Subwailer<E>> }
+    }
+}
