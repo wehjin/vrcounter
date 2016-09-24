@@ -25,7 +25,7 @@ struct App;
 struct Model {
     patch_id: u64,
     beat_id: u64,
-    wailing: Rc<RefCell<Box<Wailing<()>>>>,
+    wailing: Rc<RefCell<Box<Wailing<TouchMsg>>>>,
 }
 
 impl Star for App {
@@ -35,7 +35,7 @@ impl Star for App {
 
     fn init(&self) -> Model {
         let frame = Frame::from((0.20, 0.20, 0.20));
-        let wail = color_wail(CYAN, frame);
+        let wail = color_wail(CYAN, frame).add_touch();
         let wailing = wail.summon();
         Model {
             patch_id: random::<u64>(),
@@ -61,8 +61,14 @@ impl Star for App {
         match msg {
             &Msg::SendToWailing(wailing_in) => {
                 {
-                    let mut wailing_mut = model.wailing.as_ref().borrow_mut();
-                    wailing_mut.update(&wailing_in);
+                    let mut wailing = model.wailing.as_ref().borrow_mut();
+                    let out = wailing.update(&wailing_in);
+                    match out {
+                        TouchMsg::TouchMove => {
+                            println!("Touch move!");
+                        }
+                        _ => ()
+                    }
                 }
                 model.clone()
             }
