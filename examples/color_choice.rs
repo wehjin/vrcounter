@@ -12,7 +12,7 @@ use cage::{Frame};
 
 #[derive(Clone, Debug)]
 enum Msg {
-    SendToWailing(WailerIn)
+    SendToWailing(WailingIn)
 }
 
 #[derive(Clone, Debug)]
@@ -25,7 +25,7 @@ struct App;
 struct Model {
     patch_id: u64,
     beat_id: u64,
-    wailing: Rc<RefCell<Wailing<()>>>,
+    wailing: Rc<RefCell<Box<Wailing<()>>>>,
 }
 
 impl Star for App {
@@ -35,7 +35,7 @@ impl Star for App {
 
     fn init(&self) -> Model {
         let frame = Frame::from((0.20, 0.20, 0.20));
-        let wail = LeafWailer::new(CYAN, frame).enable_hand(|_| ());
+        let wail = ColorWail { frame: frame, color: CYAN };
         let wailing = wail.summon();
         Model {
             patch_id: random::<u64>(),
@@ -50,7 +50,7 @@ impl Star for App {
         let wail_vision = wailing_mut.view();
         vision.add_vision(wail_vision, |wailing_msg| {
             match wailing_msg {
-                WailerIn::Hand(hand) => Some(Msg::SendToWailing(WailerIn::Hand(hand))),
+                WailingIn::Hand(hand) => Some(Msg::SendToWailing(WailingIn::Hand(hand))),
                 _ => None
             }
         });
