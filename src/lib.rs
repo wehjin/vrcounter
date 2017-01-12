@@ -1,4 +1,5 @@
-#[macro_use] extern crate glium;
+#[macro_use]
+extern crate glium;
 extern crate openvr;
 extern crate openvr_sys;
 extern crate nalgebra;
@@ -17,7 +18,7 @@ mod controller_program;
 mod programs;
 mod mat;
 mod cam;
-mod gl_user;
+pub mod gl_user;
 mod vr_user;
 mod eyebuffers;
 mod common;
@@ -31,7 +32,7 @@ pub mod howl;
 pub mod roar;
 mod mist;
 mod patch;
-mod app;
+pub mod app;
 mod vision;
 mod report;
 mod summoner;
@@ -61,6 +62,7 @@ pub use beat::Beat;
 pub use hand::Hand;
 pub use howl::Howl;
 pub use wail::*;
+pub use viewer::Viewer;
 
 pub fn start<S: Star, F>(star_builder: Arc<F>) where S: Clone + 'static,
                                                      F: Fn() -> S + Send + Sync + 'static
