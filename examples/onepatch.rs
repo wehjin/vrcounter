@@ -11,11 +11,12 @@ use cage::Cage;
 use vrcounter::app::{Message as UserEvent};
 use screen_metrics::ScreenMetrics;
 use journal::{PrimeJournal};
-use traveller::{Traveller, ColorTraveller};
+use traveller::{Traveller};
 use vrcounter::color::*;
 
 enum AppMessage {
     Go(ScreenMetrics),
+    Step(ScreenMetrics),
     Stop,
 }
 
@@ -31,18 +32,20 @@ impl App {
     fn new(user_message_writer: std::sync::mpsc::Sender<UserMessage>, viewer: Viewer) -> Self {
         let (app_message_writer, app_message_reader) = std::sync::mpsc::channel();
         std::thread::spawn(move || {
+            use traveller::ColorTraveller;
+            let mut traveller = ColorTraveller::new(VIOLET);
+            let mut travel_and_patch = |screen_metrics: ScreenMetrics| {
+                let mut journal = PrimeJournal::new(screen_metrics);
+                traveller.travel(&mut journal);
+                viewer.clear();
+                for (_, patch) in journal.patches() {
+                    viewer.add_patch(*patch);
+                }
+            };
             loop {
                 match app_message_reader.recv().unwrap() {
-                    AppMessage::Go(screen_metrics) => {
-                        let mut journal = PrimeJournal::new(screen_metrics);
-                        let mut traveller = ColorTraveller::new(VIOLET);
-                        traveller.travel(&mut journal);
-
-                        viewer.clear();
-                        for (_, patch) in journal.patches() {
-                            viewer.add_patch(*patch);
-                        }
-                    }
+                    AppMessage::Go(screen_metrics) => travel_and_patch(screen_metrics),
+                    AppMessage::Step(screen_metrics) => travel_and_patch(screen_metrics),
                     AppMessage::Stop => {
                         user_message_writer.send(UserMessage::AppDidStop).unwrap();
                         return;
@@ -70,6 +73,9 @@ fn main() {
     std::thread::spawn(move || {
         loop {
             match user_event_reader.recv().unwrap() {
+                UserEvent::EmitAnimationFrame => {
+                    app.send(AppMessage::Step(screen_metrics));
+                },
                 UserEvent::Stop => {
                     println!("UserEvent::Stop");
                     app.send(AppMessage::Stop);
