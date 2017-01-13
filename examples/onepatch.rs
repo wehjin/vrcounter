@@ -11,7 +11,8 @@ use cage::Cage;
 use vrcounter::app::{Message as UserEvent};
 use screen_metrics::ScreenMetrics;
 use journal::{PrimeJournal};
-use traveller::{Traveller, PatchTraveller};
+use traveller::{Traveller, ColorTraveller};
+use vrcounter::color::*;
 
 enum AppMessage {
     Go(ScreenMetrics),
@@ -34,7 +35,7 @@ impl App {
                 match app_message_reader.recv().unwrap() {
                     AppMessage::Go(screen_metrics) => {
                         let mut journal = PrimeJournal::new(screen_metrics);
-                        let mut traveller = PatchTraveller::new();
+                        let mut traveller = ColorTraveller::new(VIOLET);
                         traveller.travel(&mut journal);
 
                         viewer.clear();
