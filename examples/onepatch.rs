@@ -29,11 +29,11 @@ pub struct App {
 }
 
 impl App {
-    fn new(user_message_writer: std::sync::mpsc::Sender<UserMessage>, viewer: Viewer) -> Self {
+    fn new<T>(user_message_writer: std::sync::mpsc::Sender<UserMessage>, viewer: Viewer, mut traveller: T) -> Self
+        where T: Traveller + Send + 'static
+    {
         let (app_message_writer, app_message_reader) = std::sync::mpsc::channel();
         std::thread::spawn(move || {
-            use traveller::ColorTraveller;
-            let mut traveller = ColorTraveller::new(VIOLET);
             let mut travel_and_patch = |screen_metrics: ScreenMetrics| {
                 let mut journal = PrimeJournal::new(screen_metrics);
                 traveller.travel(&mut journal);
@@ -65,8 +65,9 @@ fn main() {
     let cage = Cage::from((-0.5, 0.5, -1.5, 0.0, 0.0, 0.2));
     let screen_metrics = ScreenMetrics::new(cage, 0.03, 0.01);
 
+    let traveller = traveller::ColorTraveller::new(VIOLET);
     let (user_message_writer, user_message_reader) = std::sync::mpsc::channel();
-    let app = App::new(user_message_writer.clone(), viewer.clone());
+    let app = App::new(user_message_writer.clone(), viewer.clone(), traveller);
     app.send(AppMessage::Go(screen_metrics));
 
     let (user_event_writer, user_event_reader) = std::sync::mpsc::channel();
