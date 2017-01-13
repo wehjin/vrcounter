@@ -28,9 +28,8 @@ impl App {
             loop {
                 match app_message_reader.recv().unwrap() {
                     AppMessage::Go => {
-                        let colors = [BLUE, YELLOW];
-                        let color = colors[0 % colors.len()];
-                        let cage = Cage::from((-0.5, 0.5, -1.5, 1.5, 0.00, 0.20));
+                        let color = SPECTRUM[0 % SPECTRUM.len()];
+                        let cage = Cage::from((-0.5, 0.5, -1.5, 0.0, 0.0, 0.2));
                         let patch_id = rand::random::<u64>();
                         viewer.add_patch(Patch::from_cage(&cage, color, Sigil::Fill, patch_id));
                     }
@@ -50,11 +49,12 @@ impl App {
 
 fn main() {
     let viewer = Viewer::start();
-    let (user_event_writer, user_event_reader) = std::sync::mpsc::channel();
+
     let (user_message_writer, user_message_reader) = std::sync::mpsc::channel();
     let app = App::new(user_message_writer.clone(), viewer.clone());
     app.send(AppMessage::Go);
 
+    let (user_event_writer, user_event_reader) = std::sync::mpsc::channel();
     std::thread::spawn(move || {
         loop {
             match user_event_reader.recv().unwrap() {
@@ -70,10 +70,10 @@ fn main() {
     gl_user::run(viewer.clone(), user_event_writer.clone());
     user_event_writer.send(UserEvent::Stop).unwrap();
 
-    'await_appstop: loop {
+    loop {
         match user_message_reader.recv().unwrap() {
             UserMessage::AppDidStop => {
-                break 'await_appstop;
+                break
             }
         }
     }
