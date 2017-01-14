@@ -27,9 +27,6 @@ mod shape;
 mod atlas;
 mod viewer;
 pub mod color;
-pub mod scream;
-pub mod howl;
-pub mod roar;
 mod mist;
 mod patch;
 pub mod app;
@@ -45,7 +42,6 @@ mod vr;
 mod demon;
 mod demonoid;
 pub mod star;
-mod wail;
 
 use std::sync::Arc;
 
@@ -60,10 +56,9 @@ pub use patch::Patch;
 pub use mist::Mist;
 pub use beat::Beat;
 pub use hand::Hand;
-pub use howl::Howl;
-pub use wail::*;
 pub use viewer::Viewer;
 
+// TODO delete this
 pub fn start<S: Star, F>(star_builder: Arc<F>) where S: Clone + 'static,
                                                      F: Fn() -> S + Send + Sync + 'static
 {
