@@ -1,4 +1,5 @@
-use traveller::{Traveller, ColorTraveller};
+use traveller::Traveller;
+use traveller::color::ColorTraveller;
 
 pub trait Caravel<T: Traveller> {
     fn embark(&self) -> T;
