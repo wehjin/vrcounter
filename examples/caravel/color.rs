@@ -1,9 +1,5 @@
-use traveller::Traveller;
+use caravel::Caravel;
 use traveller::color::ColorTraveller;
-
-pub trait Caravel<T: Traveller> {
-    fn embark(&self) -> T;
-}
 
 pub struct ColorCaravel {
     color: [f32; 4],
