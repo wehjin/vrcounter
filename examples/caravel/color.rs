@@ -19,7 +19,7 @@ impl ColorCaravel {
     }
 
     pub fn dock_top<TopT, TopC>(self, top_units: f32, top_caravel: TopC)
-                                -> TopDockCaravel<ColorTraveller, ColorCaravel, TopT, TopC>
+                                -> TopDockCaravel<ColorTraveller, Self, TopT, TopC>
         where TopT: Traveller, TopC: Caravel<TopT>
     {
         TopDockCaravel::new(top_units, self, top_caravel)
