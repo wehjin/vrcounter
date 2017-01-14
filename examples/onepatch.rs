@@ -70,13 +70,14 @@ impl App {
 
 fn main() {
     use caravel::color::ColorCaravel;
+    use caravel::spectrum::SpectrumCaravel;
 
     let viewer = Viewer::start();
     let cage = Cage::from((-0.5, 0.5, -1.5, 0.0, 0.0, 0.2));
     let screen_metrics = ScreenMetrics::new(cage, 0.03, 0.01);
 
     let caravel = ColorCaravel::new(VIOLET)
-        .dock_top(3.0, ColorCaravel::new(AZURE));
+        .dock_top(3.0, SpectrumCaravel::new());
 
     let (user_message_writer, user_message_reader) = std::sync::mpsc::channel();
     let app = App::new(user_message_writer.clone(), viewer.clone(), caravel);

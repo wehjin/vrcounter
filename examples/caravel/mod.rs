@@ -1,5 +1,6 @@
 pub mod color;
 pub mod top_dock;
+pub mod spectrum;
 
 use traveller::Traveller;
 use caravel::top_dock::TopDockCaravel;
