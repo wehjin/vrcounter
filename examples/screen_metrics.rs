@@ -17,4 +17,8 @@ impl ScreenMetrics {
             preferred_z_increment: preferred_z_increment
         }
     }
+
+    pub fn with_active_cage(&self, active_cage: Cage) -> Self {
+        ScreenMetrics { active_cage: active_cage, ..*self }
+    }
 }
