@@ -3,18 +3,18 @@ use traveller::Traveller;
 use cage::{Cage, Translation};
 use journal::CageJournal;
 
-pub struct TopDockTraveller<BottomT: Traveller, TopT: Traveller> {
+pub struct DockTopTraveller<BottomT: Traveller, TopT: Traveller> {
     top_units: f32,
     bottom_traveller: BottomT,
     top_traveller: TopT,
 }
 
-impl<BottomT, TopT> TopDockTraveller<BottomT, TopT>
+impl<BottomT, TopT> DockTopTraveller<BottomT, TopT>
 where BottomT: Traveller,
       TopT: Traveller
 {
     pub fn new(top_units: f32, bottom_traveller: BottomT, top_traveller: TopT) -> Self {
-        TopDockTraveller {
+        DockTopTraveller {
             top_units: top_units,
             bottom_traveller: bottom_traveller,
             top_traveller: top_traveller,
@@ -22,7 +22,7 @@ where BottomT: Traveller,
     }
 }
 
-impl<BottomT, TopT> Traveller for TopDockTraveller<BottomT, TopT>
+impl<BottomT, TopT> Traveller for DockTopTraveller<BottomT, TopT>
 where BottomT: Traveller,
       TopT: Traveller
 {
@@ -45,7 +45,7 @@ where BottomT: Traveller,
 
 fn divide_cage(cage: Cage, top_height: f32) -> (Cage, Cage) {
     let bottom_height = cage.frame.h - top_height;
-    let top_cage = cage.translate_sides(Translation { bottom: bottom_height, ..Default::default() });
     let bottom_cage = cage.translate_sides(Translation { top: -top_height, ..Default::default() });
+    let top_cage = cage.translate_sides(Translation { bottom: bottom_height, ..Default::default() });
     (top_cage, bottom_cage)
 }

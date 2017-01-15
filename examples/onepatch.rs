@@ -76,8 +76,11 @@ fn main() {
     let cage = Cage::from((-0.5, 0.5, -1.5, 0.0, 0.0, 0.2));
     let screen_metrics = ScreenMetrics::new(cage, 0.03, 0.01);
 
-    let caravel = ColorCaravel::new(VIOLET)
-        .dock_top(3.0, SpectrumCaravel::new());
+    let top_caravel = ColorCaravel::new(YELLOW, Sigil::Fill)
+        .dock_left(24.0, ColorCaravel::new(AZURE, Sigil::Letter('J')));
+
+    let caravel = ColorCaravel::new(VIOLET, Sigil::Fill)
+        .dock_top(3.0, top_caravel);
 
     let (user_message_writer, user_message_reader) = std::sync::mpsc::channel();
     let app = App::new(user_message_writer.clone(), viewer.clone(), caravel);

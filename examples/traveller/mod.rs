@@ -1,6 +1,7 @@
 pub mod color;
 pub mod spectrum;
-pub mod top_dock;
+pub mod dock_top;
+pub mod dock_left;
 
 use journal::Journal;
 

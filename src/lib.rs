@@ -8,6 +8,12 @@ extern crate rusttype;
 extern crate unicode_normalization;
 extern crate cage;
 
+pub mod app;
+pub mod atlas;
+pub mod color;
+pub mod gl_user;
+pub mod star;
+
 mod hand;
 mod hand_program;
 mod keymap;
@@ -18,18 +24,14 @@ mod controller_program;
 mod programs;
 mod mat;
 mod cam;
-pub mod gl_user;
 mod vr_user;
 mod eyebuffers;
 mod common;
 mod os;
 mod shape;
-mod atlas;
 mod viewer;
-pub mod color;
 mod mist;
 mod patch;
-pub mod app;
 mod vision;
 mod report;
 mod summoner;
@@ -41,7 +43,6 @@ mod poses;
 mod vr;
 mod demon;
 mod demonoid;
-pub mod star;
 
 use std::sync::Arc;
 

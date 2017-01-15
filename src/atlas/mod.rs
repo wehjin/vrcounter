@@ -25,7 +25,7 @@ impl Atlas {
     pub fn new(display: &Display) -> Self {
         let mut page_map = HashMap::new();
 
-        let font_data = include_bytes!("Arial Unicode.ttf");
+        let font_data = include_bytes!("ubuntu-font-family-0.83/UbuntuMono-R.ttf");
         let font: Font = FontCollection::from_bytes(font_data as &[u8]).into_font().unwrap();
         let max_pixels_side = 512; // power of 2
         let max_pixels_total = max_pixels_side * max_pixels_side;
