@@ -55,6 +55,7 @@ pub use vision::Vision;
 pub use report::Well;
 pub use star::*;
 pub use patch::Patch;
+pub use patch::PatchPosition;
 pub use mist::Mist;
 pub use beat::Beat;
 pub use hand::Hand;

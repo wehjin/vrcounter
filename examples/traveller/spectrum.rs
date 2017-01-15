@@ -1,9 +1,8 @@
 use journal::Journal;
-use vrcounter::Patch;
 use vrcounter::Sigil;
 use rand;
 use vrcounter::color::*;
-use traveller::Traveller;
+use traveller::{Traveller, sigil_to_patch};
 
 #[allow(dead_code)]
 pub struct SpectrumTraveller {
@@ -22,7 +21,8 @@ impl Traveller for SpectrumTraveller {
     fn travel<J: Journal>(&mut self, journal: &mut J) {
         let cage = journal.screen_metrics().active_cage;
         let color = SPECTRUM[self.color_index / 2 % SPECTRUM.len()];
-        let patch = Patch::new_in_cage(&cage, color, Sigil::of_fill(), self.id);
+        let sigil = Sigil::of_fill();
+        let patch = sigil_to_patch(&sigil, &cage, color, self.id);
         journal.set_patch(patch.id, patch);
         self.color_index += 1;
     }

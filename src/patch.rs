@@ -36,18 +36,4 @@ impl Patch {
             glyph: sigil.ascii_point(),
         }
     }
-
-    pub fn new_in_cage(cage: &Cage, color: [f32; 4], sigil: Sigil, id: u64) -> Self {
-        let patch_width = if sigil.is_fill() {
-            cage.frame.w
-        } else {
-            let width_per_height = sigil.width_per_height();
-            cage.frame.h * width_per_height
-        };
-        let non_patch_width = cage.frame.w - patch_width;
-        let patch_cage = cage.translate_sides(cage::Translation { right: -non_patch_width, ..Default::default() });
-        Patch {
-            id: id, glyph: sigil.ascii_point(), color: color, position: PatchPosition::from_cage(&patch_cage)
-        }
-    }
 }

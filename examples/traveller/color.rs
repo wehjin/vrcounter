@@ -1,8 +1,7 @@
 use journal::Journal;
-use vrcounter::Patch;
 use vrcounter::Sigil;
 use rand;
-use traveller::Traveller;
+use traveller::{Traveller, sigil_to_patch};
 
 pub struct ColorTraveller {
     id: u64,
@@ -23,7 +22,7 @@ impl ColorTraveller {
 impl Traveller for ColorTraveller {
     fn travel<J: Journal>(&mut self, journal: &mut J) {
         let cage = journal.screen_metrics().active_cage;
-        let patch = Patch::new_in_cage(&cage, self.color, self.sigil.clone(), self.id);
+        let patch = sigil_to_patch(&self.sigil, &cage, self.color, self.id);
         journal.set_patch(patch.id, patch);
     }
 }
