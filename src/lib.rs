@@ -54,12 +54,12 @@ pub use summoner::Summoner;
 pub use vision::Vision;
 pub use report::Well;
 pub use star::*;
-pub use patch::Sigil;
 pub use patch::Patch;
 pub use mist::Mist;
 pub use beat::Beat;
 pub use hand::Hand;
 pub use viewer::Viewer;
+pub use sigil::Sigil;
 
 // TODO delete this
 pub fn start<S: Star, F>(star_builder: Arc<F>) where S: Clone + 'static,

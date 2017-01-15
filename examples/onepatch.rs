@@ -76,13 +76,14 @@ fn main() {
     let cage = Cage::from((-0.5, 0.5, -1.5, 0.0, 0.0, 0.2));
     let screen_metrics = ScreenMetrics::new(cage, 0.03, 0.01);
 
-    let glyfficon = glyffin::Glyffiary::new();
-
-    let top_caravel = ColorCaravel::new(YELLOW, Sigil::Fill)
-        .dock_left(24.0, ColorCaravel::new(AZURE, Sigil::FitLetter('J', glyfficon)))
+    let glyffiary = glyffin::Glyffiary::new();
+    let j_sigil = Sigil::of_point('J', &glyffiary);
+    println!("J sigil: {:?}", j_sigil);
+    let top_caravel = ColorCaravel::new(YELLOW, Sigil::of_fill())
+        .dock_left(24.0, ColorCaravel::new(AZURE, j_sigil))
         .dock_left(1.0, SpectrumCaravel::new());
 
-    let caravel = ColorCaravel::new(VIOLET, Sigil::Fill)
+    let caravel = ColorCaravel::new(VIOLET, Sigil::of_fill())
         .dock_top(3.0, top_caravel);
 
     let (user_message_writer, user_message_reader) = std::sync::mpsc::channel();

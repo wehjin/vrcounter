@@ -22,7 +22,7 @@ impl Traveller for SpectrumTraveller {
     fn travel<J: Journal>(&mut self, journal: &mut J) {
         let cage = journal.screen_metrics().active_cage;
         let color = SPECTRUM[self.color_index / 2 % SPECTRUM.len()];
-        let patch = Patch::new_in_cage(&cage, color, Sigil::Fill, self.id);
+        let patch = Patch::new_in_cage(&cage, color, Sigil::of_fill(), self.id);
         journal.set_patch(patch.id, patch);
         self.color_index += 1;
     }
