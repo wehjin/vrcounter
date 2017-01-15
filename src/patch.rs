@@ -22,6 +22,7 @@ impl PatchPosition {
 pub enum Sigil {
     Fill,
     Letter(char),
+    FitLetter(char),
 }
 
 impl Default for Sigil {
@@ -35,6 +36,7 @@ impl Sigil {
         match self {
             &Sigil::Fill => '\u{0}',
             &Sigil::Letter(c) => c,
+            &Sigil::FitLetter(c) => c,
         }
     }
 }

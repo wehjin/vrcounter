@@ -77,7 +77,8 @@ fn main() {
     let screen_metrics = ScreenMetrics::new(cage, 0.03, 0.01);
 
     let top_caravel = ColorCaravel::new(YELLOW, Sigil::Fill)
-        .dock_left(24.0, ColorCaravel::new(AZURE, Sigil::Letter('J')));
+        .dock_left(24.0, ColorCaravel::new(AZURE, Sigil::FitLetter('J')))
+        .dock_left(1.0, SpectrumCaravel::new());
 
     let caravel = ColorCaravel::new(VIOLET, Sigil::Fill)
         .dock_top(3.0, top_caravel);
