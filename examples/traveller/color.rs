@@ -23,7 +23,7 @@ impl ColorTraveller {
 impl Traveller for ColorTraveller {
     fn travel<J: Journal>(&mut self, journal: &mut J) {
         let cage = journal.screen_metrics().active_cage;
-        let patch = Patch::from_cage(&cage, self.color, self.sigil, self.id);
+        let patch = Patch::new_in_cage(&cage, self.color, self.sigil.clone(), self.id);
         journal.set_patch(patch.id, patch);
     }
 }

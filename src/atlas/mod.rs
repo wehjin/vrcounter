@@ -7,8 +7,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::char;
 use rusttype::{
-    FontCollection, Font, Scale, VMetrics, CodepointOrGlyphId,
-    Glyph, ScaledGlyph, HMetrics, PositionedGlyph, point, Rect
+    Scale, VMetrics, CodepointOrGlyphId, Glyph, ScaledGlyph, HMetrics, PositionedGlyph, point, Rect
 };
 
 pub struct AtlasPage {
@@ -21,12 +20,13 @@ pub struct Atlas {
     pub page_map: HashMap<char, AtlasPage>
 }
 
+use glyffin;
+
 impl Atlas {
     pub fn new(display: &Display) -> Self {
         let mut page_map = HashMap::new();
 
-        let font_data = include_bytes!("ubuntu-font-family-0.83/UbuntuMono-R.ttf");
-        let font: Font = FontCollection::from_bytes(font_data as &[u8]).into_font().unwrap();
+        let font = glyffin::load_font();
         let max_pixels_side = 512; // power of 2
         let max_pixels_total = max_pixels_side * max_pixels_side;
         let page_height = 64; // power of 2

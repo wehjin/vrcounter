@@ -18,11 +18,13 @@ impl PatchPosition {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+use glyffin::Glyfficon;
+
+#[derive(Clone, Debug)]
 pub enum Sigil {
     Fill,
     Letter(char),
-    FitLetter(char),
+    FitLetter(char, Glyfficon),
 }
 
 impl Default for Sigil {
@@ -36,7 +38,7 @@ impl Sigil {
         match self {
             &Sigil::Fill => '\u{0}',
             &Sigil::Letter(c) => c,
-            &Sigil::FitLetter(c) => c,
+            &Sigil::FitLetter(c, _) => c,
         }
     }
 }
@@ -58,9 +60,21 @@ impl Patch {
             glyph: sigil.to_glyph(),
         }
     }
-    pub fn from_cage(cage: &Cage, color: [f32; 4], sigil: Sigil, id: u64) -> Self {
-        Patch {
-            id: id, glyph: sigil.to_glyph(), color: color, position: PatchPosition::from_cage(cage)
+
+    pub fn new_in_cage(cage: &Cage, color: [f32; 4], sigil: Sigil, id: u64) -> Self {
+        use glyffin::Glyfficon;
+        if let Sigil::FitLetter(codepoint, glyfficon) = sigil.clone() {
+            let g: Glyfficon = glyfficon;
+            let patch_width = g.advance_for_ascent(codepoint, cage.frame.h);
+            let non_patch_width = cage.frame.w - patch_width;
+            let patch_cage = cage.translate_sides(cage::Translation { right: -non_patch_width, ..Default::default() });
+            Patch {
+                id: id, glyph: sigil.to_glyph(), color: color, position: PatchPosition::from_cage(&patch_cage)
+            }
+        } else {
+            Patch {
+                id: id, glyph: sigil.to_glyph(), color: color, position: PatchPosition::from_cage(cage)
+            }
         }
     }
 }

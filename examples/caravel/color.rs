@@ -9,7 +9,7 @@ pub struct ColorCaravel {
 
 impl Caravel<ColorTraveller> for ColorCaravel {
     fn embark(&self) -> ColorTraveller {
-        ColorTraveller::new(self.color, self.sigil)
+        ColorTraveller::new(self.color, self.sigil.clone())
     }
 }
 
