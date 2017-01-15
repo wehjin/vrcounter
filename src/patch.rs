@@ -18,13 +18,13 @@ impl PatchPosition {
     }
 }
 
-use glyffin::Glyfficon;
+use glyffin::Glyffiary;
 
 #[derive(Clone, Debug)]
 pub enum Sigil {
     Fill,
     Letter(char),
-    FitLetter(char, Glyfficon),
+    FitLetter(char, Glyffiary),
 }
 
 impl Default for Sigil {
@@ -62,9 +62,9 @@ impl Patch {
     }
 
     pub fn new_in_cage(cage: &Cage, color: [f32; 4], sigil: Sigil, id: u64) -> Self {
-        use glyffin::Glyfficon;
+        use glyffin::Glyffiary;
         if let Sigil::FitLetter(codepoint, glyfficon) = sigil.clone() {
-            let g: Glyfficon = glyfficon;
+            let g: Glyffiary = glyfficon;
             let patch_width = g.advance_for_ascent(codepoint, cage.frame.h);
             let non_patch_width = cage.frame.w - patch_width;
             let patch_cage = cage.translate_sides(cage::Translation { right: -non_patch_width, ..Default::default() });

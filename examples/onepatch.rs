@@ -76,7 +76,7 @@ fn main() {
     let cage = Cage::from((-0.5, 0.5, -1.5, 0.0, 0.0, 0.2));
     let screen_metrics = ScreenMetrics::new(cage, 0.03, 0.01);
 
-    let glyfficon = glyffin::Glyfficon::new();
+    let glyfficon = glyffin::Glyffiary::new();
 
     let top_caravel = ColorCaravel::new(YELLOW, Sigil::Fill)
         .dock_left(24.0, ColorCaravel::new(AZURE, Sigil::FitLetter('J', glyfficon)))
