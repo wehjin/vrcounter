@@ -12,8 +12,9 @@ pub mod app;
 pub mod atlas;
 pub mod color;
 pub mod gl_user;
-pub mod star;
 pub mod glyffin;
+pub mod sigil;
+pub mod star;
 
 mod hand;
 mod hand_program;
