@@ -1,28 +1,26 @@
 use journal::Journal;
 use vrcounter::Sigil;
-use rand;
-use traveller::{Traveller, sigil_to_patch};
+use traveller::{Traveller, patches_from_sigil, ids_from_sigil};
 
 pub struct ColorTraveller {
-    id: u64,
+    ids: Vec<u64>,
     color: [f32; 4],
     sigil: Sigil,
 }
 
 impl ColorTraveller {
     pub fn new(color: [f32; 4], sigil: Sigil) -> Self {
-        ColorTraveller {
-            id: rand::random::<u64>(),
-            color: color,
-            sigil: sigil,
-        }
+        let ids = ids_from_sigil(&sigil);
+        ColorTraveller { ids: ids, color: color, sigil: sigil }
     }
 }
 
 impl Traveller for ColorTraveller {
     fn travel<J: Journal>(&mut self, journal: &mut J) {
         let cage = journal.screen_metrics().active_cage;
-        let patch = sigil_to_patch(&self.sigil, &cage, self.color, self.id);
-        journal.set_patch(patch.id, patch);
+        let patches = patches_from_sigil(&self.sigil, &cage, self.color, &self.ids);
+        for patch in patches {
+            journal.set_patch(patch.id, patch);
+        }
     }
 }

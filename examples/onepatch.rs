@@ -77,7 +77,7 @@ fn main() {
     let screen_metrics = ScreenMetrics::new(cage, 0.03, 0.01);
 
     let glyffiary = glyffin::Glyffiary::new();
-    let j_sigil = Sigil::of_point('J', &glyffiary);
+    let j_sigil = Sigil::of_line("Jupiter", &glyffiary);
     println!("J sigil: {:?}", j_sigil);
     let top_caravel = ColorCaravel::new(YELLOW, Sigil::of_fill())
         .dock_left(24.0, ColorCaravel::new(AZURE, j_sigil))

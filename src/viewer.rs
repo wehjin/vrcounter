@@ -59,24 +59,34 @@ impl Viewer {
         self.command_tx.send(Message::SendHand(tx)).unwrap();
         if let Ok(hand) = rx.recv() { hand } else { Default::default() }
     }
-    pub fn add_patch(&self, patch: Patch) { self.command_tx.send(Message::AddPatch(patch)).unwrap(); }
-    pub fn add_mist(&self, mist: Mist) { self.command_tx.send(Message::AddMist(mist)).unwrap(); }
-    pub fn set_hand(&self, hand: Hand) { self.command_tx.send(Message::SetHand(hand)).unwrap(); }
-    pub fn clear(&self) { self.command_tx.send(Message::Clear).unwrap(); }
-    pub fn stop(&self) { self.command_tx.send(Message::Stop).unwrap_or(()); }
+    pub fn add_patch(&self, patch: Patch) {
+        self.command_tx.send(Message::AddPatch(patch)).unwrap();
+    }
+    pub fn add_mist(&self, mist: Mist) {
+        self.command_tx.send(Message::AddMist(mist)).unwrap();
+    }
+    pub fn set_hand(&self, hand: Hand) {
+        self.command_tx.send(Message::SetHand(hand)).unwrap();
+    }
+    pub fn clear(&self) {
+        self.command_tx.send(Message::Clear).unwrap();
+    }
+    pub fn stop(&self) {
+        self.command_tx.send(Message::Stop).unwrap_or(());
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use patch::{Sigil, Patch};
+    use patch::{Sigil, Patch, FILL_POINT};
     use color::MAGENTA;
 
 
     #[test]
     fn add_patch() {
         let viewer = Viewer::start();
-        let patch = Patch::new(1, -1.0, 1.0, -1.0, 1.0, 0.0, MAGENTA, Sigil::Fill);
+        let patch = Patch::new(1, -1.0, 1.0, -1.0, 1.0, 0.0, MAGENTA, FILL_POINT);
         viewer.add_patch(patch);
         let report = viewer.get_patches();
         viewer.stop();

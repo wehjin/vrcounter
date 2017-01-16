@@ -1,7 +1,6 @@
 extern crate cage;
 
 use cage::Cage;
-use sigil::Sigil;
 
 #[derive(Debug, Copy, Clone)]
 pub struct PatchPosition {
@@ -19,6 +18,8 @@ impl PatchPosition {
     }
 }
 
+pub const FILL_POINT: char = '\u{0}';
+
 #[derive(Debug, Copy, Clone)]
 pub struct Patch {
     pub position: PatchPosition,
@@ -28,12 +29,12 @@ pub struct Patch {
 }
 
 impl Patch {
-    pub fn new(id: u64, left: f32, right: f32, bottom: f32, top: f32, near: f32, color: [f32; 4], sigil: Sigil) -> Self {
+    pub fn new(id: u64, left: f32, right: f32, bottom: f32, top: f32, near: f32, color: [f32; 4], ascii_point: char) -> Self {
         Patch {
             id: id,
             position: PatchPosition { left: left, right: right, bottom: bottom, top: top, near: near },
             color: color,
-            glyph: sigil.ascii_point(),
+            glyph: ascii_point,
         }
     }
 }

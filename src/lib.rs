@@ -15,6 +15,7 @@ pub mod gl_user;
 pub mod glyffin;
 pub mod sigil;
 pub mod star;
+pub mod patch;
 
 mod hand;
 mod hand_program;
@@ -33,7 +34,6 @@ mod os;
 mod shape;
 mod viewer;
 mod mist;
-mod patch;
 mod vision;
 mod report;
 mod summoner;
