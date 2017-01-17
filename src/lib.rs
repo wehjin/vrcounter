@@ -61,18 +61,20 @@ pub use beat::Beat;
 pub use hand::Hand;
 pub use viewer::Viewer;
 pub use sigil::Sigil;
+use app::Message as AppMessage;
+use std::sync::mpsc::Sender;
 
 // TODO delete this
 pub fn start<S: Star, F>(star_builder: Arc<F>) where S: Clone + 'static,
                                                      F: Fn() -> S + Send + Sync + 'static
 {
     let viewer = viewer::Viewer::start();
-    let app = app::start(viewer.clone(), star_builder);
+    let app: Sender<AppMessage> = app::start(viewer.clone(), star_builder);
 
     if os::is_windows() {
         vr_user::run(viewer.clone(), app.clone());
     } else {
-        gl_user::run(viewer.clone(), app.clone());
+        gl_user::run(viewer.clone(), |x: AppMessage| app.send(x).unwrap());
     }
 
     app::stop(app);

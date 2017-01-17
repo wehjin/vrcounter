@@ -79,7 +79,7 @@ impl Viewer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use patch::{Sigil, Patch, FILL_POINT};
+    use patch::{Patch, FILL_POINT};
     use color::MAGENTA;
 
 

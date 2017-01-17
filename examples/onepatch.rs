@@ -16,7 +16,7 @@ use traveller::{Traveller};
 use vrcounter::color::*;
 
 enum AppMessage {
-    Go(ScreenMetrics),
+    Start(ScreenMetrics),
     Step(ScreenMetrics),
     Stop,
 }
@@ -30,13 +30,11 @@ pub struct App {
 }
 
 use caravel::Caravel;
+use std::sync::mpsc::Sender;
 
 impl App {
-    fn new<C, T>(
-        user_message_writer: std::sync::mpsc::Sender<UserMessage>,
-        viewer: Viewer,
-        caravel: C
-    ) -> Self
+    fn new<C, T>(user_message_writer: Sender<UserMessage>, viewer: Viewer, caravel: C)
+                 -> Self
         where T: Traveller, C: Caravel<T> + Send + 'static
     {
         let (app_message_writer, app_message_reader) = std::sync::mpsc::channel();
@@ -52,11 +50,11 @@ impl App {
             };
             loop {
                 match app_message_reader.recv().unwrap() {
-                    AppMessage::Go(screen_metrics) => travel_and_patch(screen_metrics),
+                    AppMessage::Start(screen_metrics) => travel_and_patch(screen_metrics),
                     AppMessage::Step(screen_metrics) => travel_and_patch(screen_metrics),
                     AppMessage::Stop => {
                         user_message_writer.send(UserMessage::AppDidStop).unwrap();
-                        return;
+                        break;
                     }
                 }
             }
@@ -75,42 +73,33 @@ fn main() {
     let viewer = Viewer::start();
     let cage = Cage::from((-0.5, 0.5, -1.5, 0.0, 0.0, 0.2));
     let screen_metrics = ScreenMetrics::new(cage, 0.03, 0.01);
-
     let glyffiary = glyffin::Glyffiary::new();
-    let j_sigil = Sigil::of_line("Jupiter", &glyffiary);
-    println!("J sigil: {:?}", j_sigil);
+    let sigil = Sigil::of_line("Jupiter", &glyffiary);
+
     let top_caravel = ColorCaravel::new(YELLOW, Sigil::of_fill())
-        .dock_left(24.0, ColorCaravel::new(AZURE, j_sigil))
+        .dock_left(24.0, ColorCaravel::new(AZURE, sigil))
         .dock_left(1.0, SpectrumCaravel::new());
 
     let caravel = ColorCaravel::new(VIOLET, Sigil::of_fill())
         .dock_top(3.0, top_caravel);
 
-    let (user_message_writer, user_message_reader) = std::sync::mpsc::channel();
-    let app = App::new(user_message_writer.clone(), viewer.clone(), caravel);
-    app.send(AppMessage::Go(screen_metrics));
+    let (main_message_writer, main_message_reader) = std::sync::mpsc::channel();
+    let app = App::new(main_message_writer.clone(), viewer.clone(), caravel);
+    app.send(AppMessage::Start(screen_metrics));
 
-    let (user_event_writer, user_event_reader) = std::sync::mpsc::channel();
-    std::thread::spawn(move || {
-        loop {
-            match user_event_reader.recv().unwrap() {
-                UserEvent::EmitAnimationFrame => {
-                    app.send(AppMessage::Step(screen_metrics));
-                },
-                UserEvent::Stop => {
-                    println!("UserEvent::Stop");
-                    app.send(AppMessage::Stop);
-                    return;
-                },
-                _ => ()
-            }
-        }
+    gl_user::run(viewer.clone(), |x: UserEvent| match x {
+        UserEvent::EmitAnimationFrame => {
+            app.send(AppMessage::Step(screen_metrics));
+        },
+        UserEvent::Stop => {
+            println!("UserEvent::Stop");
+        },
+        _ => ()
     });
-    gl_user::run(viewer.clone(), user_event_writer.clone());
-    user_event_writer.send(UserEvent::Stop).unwrap();
 
+    app.send(AppMessage::Stop);
     loop {
-        match user_message_reader.recv().unwrap() {
+        match main_message_reader.recv().unwrap() {
             UserMessage::AppDidStop => {
                 break
             }

@@ -8,16 +8,15 @@ use keymap::{Keymap, Key};
 use std::rc::Rc;
 use viewer::Viewer;
 use app::{Message as AppMessage};
-use std::sync::mpsc::Sender;
 use std::time::{Instant, Duration};
 use hand::Hand;
 
-pub struct Model {
+pub struct Model<F> {
     display: Rc<Display>,
     programs: Programs,
     keymap: Keymap,
     camera: Camera,
-    app: Sender<AppMessage>,
+    on_event: F,
     hand: Hand,
     viewer: Viewer,
 }
@@ -30,8 +29,10 @@ pub enum Message {
     EmitAnimationFrame,
 }
 
-pub fn run(viewer: Viewer, app: Sender<AppMessage>) {
-    let mut model = init(viewer, app);
+pub fn run<F>(viewer: Viewer, on_event: F)
+    where F: Fn(AppMessage) -> ()
+{
+    let mut model = init(viewer, on_event);
     loop {
         let message = draw(&model);
         match update(message, model) {
@@ -41,14 +42,16 @@ pub fn run(viewer: Viewer, app: Sender<AppMessage>) {
     }
 }
 
-pub fn init(viewer: Viewer, app: Sender<AppMessage>) -> Model {
+pub fn init<F>(viewer: Viewer, on_event: F) -> Model<F>
+    where F: Fn(AppMessage) -> ()
+{
     use programs::HandType;
     let display: Rc<Display> = Rc::new(WindowBuilder::new().with_title("vr counter")
                                                            .with_depth_buffer(24)
                                                            .build_glium()
                                                            .unwrap());
     Model {
-        app: app,
+        on_event: on_event,
         display: display.clone(),
         programs: Programs::new(display, viewer.clone(), HandType::Keyboard),
         keymap: Keymap::init(),
@@ -58,7 +61,9 @@ pub fn init(viewer: Viewer, app: Sender<AppMessage>) -> Model {
     }
 }
 
-pub fn update(message: Message, mut model: Model) -> Option<Model> {
+pub fn update<F>(message: Message, mut model: Model<F>) -> Option<Model<F>>
+    where F: Fn(AppMessage) -> ()
+{
     use app::Message as AppMessage;
     match message {
         Message::Quit => None,
@@ -68,7 +73,7 @@ pub fn update(message: Message, mut model: Model) -> Option<Model> {
             Some(model.with_camera(camera))
         },
         Message::EmitAnimationFrame => {
-            model.app.send(AppMessage::EmitAnimationFrame).unwrap_or(());
+            (model.on_event)(AppMessage::EmitAnimationFrame);
             Some(model)
         },
         Message::MoveHand(direction) => {
@@ -84,13 +89,15 @@ pub fn update(message: Message, mut model: Model) -> Option<Model> {
             let offset = model.hand.offset.shift(dx, dy, dz);
             model.hand.offset = offset;
             model.viewer.set_hand(model.hand);
-            model.app.send(AppMessage::SetHand(model.hand)).unwrap();
+            (model.on_event)(AppMessage::SetHand(model.hand));
             Some(model)
         },
     }
 }
 
-fn get_camera(model: &Model, direction: Direction) -> Camera {
+fn get_camera<F>(model: &Model<F>, direction: Direction) -> Camera
+    where F: Fn(AppMessage) -> ()
+{
     match direction {
         Direction::Up => model.camera.move_up(),
         Direction::Down => model.camera.move_down(),
@@ -101,7 +108,9 @@ fn get_camera(model: &Model, direction: Direction) -> Camera {
     }
 }
 
-pub fn draw(model: &Model) -> Message {
+pub fn draw<F>(model: &Model<F>) -> Message
+    where F: Fn(AppMessage) -> ()
+{
     let mut target = model.display.draw();
     target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
     let (view, perspective) = model.camera.get_view_and_projection(&target);
@@ -128,14 +137,16 @@ pub fn draw(model: &Model) -> Message {
     return message_option.unwrap();
 }
 
-impl Model {
+impl<F> Model<F>
+where F: Fn(AppMessage) -> ()
+{
     pub fn with_camera(self, camera: Camera) -> Self {
         Model {
             display: self.display,
             programs: self.programs,
             keymap: self.keymap,
             camera: camera,
-            app: self.app,
+            on_event: self.on_event,
             hand: self.hand,
             viewer: self.viewer,
         }
