@@ -1,4 +1,4 @@
-use journal::Journal2;
+use journal::Journal;
 use vrcounter::color::SPECTRUM;
 use std::boxed::Box;
 use std::rc::Rc;
@@ -9,7 +9,7 @@ use vrcounter::PatchPosition;
 use vrcounter::patch::FILL_POINT;
 use vrcounter::sigil::{Sigil, Stroke};
 
-pub enum Traveller2 {
+pub enum Traveller {
     Color {
         ids: Vec<u64>,
         color: [f32; 4],
@@ -22,58 +22,58 @@ pub enum Traveller2 {
     },
     DockTop {
         top_units: f32,
-        bottom_traveller: Box<Traveller2>,
-        top_traveller: Box<Traveller2>,
+        bottom_traveller: Box<Traveller>,
+        top_traveller: Box<Traveller>,
     },
     DockLeft {
         left_units: f32,
-        left_traveller: Box<Traveller2>,
-        right_traveller: Box<Traveller2>,
+        left_traveller: Box<Traveller>,
+        right_traveller: Box<Traveller>,
     },
 }
 
-impl Traveller2 {
-    pub fn travel(&mut self, journal: Rc<Journal2>) {
+impl Traveller {
+    pub fn travel(&mut self, journal: Rc<Journal>) {
         match self {
-            &mut Traveller2::Color { ref ids, color, ref sigil } => {
+            &mut Traveller::Color { ref ids, color, ref sigil } => {
                 let cage = journal.screen_metrics().active_cage;
                 let patches = patches_from_sigil(&sigil, &cage, color, &ids);
                 for patch in patches {
                     journal.set_patch(patch.id, patch);
                 }
             },
-            &mut Traveller2::Spectrum { ref ids, ref mut color_index, ref sigil } => {
+            &mut Traveller::Spectrum { ref ids, ref mut color_index, ref sigil } => {
                 let cage = journal.screen_metrics().active_cage;
                 let color = SPECTRUM[*color_index / 2 % SPECTRUM.len()];
                 let patch = patches_from_sigil(sigil, &cage, color, ids)[0];
                 journal.set_patch(patch.id, patch);
                 *color_index = *color_index + 1;
             },
-            &mut Traveller2::DockTop { top_units, ref mut bottom_traveller, ref mut top_traveller } => {
+            &mut Traveller::DockTop { top_units, ref mut bottom_traveller, ref mut top_traveller } => {
                 let screen_metrics = journal.screen_metrics();
                 let cage = screen_metrics.active_cage;
                 let top_height = screen_metrics.preferred_reading_height * top_units;
                 let (top_cage, bottom_cage) = divide_cage_at_top(cage, top_height);
                 {
-                    let bottom_journal = Journal2::Cage { cage: bottom_cage, delegate: journal.clone() };
+                    let bottom_journal = Journal::Cage { cage: bottom_cage, delegate: journal.clone() };
                     bottom_traveller.travel(Rc::new(bottom_journal));
                 }
                 {
-                    let top_journal = Journal2::Cage { cage: top_cage, delegate: journal.clone() };
+                    let top_journal = Journal::Cage { cage: top_cage, delegate: journal.clone() };
                     top_traveller.travel(Rc::new(top_journal));
                 }
             }
-            &mut Traveller2::DockLeft { left_units, ref mut left_traveller, ref mut right_traveller } => {
+            &mut Traveller::DockLeft { left_units, ref mut left_traveller, ref mut right_traveller } => {
                 let screen_metrics = journal.screen_metrics();
                 let cage = screen_metrics.active_cage;
                 let left_width = screen_metrics.preferred_reading_height * left_units;
                 let (left_cage, right_cage) = divide_cage_at_left(cage, left_width);
                 {
-                    let journal = Journal2::Cage { cage: left_cage, delegate: journal.clone() };
+                    let journal = Journal::Cage { cage: left_cage, delegate: journal.clone() };
                     left_traveller.travel(Rc::new(journal));
                 }
                 {
-                    let journal = Journal2::Cage { cage: right_cage, delegate: journal.clone() };
+                    let journal = Journal::Cage { cage: right_cage, delegate: journal.clone() };
                     right_traveller.travel(Rc::new(journal));
                 }
             }

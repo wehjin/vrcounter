@@ -1,5 +1,5 @@
 use caravel::Caravel;
-use traveller::Traveller2;
+use traveller::Traveller;
 
 pub struct DockLeftCaravel<LeftC: Caravel, RightC: Caravel>
 {
@@ -11,8 +11,8 @@ pub struct DockLeftCaravel<LeftC: Caravel, RightC: Caravel>
 impl<LeftC, RightC> Caravel for DockLeftCaravel<LeftC, RightC>
 where LeftC: Caravel, RightC: Caravel
 {
-    fn embark(&self) -> Traveller2 {
-        Traveller2::DockLeft {
+    fn embark(&self) -> Traveller {
+        Traveller::DockLeft {
             left_units: self.left_units,
             left_traveller: Box::new(self.left_caravel.embark()),
             right_traveller: Box::new(self.right_caravel.embark()),

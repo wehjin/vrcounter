@@ -11,7 +11,7 @@ use vrcounter::*;
 use cage::Cage;
 use vrcounter::app::{Message as UserEvent};
 use screen_metrics::ScreenMetrics;
-use journal::Journal2;
+use journal::Journal;
 use vrcounter::color::*;
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -42,7 +42,7 @@ impl App {
         std::thread::spawn(move || {
             let mut traveller = caravel.embark();
             let mut travel_and_patch = |screen_metrics: ScreenMetrics| {
-                let shared_journal = Rc::new(Journal2::Prime {
+                let shared_journal = Rc::new(Journal::Prime {
                     screen_metrics: screen_metrics,
                     patches: RefCell::new(HashMap::new())
                 });

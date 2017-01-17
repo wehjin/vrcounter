@@ -3,14 +3,14 @@ pub mod dock_top;
 pub mod dock_left;
 pub mod spectrum;
 
-use traveller::Traveller2;
+use traveller::Traveller;
 use caravel::dock_top::DockTopCaravel;
 use caravel::dock_left::DockLeftCaravel;
 use std::marker::Sized;
 use vrcounter::sigil::Sigil;
 
 pub trait Caravel {
-    fn embark(&self) -> Traveller2;
+    fn embark(&self) -> Traveller;
 
     fn dock_top<TopC>(self, top_units: f32, top_caravel: TopC) -> DockTopCaravel<Self, TopC>
         where TopC: Caravel, Self: Sized
