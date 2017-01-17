@@ -69,6 +69,7 @@ impl App {
 }
 
 fn main() {
+    use caravel::Caravel;
     use caravel::color::ColorCaravel;
     use caravel::spectrum::SpectrumCaravel;
 
@@ -76,13 +77,12 @@ fn main() {
     let cage = Cage::from((-0.5, 0.5, -1.5, 0.0, 0.0, 0.2));
     let screen_metrics = ScreenMetrics::new(cage, 0.03, 0.01);
     let glyffiary = glyffin::Glyffiary::new();
-    let sigil = Sigil::of_line("Jupiter", &glyffiary);
 
-    let top_caravel = ColorCaravel::new(YELLOW, Sigil::of_fill())
-        .dock_left(24.0, ColorCaravel::new(AZURE, sigil))
+    let top_caravel = ColorCaravel::new(Sigil::of_line("Jupiter", &glyffiary), AZURE)
+        .contract(1.0, 0.5)
         .dock_left(1.0, SpectrumCaravel::new());
 
-    let caravel = ColorCaravel::new(VIOLET, Sigil::of_fill())
+    let caravel = ColorCaravel::new(Sigil::of_fill(), VIOLET)
         .dock_top(3.0, top_caravel);
 
     let (main_message_writer, main_message_reader) = std::sync::mpsc::channel();

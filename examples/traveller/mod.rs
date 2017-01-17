@@ -10,6 +10,9 @@ use vrcounter::patch::FILL_POINT;
 use vrcounter::sigil::{Sigil, Stroke};
 
 pub enum Traveller {
+    Lambda {
+        on_travel: Box<FnMut(Rc<Journal>) -> ()>
+    },
     Color {
         ids: Vec<u64>,
         color: [f32; 4],
@@ -35,6 +38,9 @@ pub enum Traveller {
 impl Traveller {
     pub fn travel(&mut self, journal: Rc<Journal>) {
         match self {
+            &mut Traveller::Lambda { ref mut on_travel } => {
+                on_travel(journal)
+            },
             &mut Traveller::Color { ref ids, color, ref sigil } => {
                 let cage = journal.screen_metrics().active_cage;
                 let patches = patches_from_sigil(&sigil, &cage, color, &ids);

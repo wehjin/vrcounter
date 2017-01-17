@@ -19,7 +19,7 @@ impl Caravel for ColorCaravel {
 }
 
 impl ColorCaravel {
-    pub fn new(color: [f32; 4], sigil: Sigil) -> Self {
+    pub fn new(sigil: Sigil, color: [f32; 4]) -> Self {
         ColorCaravel { color: color, sigil: sigil }
     }
 }
