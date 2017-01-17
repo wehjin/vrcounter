@@ -84,16 +84,12 @@ fn main() {
         .dock_top(3.0, top_caravel);
 
     let (main_message_writer, main_message_reader) = std::sync::mpsc::channel();
-    let app = App::new(main_message_writer.clone(), viewer.clone(), caravel);
+    let app = App::new(main_message_writer, viewer.clone(), caravel);
     app.send(AppMessage::Start(screen_metrics));
 
     gl_user::run(viewer.clone(), |x: UserEvent| match x {
-        UserEvent::EmitAnimationFrame => {
-            app.send(AppMessage::Step(screen_metrics));
-        },
-        UserEvent::Stop => {
-            println!("UserEvent::Stop");
-        },
+        UserEvent::EmitAnimationFrame => app.send(AppMessage::Step(screen_metrics)),
+        UserEvent::Stop => println!("UserEvent::Stop"),
         _ => ()
     });
 
