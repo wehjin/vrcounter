@@ -74,6 +74,12 @@ impl Viewer {
     pub fn stop(&self) {
         self.command_tx.send(Message::Stop).unwrap_or(());
     }
+    pub fn set_patches(&self, patches: HashMap<u64, Patch>) {
+        self.clear();
+        for (_, patch) in patches {
+            self.add_patch(patch);
+        }
+    }
 }
 
 #[cfg(test)]
