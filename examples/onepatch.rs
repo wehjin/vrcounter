@@ -11,9 +11,11 @@ use vrcounter::*;
 use cage::Cage;
 use vrcounter::app::{Message as UserEvent};
 use screen_metrics::ScreenMetrics;
-use journal::{PrimeJournal};
-use traveller::{Traveller};
+use journal::Journal2;
 use vrcounter::color::*;
+use std::rc::Rc;
+use std::cell::RefCell;
+use std::collections::HashMap;
 
 enum AppMessage {
     Start(ScreenMetrics),
@@ -33,19 +35,22 @@ use caravel::Caravel;
 use std::sync::mpsc::Sender;
 
 impl App {
-    fn new<C, T>(user_message_writer: Sender<UserMessage>, viewer: Viewer, caravel: C)
-                 -> Self
-        where T: Traveller, C: Caravel<T> + Send + 'static
+    fn new<C>(user_message_writer: Sender<UserMessage>, viewer: Viewer, caravel: C)
+              -> Self
+        where C: Caravel + Send + 'static
     {
         let (app_message_writer, app_message_reader) = std::sync::mpsc::channel();
         std::thread::spawn(move || {
             let mut traveller = caravel.embark();
             let mut travel_and_patch = |screen_metrics: ScreenMetrics| {
-                let mut journal = PrimeJournal::new(screen_metrics);
-                traveller.travel(&mut journal);
+                let patches_cell = RefCell::new(HashMap::new());
+                let journal = Journal2::Prime { screen_metrics: screen_metrics, patches: patches_cell };
+                let rc_journal = Rc::new(journal);
+                traveller.travel(rc_journal.clone());
                 viewer.clear();
-                for (_, patch) in journal.patches() {
-                    viewer.add_patch(*patch);
+                let patches = rc_journal.patches();
+                for (_, patch) in patches {
+                    viewer.add_patch(patch);
                 }
             };
             loop {

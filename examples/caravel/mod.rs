@@ -3,23 +3,37 @@ pub mod dock_top;
 pub mod dock_left;
 pub mod spectrum;
 
-use traveller::Traveller;
+use traveller::Traveller2;
 use caravel::dock_top::DockTopCaravel;
 use caravel::dock_left::DockLeftCaravel;
 use std::marker::Sized;
+use vrcounter::sigil::Sigil;
 
-pub trait Caravel<T: Traveller> {
-    fn embark(&self) -> T;
+pub trait Caravel {
+    fn embark(&self) -> Traveller2;
 
-    fn dock_top<TopT, TopC>(self, top_units: f32, top_caravel: TopC) -> DockTopCaravel<T, Self, TopT, TopC>
-        where TopT: Traveller, TopC: Caravel<TopT>, Self: Sized
+    fn dock_top<TopC>(self, top_units: f32, top_caravel: TopC) -> DockTopCaravel<Self, TopC>
+        where TopC: Caravel, Self: Sized
     {
         DockTopCaravel::new(top_units, self, top_caravel)
     }
 
-    fn dock_left<LeftT, LeftC>(self, left_units: f32, left_caravel: LeftC) -> DockLeftCaravel<LeftT, LeftC, T, Self>
-        where LeftT: Traveller, LeftC: Caravel<LeftT>, Self: Sized
+    fn dock_left<LeftC>(self, left_units: f32, left_caravel: LeftC) -> DockLeftCaravel<LeftC, Self>
+        where LeftC: Caravel, Self: Sized
     {
         DockLeftCaravel::new(left_units, left_caravel, self)
+    }
+}
+
+pub fn ids_from_sigil(sigil: &Sigil) -> Vec<u64> {
+    use rand;
+    if sigil.is_fill() {
+        vec![rand::random::<u64>()]
+    } else {
+        let mut ids = Vec::new();
+        for _ in 0..sigil.strokes.len() {
+            ids.push(rand::random::<u64>());
+        }
+        ids
     }
 }

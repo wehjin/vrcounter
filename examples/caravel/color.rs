@@ -1,5 +1,6 @@
 use caravel::Caravel;
-use traveller::color::ColorTraveller;
+use caravel::ids_from_sigil;
+use traveller::Traveller2;
 use vrcounter::Sigil;
 
 pub struct ColorCaravel {
@@ -7,9 +8,13 @@ pub struct ColorCaravel {
     sigil: Sigil,
 }
 
-impl Caravel<ColorTraveller> for ColorCaravel {
-    fn embark(&self) -> ColorTraveller {
-        ColorTraveller::new(self.color, self.sigil.clone())
+impl Caravel for ColorCaravel {
+    fn embark(&self) -> Traveller2 {
+        Traveller2::Color {
+            ids: ids_from_sigil(&self.sigil),
+            color: self.color,
+            sigil: self.sigil.clone()
+        }
     }
 }
 
