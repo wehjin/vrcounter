@@ -2,6 +2,7 @@ use screen_metrics::ScreenMetrics;
 use vrcounter::Patch;
 use std::collections::HashMap;
 use cage::Cage;
+use cage::Translation;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -47,5 +48,16 @@ impl Journal {
                 delegate.patches()
             }
         }
+    }
+
+    pub fn new_with_contraction(shared_journal: &Rc<Self>, left_right_units: f32, bottom_top_units: f32) -> Self {
+        let screen_metrics: ScreenMetrics = shared_journal.screen_metrics();
+        let (left_right_delta, bottom_top_delta) = screen_metrics.grid_units_to_main(left_right_units, bottom_top_units);
+        let new_cage = screen_metrics.active_cage.translate_sides(Translation {
+            bottom: bottom_top_delta, top: -bottom_top_delta,
+            left: left_right_delta, right: -left_right_delta,
+            ..Default::default()
+        });
+        Journal::Cage { cage: new_cage, delegate: shared_journal.clone() }
     }
 }
