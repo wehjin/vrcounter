@@ -1,12 +1,13 @@
 pub mod color;
 pub mod dock_top;
 pub mod dock_left;
-pub mod spectrum;
 pub mod lambda;
+pub mod spectrum;
 
 use traveller::Traveller;
 use caravel::dock_top::DockTopCaravel;
 use caravel::dock_left::DockLeftCaravel;
+use caravel::color::ColorCaravel;
 use caravel::lambda::LambdaCaravel;
 use std::marker::Sized;
 use vrcounter::sigil::Sigil;
@@ -15,6 +16,37 @@ use std::rc::Rc;
 use std::marker::Send;
 use std::marker::Sync;
 use std::boxed::Box;
+
+pub fn new_line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> LambdaCaravel {
+    let init_preline: String = String::from(line);
+    LambdaCaravel::new(move || {
+        let preline: String = String::from(init_preline.as_str());
+        let mut cursor_color_index: usize = 0;
+
+        Traveller::Lambda {
+            on_travel: Box::new(move |shared_journal: Rc<Journal>| {
+                use screen_metrics::ScreenMetrics;
+                use vrcounter::color::*;
+                use caravel::Caravel;
+                use caravel::spectrum::SpectrumCaravel;
+
+                let sigil = Sigil::of_line(preline.as_str(), shared_journal.glyffiary());
+                let screen_metrics: ScreenMetrics = shared_journal.screen_metrics();
+                let preline_height = screen_metrics.active_cage.frame.h;
+                let preline_width = sigil.width_per_height() * preline_height;
+                let (preline_units, _) = screen_metrics.main_units_to_grid(preline_width, preline_height);
+                let preline_caravel = ColorCaravel::new(sigil, color);
+                let caravel = ColorCaravel::new(Sigil::of_fill(), GREY_01)
+                    .dock_left(1.0, SpectrumCaravel::new(cursor_color_index))
+                    .dock_left(preline_units, preline_caravel);
+
+                let mut traveller = caravel.embark();
+                traveller.travel(shared_journal);
+                cursor_color_index = cursor_color_index + 1;
+            })
+        }
+    })
+}
 
 pub trait Caravel {
     fn embark(&self) -> Traveller;

@@ -64,15 +64,7 @@ impl Sigil {
         if self.is_fill() {
             panic!("width_per_height in not supported for sigils of fill")
         } else {
-            self.strokes[0].cage.frame.w
-        }
-    }
-
-    pub fn ascii_point(&self) -> char {
-        if self.is_fill() {
-            '\u{0}'
-        } else {
-            self.strokes[0].ascii_point
+            self.cage.frame.w
         }
     }
 }

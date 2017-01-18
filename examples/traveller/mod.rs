@@ -50,7 +50,8 @@ impl Traveller {
             },
             &mut Traveller::Spectrum { ref ids, ref mut color_index, ref sigil } => {
                 let cage = journal.screen_metrics().active_cage;
-                let color = SPECTRUM[*color_index / 2 % SPECTRUM.len()];
+                let spectrum_index = *color_index % SPECTRUM.len();
+                let color = SPECTRUM[spectrum_index];
                 let patch = patches_from_sigil(sigil, &cage, color, ids)[0];
                 journal.set_patch(patch.id, patch);
                 *color_index = *color_index + 1;

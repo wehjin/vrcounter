@@ -5,11 +5,13 @@ use cage::Cage;
 use cage::Translation;
 use std::cell::RefCell;
 use std::rc::Rc;
+use vrcounter::glyffin::Glyffiary;
 
 pub enum Journal {
     Prime {
         screen_metrics: ScreenMetrics,
         patches: RefCell<HashMap<u64, Patch>>,
+        shared_glyffiary: Rc<Glyffiary>,
     },
     Cage {
         cage: Cage,
@@ -18,6 +20,17 @@ pub enum Journal {
 }
 
 impl Journal {
+    pub fn glyffiary(&self) -> &Glyffiary {
+        match self {
+            &Journal::Prime { ref shared_glyffiary, .. } => {
+                shared_glyffiary.as_ref()
+            },
+            &Journal::Cage { ref delegate, .. } => {
+                delegate.glyffiary()
+            }
+        }
+    }
+
     pub fn screen_metrics(&self) -> ScreenMetrics {
         match self {
             &Journal::Prime { ref screen_metrics, .. } => {

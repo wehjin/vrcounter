@@ -30,7 +30,10 @@ impl Viewer {
             let mut hand: Hand = Default::default();
             while let Ok(message) = rx.recv() {
                 match message {
-                    Message::Clear => { mists.clear(); }
+                    Message::Clear => {
+                        mists.clear();
+                        patches.clear();
+                    }
                     Message::AddPatch(patch) => { patches.insert(patch.id, patch); },
                     Message::SendPatches(tx) => { tx.send(patches.clone()).unwrap(); },
                     Message::AddMist(mist) => { mists.insert(mist.id(), mist); },

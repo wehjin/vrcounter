@@ -22,9 +22,11 @@ impl ScreenMetrics {
         ScreenMetrics { active_cage: active_cage, ..*self }
     }
 
-    pub fn grid_units_to_main(&self, left_right_grids: f32, bottom_top_grids: f32) -> (f32, f32) {
-        let left_right_main = self.preferred_reading_height * left_right_grids;
-        let bottom_top_main = self.preferred_reading_height * bottom_top_grids;
-        (left_right_main, bottom_top_main)
+    pub fn grid_units_to_main(&self, horizontal_grids: f32, vertical_grids: f32) -> (f32, f32) {
+        (self.preferred_reading_height * horizontal_grids, self.preferred_reading_height * vertical_grids)
+    }
+
+    pub fn main_units_to_grid(&self, horizontal_mains: f32, vertical_mains: f32) -> (f32, f32) {
+        (horizontal_mains / self.preferred_reading_height, vertical_mains / self.preferred_reading_height)
     }
 }
