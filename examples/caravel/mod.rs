@@ -13,7 +13,6 @@ use vrcounter::sigil::Sigil;
 use journal::Journal;
 use std::rc::Rc;
 use cage::Translation;
-use std::sync::Arc;
 use std::marker::Send;
 use std::marker::Sync;
 use std::boxed::Box;
@@ -37,7 +36,7 @@ pub trait Caravel {
     fn contract(self, left_right_units: f32, bottom_top_units: f32) -> LambdaCaravel
         where Self: Sized + Send + Sync + 'static
     {
-        LambdaCaravel::new(Arc::new(move || {
+        LambdaCaravel::new(move || {
             let mut center_traveller = self.embark();
             Traveller::Lambda {
                 on_travel: Box::new(move |shared_journal: Rc<Journal>| {
@@ -55,7 +54,7 @@ pub trait Caravel {
                     center_traveller.travel(Rc::new(contract_journal));
                 })
             }
-        }))
+        })
     }
 }
 
