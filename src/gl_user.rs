@@ -7,16 +7,19 @@ use programs::Programs;
 use keymap::{Keymap, Key};
 use std::rc::Rc;
 use viewer::Viewer;
-use app::{Message as AppMessage};
 use std::time::{Instant, Duration};
 use hand::Hand;
+use user::UserEvent;
+use std::boxed::Box;
+use sakura::PressLabel;
+use sakura::AsciiPoint;
 
-pub struct Model<F> {
+pub struct Model {
     display: Rc<Display>,
     programs: Programs,
     keymap: Keymap,
     camera: Camera,
-    on_event: F,
+    on_event: Box<Fn(UserEvent) -> ()>,
     hand: Hand,
     viewer: Viewer,
 }
@@ -27,10 +30,11 @@ pub enum Message {
     MoveHand(Direction),
     ResetCamera,
     EmitAnimationFrame,
+    Press(PressLabel),
+    Release(PressLabel),
 }
 
-pub fn run<F>(viewer: Viewer, on_event: F)
-    where F: Fn(AppMessage) -> ()
+pub fn run<F>(viewer: Viewer, on_event: F) where F: Fn(UserEvent) -> () + 'static
 {
     let mut model = init(viewer, on_event);
     loop {
@@ -42,8 +46,7 @@ pub fn run<F>(viewer: Viewer, on_event: F)
     }
 }
 
-pub fn init<F>(viewer: Viewer, on_event: F) -> Model<F>
-    where F: Fn(AppMessage) -> ()
+pub fn init<F>(viewer: Viewer, on_event: F) -> Model where F: Fn(UserEvent) -> () + 'static
 {
     use programs::HandType;
     let display: Rc<Display> = Rc::new(WindowBuilder::new().with_title("vr counter")
@@ -51,7 +54,7 @@ pub fn init<F>(viewer: Viewer, on_event: F) -> Model<F>
                                                            .build_glium()
                                                            .unwrap());
     Model {
-        on_event: on_event,
+        on_event: Box::new(on_event),
         display: display.clone(),
         programs: Programs::new(display, viewer.clone(), HandType::Keyboard),
         keymap: Keymap::init(),
@@ -61,10 +64,8 @@ pub fn init<F>(viewer: Viewer, on_event: F) -> Model<F>
     }
 }
 
-pub fn update<F>(message: Message, mut model: Model<F>) -> Option<Model<F>>
-    where F: Fn(AppMessage) -> ()
+pub fn update(message: Message, mut model: Model) -> Option<Model>
 {
-    use app::Message as AppMessage;
     match message {
         Message::Quit => None,
         Message::ResetCamera => Some(model.with_camera(Camera::start())),
@@ -73,7 +74,7 @@ pub fn update<F>(message: Message, mut model: Model<F>) -> Option<Model<F>>
             Some(model.with_camera(camera))
         },
         Message::EmitAnimationFrame => {
-            (model.on_event)(AppMessage::EmitAnimationFrame);
+            (model.on_event)(UserEvent::EmitAnimationFrame);
             Some(model)
         },
         Message::MoveHand(direction) => {
@@ -89,14 +90,21 @@ pub fn update<F>(message: Message, mut model: Model<F>) -> Option<Model<F>>
             let offset = model.hand.offset.shift(dx, dy, dz);
             model.hand.offset = offset;
             model.viewer.set_hand(model.hand);
-            (model.on_event)(AppMessage::SetHand(model.hand));
+            (model.on_event)(UserEvent::SetHand(model.hand));
+            Some(model)
+        },
+        Message::Press(label) => {
+            (model.on_event)(UserEvent::Press(label));
+            Some(model)
+        },
+        Message::Release(label) => {
+            (model.on_event)(UserEvent::Release(label));
             Some(model)
         },
     }
 }
 
-fn get_camera<F>(model: &Model<F>, direction: Direction) -> Camera
-    where F: Fn(AppMessage) -> ()
+fn get_camera(model: &Model, direction: Direction) -> Camera
 {
     match direction {
         Direction::Up => model.camera.move_up(),
@@ -108,8 +116,7 @@ fn get_camera<F>(model: &Model<F>, direction: Direction) -> Camera
     }
 }
 
-pub fn draw<F>(model: &Model<F>) -> Message
-    where F: Fn(AppMessage) -> ()
+pub fn draw(model: &Model) -> Message
 {
     let mut target = model.display.draw();
     target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
@@ -121,12 +128,22 @@ pub fn draw<F>(model: &Model<F>) -> Message
     let frame_duration = Duration::from_millis(300);
 
     let mut message_option: Option<Message> = None;
-    while message_option.is_none() {
+    'find_message: while message_option.is_none() {
         for glutin_event in model.display.poll_events() {
+            use glium::glutin::{Event, ElementState, VirtualKeyCode};
+            message_option = match glutin_event {
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VirtualKeyCode::Y)) => Some(Message::Press(PressLabel::Ascii(AsciiPoint::Y))),
+                Event::KeyboardInput(ElementState::Released, _, Some(VirtualKeyCode::Y)) => Some(Message::Release(PressLabel::Ascii(AsciiPoint::Y))),
+                _ => None,
+            };
+            if message_option.is_some() {
+                break 'find_message;
+            }
+
             if let Some(key) = model.keymap.key_for_event(&glutin_event) {
                 message_option = message_option_from_key(key);
                 if message_option.is_some() {
-                    break;
+                    break 'find_message;
                 }
             }
         }
@@ -137,8 +154,7 @@ pub fn draw<F>(model: &Model<F>) -> Message
     return message_option.unwrap();
 }
 
-impl<F> Model<F>
-where F: Fn(AppMessage) -> ()
+impl Model
 {
     pub fn with_camera(self, camera: Camera) -> Self {
         Model {

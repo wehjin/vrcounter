@@ -13,9 +13,11 @@ pub mod atlas;
 pub mod color;
 pub mod gl_user;
 pub mod glyffin;
+pub mod patch;
+pub mod sakura;
 pub mod sigil;
 pub mod star;
-pub mod patch;
+pub mod user;
 
 mod hand;
 mod hand_program;
@@ -46,8 +48,6 @@ mod vr;
 mod demon;
 mod demonoid;
 
-use std::sync::Arc;
-
 pub use common::IdSource;
 pub use common::Wish;
 pub use summoner::Summoner;
@@ -63,6 +63,8 @@ pub use viewer::Viewer;
 pub use sigil::Sigil;
 use app::Message as AppMessage;
 use std::sync::mpsc::Sender;
+use std::sync::Arc;
+
 
 // TODO delete this
 pub fn start<S: Star, F>(star_builder: Arc<F>) where S: Clone + 'static,
@@ -70,13 +72,7 @@ pub fn start<S: Star, F>(star_builder: Arc<F>) where S: Clone + 'static,
 {
     let viewer = viewer::Viewer::start();
     let app: Sender<AppMessage> = app::start(viewer.clone(), star_builder);
-
-    if os::is_windows() {
-        vr_user::run(viewer.clone(), app.clone());
-    } else {
-        gl_user::run(viewer.clone(), |x: AppMessage| app.send(x).unwrap());
-    }
-
+    vr_user::run(viewer.clone(), app.clone());
     app::stop(app);
     viewer.stop();
 }

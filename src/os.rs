@@ -1,5 +1,6 @@
 use std::env;
 
+#[allow(dead_code)]
 pub fn is_windows() -> bool {
     match env::var("HOME") {
         Ok(val) => {

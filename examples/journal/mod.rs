@@ -6,12 +6,14 @@ use cage::Translation;
 use std::cell::RefCell;
 use std::rc::Rc;
 use vrcounter::glyffin::Glyffiary;
+use vrcounter::sakura::{Pressboard, PressLabel};
 
 pub enum Journal {
     Prime {
         screen_metrics: ScreenMetrics,
         patches: RefCell<HashMap<u64, Patch>>,
         shared_glyffiary: Rc<Glyffiary>,
+        shared_pressboard: Rc<RefCell<Pressboard>>,
     },
     Cage {
         cage: Cage,
@@ -20,6 +22,18 @@ pub enum Journal {
 }
 
 impl Journal {
+    pub fn find_press(&self, label: PressLabel, time: u64) -> bool {
+        match self {
+            &Journal::Prime { ref shared_pressboard, .. } => {
+                shared_pressboard.borrow().find_press(label, time)
+            }
+            &Journal::Cage { ref delegate, .. } => {
+                delegate.find_press(label, time)
+            }
+        }
+    }
+
+
     pub fn glyffiary(&self) -> &Glyffiary {
         match self {
             &Journal::Prime { ref shared_glyffiary, .. } => {

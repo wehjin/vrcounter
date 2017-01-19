@@ -29,6 +29,7 @@ pub fn new_line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> Lambda
                 use vrcounter::color::*;
                 use caravel::Caravel;
                 use caravel::spectrum::SpectrumCaravel;
+                use vrcounter::sakura::{PressLabel, AsciiPoint};
 
                 let sigil = Sigil::of_line(preline.as_str(), shared_journal.glyffiary());
                 let screen_metrics: ScreenMetrics = shared_journal.screen_metrics();
@@ -36,7 +37,21 @@ pub fn new_line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> Lambda
                 let preline_width = sigil.width_per_height() * preline_height;
                 let (preline_units, _) = screen_metrics.main_units_to_grid(preline_width, preline_height);
                 let preline_caravel = ColorCaravel::new(sigil, color);
+
+                let (cursor_width, cursor_sigil) = {
+                    let journal: &Journal = shared_journal.as_ref();
+                    if journal.find_press(PressLabel::Ascii(AsciiPoint::Y), 0) {
+                        let sigil = Sigil::of_point('y', journal.glyffiary());
+                        let cursor_width = sigil.width_per_height() * preline_height;
+                        let (cursor_units, _) = screen_metrics.main_units_to_grid(cursor_width, 0.0);
+                        (cursor_units, sigil)
+                    } else {
+                        (0.1, Sigil::of_fill())
+                    }
+                };
+                let cursor_caravel = ColorCaravel::new(cursor_sigil, YELLOW);
                 let caravel = ColorCaravel::new(Sigil::of_fill(), GREY_01)
+                    .dock_left(cursor_width, cursor_caravel)
                     .dock_left(1.0, SpectrumCaravel::new(cursor_color_index))
                     .dock_left(preline_units, preline_caravel);
 
