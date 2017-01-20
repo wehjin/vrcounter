@@ -3,19 +3,20 @@ pub mod dock_top;
 pub mod dock_left;
 pub mod lambda;
 pub mod spectrum;
+pub mod proxy;
 
 use traveller::Traveller;
 use caravel::dock_top::DockTopCaravel;
 use caravel::dock_left::DockLeftCaravel;
 use caravel::color::ColorCaravel;
 use caravel::lambda::LambdaCaravel;
+use caravel::proxy::ProxyCaravel;
 use std::marker::Sized;
 use vrcounter::sigil::Sigil;
 use journal::Journal;
 use std::rc::Rc;
 use std::marker::Send;
 use std::marker::Sync;
-use std::boxed::Box;
 
 pub fn new_line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> LambdaCaravel {
     let init_preline: String = String::from(line);
@@ -38,21 +39,21 @@ pub fn new_line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> Lambda
                 let (preline_units, _) = screen_metrics.main_units_to_grid(preline_width, preline_height);
                 let preline_caravel = ColorCaravel::new(sigil, color);
 
-                let (cursor_width, cursor_sigil) = {
+                let (cursor_width, cursor_caravel) = {
                     let journal: &Journal = shared_journal.as_ref();
                     if journal.find_press(PressLabel::Ascii(AsciiPoint::Y), 0) {
                         let sigil = Sigil::of_point('y', journal.glyffiary());
-                        let cursor_width = sigil.width_per_height() * preline_height;
-                        let (cursor_units, _) = screen_metrics.main_units_to_grid(cursor_width, 0.0);
-                        (cursor_units, sigil)
+                        let width = sigil.width_per_height() * preline_height;
+                        let (width_units, _) = screen_metrics.main_units_to_grid(width, 0.0);
+                        let caravel = ProxyCaravel::new(ColorCaravel::new(sigil, WHITE));
+                        (width_units, caravel)
                     } else {
-                        (0.1, Sigil::of_fill())
+                        let caravel = ProxyCaravel::new(SpectrumCaravel::new(cursor_color_index));
+                        (0.4, caravel)
                     }
                 };
-                let cursor_caravel = ColorCaravel::new(cursor_sigil, YELLOW);
                 let caravel = ColorCaravel::new(Sigil::of_fill(), GREY_01)
                     .dock_left(cursor_width, cursor_caravel)
-                    .dock_left(1.0, SpectrumCaravel::new(cursor_color_index))
                     .dock_left(preline_units, preline_caravel);
 
                 let mut traveller = caravel.embark();
