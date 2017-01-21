@@ -17,6 +17,8 @@ use journal::Journal;
 use std::rc::Rc;
 use std::marker::Send;
 use std::marker::Sync;
+use cage::Cage;
+use cage::Translation;
 
 pub fn new_line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> LambdaCaravel {
     let init_preline: String = String::from(line);
@@ -45,7 +47,10 @@ pub fn new_line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> Lambda
                         let sigil = Sigil::of_point('y', journal.glyffiary());
                         let width = sigil.width_per_height() * preline_height;
                         let (width_units, _) = screen_metrics.main_units_to_grid(width, 0.0);
-                        let caravel = ProxyCaravel::new(ColorCaravel::new(sigil, WHITE));
+
+                        let sigil_on_spectrum = ColorCaravel::new(sigil, GREY_01)
+                            .dock_far(1.0, SpectrumCaravel::new(cursor_color_index));
+                        let caravel = ProxyCaravel::new(sigil_on_spectrum);
                         (width_units, caravel)
                     } else {
                         let caravel = ProxyCaravel::new(SpectrumCaravel::new(cursor_color_index));
@@ -79,6 +84,32 @@ pub trait Caravel {
         DockLeftCaravel::new(left_units, left_caravel, self)
     }
 
+    fn dock_far<FarC>(self, far_units: f32, far_caravel: FarC) -> LambdaCaravel
+        where FarC: Caravel + Send + Sync + 'static,
+              Self: Sized + Send + Sync + 'static,
+    {
+        LambdaCaravel::new(move || {
+            let mut far_traveller = far_caravel.embark();
+            let mut near_traveller = self.embark();
+            Traveller::Lambda {
+                on_travel: Box::new(move |journal: Rc<Journal>| {
+                    let screen_metrics = journal.screen_metrics();
+                    let cage = screen_metrics.active_cage;
+                    let far_depth = screen_metrics.preferred_z_increment * far_units;
+                    let (far_cage, near_cage) = divide_cage_at_far(cage, far_depth);
+                    {
+                        let far_journal = Journal::Cage { cage: far_cage, delegate: journal.clone() };
+                        far_traveller.travel(Rc::new(far_journal));
+                    }
+                    {
+                        let near_journal = Journal::Cage { cage: near_cage, delegate: journal.clone() };
+                        near_traveller.travel(Rc::new(near_journal));
+                    }
+                })
+            }
+        })
+    }
+
     fn contract(self, left_right_units: f32, bottom_top_units: f32) -> LambdaCaravel
         where Self: Sized + Send + Sync + 'static
     {
@@ -105,4 +136,10 @@ pub fn ids_from_sigil(sigil: &Sigil) -> Vec<u64> {
         }
         ids
     }
+}
+
+fn divide_cage_at_far(cage: Cage, far_depth: f32) -> (Cage, Cage) {
+    let far_cage = cage;
+    let near_cage = cage.translate_sides(Translation { far: far_depth, near: far_depth, ..Default::default() });
+    (far_cage, near_cage)
 }
