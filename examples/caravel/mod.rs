@@ -19,12 +19,14 @@ use std::marker::Send;
 use std::marker::Sync;
 use cage::Cage;
 use cage::Translation;
+use std::fmt::Write;
 
 pub fn new_line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> LambdaCaravel {
     let init_preline: String = String::from(line);
     LambdaCaravel::new(move || {
-        let preline: String = String::from(init_preline.as_str());
+        let mut preline: String = String::from(init_preline.as_str());
         let mut cursor_color_index: usize = 0;
+        let mut insertion_time: u64 = 0;
 
         Traveller::Lambda {
             on_travel: Box::new(move |shared_journal: Rc<Journal>| {
@@ -41,10 +43,24 @@ pub fn new_line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> Lambda
                 let (preline_units, _) = screen_metrics.main_units_to_grid(preline_width, preline_height);
                 let preline_caravel = ColorCaravel::new(sigil, color);
 
+                let optional_ascii_point = if shared_journal.find_press(PressLabel::Ascii(AsciiPoint::Y), 0) {
+                    Some('y')
+                } else {
+                    None
+                };
+
+                let should_insert = shared_journal.find_press(PressLabel::Ascii(AsciiPoint::U), insertion_time);
+                if should_insert {
+                    println!("Insert!");
+                    if let Some(ascii_char) = optional_ascii_point {
+                        preline.write_char(ascii_char).unwrap();
+                    }
+                    insertion_time = shared_journal.time();
+                }
+
                 let (cursor_width, cursor_caravel) = {
-                    let journal: &Journal = shared_journal.as_ref();
-                    if journal.find_press(PressLabel::Ascii(AsciiPoint::Y), 0) {
-                        let sigil = Sigil::of_point('y', journal.glyffiary());
+                    if let Some(ascii_point) = optional_ascii_point {
+                        let sigil = Sigil::of_point(ascii_point, shared_journal.glyffiary());
                         let width = sigil.width_per_height() * preline_height;
                         let (width_units, _) = screen_metrics.main_units_to_grid(width, 0.0);
 
@@ -62,7 +78,7 @@ pub fn new_line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> Lambda
                     .dock_left(preline_units, preline_caravel);
 
                 let mut traveller = caravel.embark();
-                traveller.travel(shared_journal);
+                traveller.travel(shared_journal.clone());
                 cursor_color_index = cursor_color_index + 1;
             })
         }

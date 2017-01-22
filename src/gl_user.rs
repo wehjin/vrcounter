@@ -134,6 +134,8 @@ pub fn draw(model: &Model) -> Message
             message_option = match glutin_event {
                 Event::KeyboardInput(ElementState::Pressed, _, Some(VirtualKeyCode::Y)) => Some(Message::Press(PressLabel::Ascii(AsciiPoint::Y))),
                 Event::KeyboardInput(ElementState::Released, _, Some(VirtualKeyCode::Y)) => Some(Message::Release(PressLabel::Ascii(AsciiPoint::Y))),
+                Event::KeyboardInput(ElementState::Pressed, _, Some(VirtualKeyCode::U)) => Some(Message::Press(PressLabel::Ascii(AsciiPoint::U))),
+                Event::KeyboardInput(ElementState::Released, _, Some(VirtualKeyCode::U)) => Some(Message::Release(PressLabel::Ascii(AsciiPoint::U))),
                 _ => None,
             };
             if message_option.is_some() {

@@ -14,6 +14,7 @@ pub enum Journal {
         patches: RefCell<HashMap<u64, Patch>>,
         shared_glyffiary: Rc<Glyffiary>,
         shared_pressboard: Rc<RefCell<Pressboard>>,
+        time: u64,
     },
     Cage {
         cage: Cage,
@@ -22,6 +23,17 @@ pub enum Journal {
 }
 
 impl Journal {
+    pub fn time(&self) -> u64 {
+        match self {
+            &Journal::Prime { ref time, .. } => {
+                *time
+            },
+            &Journal::Cage { ref delegate, .. } => {
+                delegate.time()
+            }
+        }
+    }
+
     pub fn find_press(&self, label: PressLabel, time: u64) -> bool {
         match self {
             &Journal::Prime { ref shared_pressboard, .. } => {
@@ -32,7 +44,6 @@ impl Journal {
             }
         }
     }
-
 
     pub fn glyffiary(&self) -> &Glyffiary {
         match self {

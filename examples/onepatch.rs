@@ -54,18 +54,22 @@ impl App {
             loop {
                 match app_message_reader.recv().unwrap() {
                     AppMessage::Start => {
-                        App::update(&mut traveller, screen_metrics, &viewer, shared_glyffiary.clone(), shared_pressboard.clone())
+                        App::update(&mut traveller,
+                                    screen_metrics, &viewer, shared_glyffiary.clone(), shared_pressboard.clone(), app_time)
                     },
                     AppMessage::Frame => {
-                        App::update(&mut traveller, screen_metrics, &viewer, shared_glyffiary.clone(), shared_pressboard.clone())
+                        App::update(&mut traveller,
+                                    screen_metrics, &viewer, shared_glyffiary.clone(), shared_pressboard.clone(), app_time)
                     },
                     AppMessage::Press(label) => {
                         { shared_pressboard.borrow_mut().begin_press(label, app_time); }
-                        App::update(&mut traveller, screen_metrics, &viewer, shared_glyffiary.clone(), shared_pressboard.clone());
+                        App::update(&mut traveller,
+                                    screen_metrics, &viewer, shared_glyffiary.clone(), shared_pressboard.clone(), app_time);
                     },
                     AppMessage::Release(label) => {
                         { shared_pressboard.borrow_mut().end_press(label, app_time); }
-                        App::update(&mut traveller, screen_metrics, &viewer, shared_glyffiary.clone(), shared_pressboard.clone());
+                        App::update(&mut traveller,
+                                    screen_metrics, &viewer, shared_glyffiary.clone(), shared_pressboard.clone(), app_time);
                     },
                     AppMessage::Stop => {
                         user_message_writer.send(UserMessage::AppDidStop).unwrap();
@@ -80,12 +84,16 @@ impl App {
     fn send(&self, app_message: AppMessage) {
         self.app_message_writer.send(app_message).unwrap();
     }
-    fn update(traveller: &mut Traveller, screen_metrics: ScreenMetrics, viewer: &Viewer, shared_glyffiary: Rc<Glyffiary>, board: Rc<RefCell<Pressboard>>) {
+    fn update(traveller: &mut Traveller,
+              screen_metrics: ScreenMetrics, viewer: &Viewer, shared_glyffiary: Rc<Glyffiary>,
+              board: Rc<RefCell<Pressboard>>, today: u64)
+    {
         let shared_journal = Rc::new(Journal::Prime {
             screen_metrics: screen_metrics,
             patches: RefCell::new(HashMap::new()),
             shared_glyffiary: shared_glyffiary,
             shared_pressboard: board,
+            time: today,
         });
         traveller.travel(shared_journal.clone());
         viewer.set_patches(shared_journal.patches());
