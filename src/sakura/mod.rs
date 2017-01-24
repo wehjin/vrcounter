@@ -2,13 +2,15 @@ use std::collections::HashMap;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum AsciiPoint {
+    Backspace,
     Y,
-    U
+    U,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum PressLabel {
-    Ascii(AsciiPoint)
+    Ascii(AsciiPoint),
+    SelectionEditLeft,
 }
 
 #[derive(Copy, Clone)]

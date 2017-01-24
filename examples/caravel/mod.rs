@@ -20,31 +20,50 @@ use std::marker::Sync;
 use cage::Cage;
 use cage::Translation;
 use std::fmt::Write;
+use screen_metrics::ScreenMetrics;
+use vrcounter::color::*;
+use caravel::spectrum::SpectrumCaravel;
+use vrcounter::sakura::{PressLabel, AsciiPoint};
+
+enum MidlineSide {
+    None,
+    Left,
+    Right
+}
+
+pub fn cursor_width_and_caravel(sigil: Sigil,
+                                line_height: f32,
+                                screen_metrics: &ScreenMetrics,
+                                cursor_color_index: usize) -> (f32, ProxyCaravel)
+{
+    let width = sigil.width_per_height() * line_height;
+    let (width_units, _) = screen_metrics.main_units_to_grid(width, 0.0);
+    let sigil_on_spectrum = ColorCaravel::new(sigil, GREY_01).dock_far(1.0, SpectrumCaravel::new(cursor_color_index));
+    let caravel = ProxyCaravel::new(sigil_on_spectrum);
+    (width_units, caravel)
+}
+
+pub fn empty_cursor_width_and_caravel(cursor_color_index: usize) -> (f32, ProxyCaravel)
+{
+    (0.4, ProxyCaravel::new(SpectrumCaravel::new(cursor_color_index)))
+}
 
 pub fn new_line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> LambdaCaravel {
     let init_preline: String = String::from(line);
     LambdaCaravel::new(move || {
         let mut preline: String = String::from(init_preline.as_str());
+        let mut midline: String = String::new();
+        let mut midline_side = MidlineSide::None;
         let mut cursor_color_index: usize = 0;
         let mut insertion_time: u64 = 0;
+        let mut selection_expand_left_time: u64 = 0;
 
         Traveller::Lambda {
             on_travel: Box::new(move |shared_journal: Rc<Journal>| {
-                use screen_metrics::ScreenMetrics;
-                use vrcounter::color::*;
-                use caravel::Caravel;
-                use caravel::spectrum::SpectrumCaravel;
-                use vrcounter::sakura::{PressLabel, AsciiPoint};
-
-                let sigil = Sigil::of_line(preline.as_str(), shared_journal.glyffiary());
-                let screen_metrics: ScreenMetrics = shared_journal.screen_metrics();
-                let preline_height = screen_metrics.active_cage.frame.h;
-                let preline_width = sigil.width_per_height() * preline_height;
-                let (preline_units, _) = screen_metrics.main_units_to_grid(preline_width, preline_height);
-                let preline_caravel = ColorCaravel::new(sigil, color);
-
                 let optional_ascii_point = if shared_journal.find_press(PressLabel::Ascii(AsciiPoint::Y), 0) {
                     Some('y')
+                } else if shared_journal.find_press(PressLabel::Ascii(AsciiPoint::Backspace), 0) {
+                    Some('\x08')
                 } else {
                     None
                 };
@@ -53,24 +72,53 @@ pub fn new_line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> Lambda
                 if should_insert {
                     println!("Insert!");
                     if let Some(ascii_char) = optional_ascii_point {
-                        preline.write_char(ascii_char).unwrap();
+                        if ascii_char != '\x08' {
+                            preline.write_char(ascii_char).unwrap();
+                        }
+                        midline.clear();
+                        midline_side = MidlineSide::None;
                     }
                     insertion_time = shared_journal.time();
                 }
 
+                let should_expand_selection_left = shared_journal.find_press(PressLabel::SelectionEditLeft, selection_expand_left_time);
+                if should_expand_selection_left {
+                    if let Some(c) = preline.pop() {
+                        midline.insert(0, c);
+                        midline_side = MidlineSide::Left;
+                    }
+                    selection_expand_left_time = shared_journal.time();
+                }
+
+                let screen_metrics: ScreenMetrics = shared_journal.screen_metrics();
+                let line_height = screen_metrics.active_cage.frame.h;
+
+                let (preline_units, preline_caravel) = {
+                    if preline.is_empty() {
+                        (0.0, ColorCaravel::new(Sigil::of_fill(), ROSE))
+                    } else {
+                        let sigil = Sigil::of_line(preline.as_str(), shared_journal.glyffiary());
+                        let preline_width = sigil.width_per_height() * line_height;
+                        let (preline_units, _) = screen_metrics.main_units_to_grid(preline_width, line_height);
+                        (preline_units, ColorCaravel::new(sigil, color))
+                    }
+                };
+
                 let (cursor_width, cursor_caravel) = {
                     if let Some(ascii_point) = optional_ascii_point {
-                        let sigil = Sigil::of_point(ascii_point, shared_journal.glyffiary());
-                        let width = sigil.width_per_height() * preline_height;
-                        let (width_units, _) = screen_metrics.main_units_to_grid(width, 0.0);
-
-                        let sigil_on_spectrum = ColorCaravel::new(sigil, GREY_01)
-                            .dock_far(1.0, SpectrumCaravel::new(cursor_color_index));
-                        let caravel = ProxyCaravel::new(sigil_on_spectrum);
-                        (width_units, caravel)
+                        if ascii_point == '\x08' {
+                            empty_cursor_width_and_caravel(cursor_color_index)
+                        } else {
+                            let sigil = Sigil::of_point(ascii_point, shared_journal.glyffiary());
+                            cursor_width_and_caravel(sigil, line_height, &screen_metrics, cursor_color_index)
+                        }
                     } else {
-                        let caravel = ProxyCaravel::new(SpectrumCaravel::new(cursor_color_index));
-                        (0.4, caravel)
+                        if midline.len() > 0 {
+                            let sigil = Sigil::of_line(&midline, shared_journal.glyffiary());
+                            cursor_width_and_caravel(sigil, line_height, &screen_metrics, cursor_color_index)
+                        } else {
+                            empty_cursor_width_and_caravel(cursor_color_index)
+                        }
                     }
                 };
                 let caravel = ColorCaravel::new(Sigil::of_fill(), GREY_01)

@@ -13,6 +13,8 @@ use user::UserEvent;
 use std::boxed::Box;
 use sakura::PressLabel;
 use sakura::AsciiPoint;
+use glium::glutin::{Event, ElementState, VirtualKeyCode};
+
 
 pub struct Model {
     display: Rc<Display>,
@@ -116,6 +118,15 @@ fn get_camera(model: &Model, direction: Direction) -> Camera
     }
 }
 
+impl PressLabel {
+    fn to_message(self, elementstate: ElementState) -> Option<Message> {
+        Some(match elementstate {
+            ElementState::Pressed => Message::Press(self),
+            ElementState::Released => Message::Release(self),
+        })
+    }
+}
+
 pub fn draw(model: &Model) -> Message
 {
     let mut target = model.display.draw();
@@ -130,12 +141,11 @@ pub fn draw(model: &Model) -> Message
     let mut message_option: Option<Message> = None;
     'find_message: while message_option.is_none() {
         for glutin_event in model.display.poll_events() {
-            use glium::glutin::{Event, ElementState, VirtualKeyCode};
             message_option = match glutin_event {
-                Event::KeyboardInput(ElementState::Pressed, _, Some(VirtualKeyCode::Y)) => Some(Message::Press(PressLabel::Ascii(AsciiPoint::Y))),
-                Event::KeyboardInput(ElementState::Released, _, Some(VirtualKeyCode::Y)) => Some(Message::Release(PressLabel::Ascii(AsciiPoint::Y))),
-                Event::KeyboardInput(ElementState::Pressed, _, Some(VirtualKeyCode::U)) => Some(Message::Press(PressLabel::Ascii(AsciiPoint::U))),
-                Event::KeyboardInput(ElementState::Released, _, Some(VirtualKeyCode::U)) => Some(Message::Release(PressLabel::Ascii(AsciiPoint::U))),
+                Event::KeyboardInput(elementstate, _, Some(VirtualKeyCode::Y)) => PressLabel::Ascii(AsciiPoint::Y).to_message(elementstate),
+                Event::KeyboardInput(elementstate, _, Some(VirtualKeyCode::U)) => PressLabel::Ascii(AsciiPoint::U).to_message(elementstate),
+                Event::KeyboardInput(elementstate, _, Some(VirtualKeyCode::Left)) => PressLabel::SelectionEditLeft.to_message(elementstate),
+                Event::KeyboardInput(elementstate, _, Some(VirtualKeyCode::Back)) => PressLabel::Ascii(AsciiPoint::Backspace).to_message(elementstate),
                 _ => None,
             };
             if message_option.is_some() {
