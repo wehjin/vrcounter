@@ -109,7 +109,7 @@ fn main() {
     let screen_metrics = ScreenMetrics::new(cage, 0.03, 0.01);
     let glyffiary = glyffin::Glyffiary::new();
 
-    let line_editor = caravel::new_line_editor("Saturn", 7, 'a', AZURE);
+    let line_editor = caravel::line_editor::line_editor("Saturn", 7, 'a', AZURE);
     let top_caravel = line_editor.contract(1.0, 0.5);
 
     let caravel = ColorCaravel::new(Sigil::of_fill(), VIOLET)
