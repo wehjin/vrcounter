@@ -42,25 +42,32 @@ pub fn line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> LambdaCara
         let mut midline_side = MidlineSide::None;
         let mut cursor_color_index: usize = 0;
         let mut insertion_time: u64 = 0;
+        let mut back_erasure_time: u64 = 0;
         let mut selection_expand_left_time: u64 = 0;
 
         Traveller::Lambda {
             on_travel: Box::new(move |shared_journal: Rc<Journal>| {
-                let optional_ascii_point = if shared_journal.find_press(PressLabel::Ascii(AsciiPoint::Y), 0) {
+                let optional_preview_char = if shared_journal.find_press(PressLabel::Ascii(AsciiPoint::Y), 0) {
                     Some('y')
-                } else if shared_journal.find_press(PressLabel::Ascii(AsciiPoint::Backspace), 0) {
-                    Some('\x08')
                 } else {
                     None
                 };
 
+                let should_erase_back = shared_journal.find_press(PressLabel::Ascii(AsciiPoint::Backspace), back_erasure_time);
+                if should_erase_back {
+                    if midline.is_empty() {
+                        preline.pop();
+                    } else {
+                        midline.clear();
+                        midline_side = MidlineSide::None;
+                    }
+                    back_erasure_time = shared_journal.time();
+                }
+
                 let should_insert = shared_journal.find_press(PressLabel::Ascii(AsciiPoint::U), insertion_time);
                 if should_insert {
-                    println!("Insert!");
-                    if let Some(ascii_char) = optional_ascii_point {
-                        if ascii_char != '\x08' {
-                            preline.write_char(ascii_char).unwrap();
-                        }
+                    if let Some(ascii_char) = optional_preview_char {
+                        preline.write_char(ascii_char).unwrap();
                         midline.clear();
                         midline_side = MidlineSide::None;
                     }
@@ -91,13 +98,9 @@ pub fn line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> LambdaCara
                 };
 
                 let (cursor_width, cursor_caravel) = {
-                    if let Some(ascii_point) = optional_ascii_point {
-                        if ascii_point == '\x08' {
-                            empty_cursor_width_and_caravel(cursor_color_index)
-                        } else {
-                            let sigil = Sigil::of_point(ascii_point, shared_journal.glyffiary());
-                            cursor_width_and_caravel(sigil, line_height, &screen_metrics, cursor_color_index)
-                        }
+                    if let Some(ascii_point) = optional_preview_char {
+                        let sigil = Sigil::of_point(ascii_point, shared_journal.glyffiary());
+                        cursor_width_and_caravel(sigil, line_height, &screen_metrics, cursor_color_index)
                     } else {
                         if midline.len() > 0 {
                             let sigil = Sigil::of_line(&midline, shared_journal.glyffiary());
