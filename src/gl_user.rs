@@ -146,6 +146,7 @@ pub fn draw(model: &Model) -> Message
                 Event::KeyboardInput(elementstate, _, Some(VirtualKeyCode::U)) => PressLabel::Ascii(AsciiPoint::U).to_message(elementstate),
                 Event::KeyboardInput(elementstate, _, Some(VirtualKeyCode::Left)) => PressLabel::SelectionEditLeft.to_message(elementstate),
                 Event::KeyboardInput(elementstate, _, Some(VirtualKeyCode::Back)) => PressLabel::Ascii(AsciiPoint::Backspace).to_message(elementstate),
+                Event::KeyboardInput(elementstate, _, Some(VirtualKeyCode::Space)) => PressLabel::Ascii(AsciiPoint::Space).to_message(elementstate),
                 _ => None,
             };
             if message_option.is_some() {

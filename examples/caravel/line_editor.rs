@@ -47,13 +47,15 @@ pub fn line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> LambdaCara
 
         Traveller::Lambda {
             on_travel: Box::new(move |shared_journal: Rc<Journal>| {
-                let optional_preview_char = if shared_journal.find_press(PressLabel::Ascii(AsciiPoint::Y), 0) {
-                    Some('y')
+                let journal: &Journal = shared_journal.as_ref();
+
+                let optional_preview_press = if journal.find_press(PressLabel::Ascii(AsciiPoint::Y), 0) {
+                    Some(PressLabel::Ascii(AsciiPoint::Y))
                 } else {
                     None
                 };
 
-                let should_erase_back = shared_journal.find_press(PressLabel::Ascii(AsciiPoint::Backspace), back_erasure_time);
+                let should_erase_back = journal.find_press(PressLabel::Ascii(AsciiPoint::Backspace), back_erasure_time);
                 if should_erase_back {
                     if midline.is_empty() {
                         preline.pop();
@@ -61,36 +63,38 @@ pub fn line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> LambdaCara
                         midline.clear();
                         midline_side = MidlineSide::None;
                     }
-                    back_erasure_time = shared_journal.time();
+                    back_erasure_time = journal.time();
                 }
 
-                let should_insert = shared_journal.find_press(PressLabel::Ascii(AsciiPoint::U), insertion_time);
+                let should_insert = journal.find_press(PressLabel::Ascii(AsciiPoint::Space), insertion_time);
                 if should_insert {
-                    if let Some(ascii_char) = optional_preview_char {
-                        preline.write_char(ascii_char).unwrap();
-                        midline.clear();
-                        midline_side = MidlineSide::None;
+                    if let Some(PressLabel::Ascii(ascii_point)) = optional_preview_press {
+                        preline.write_char(ascii_point.as_char()).unwrap();
+                    } else {
+                        preline.write_char(' ').unwrap();
                     }
-                    insertion_time = shared_journal.time();
+                    midline.clear();
+                    midline_side = MidlineSide::None;
+                    insertion_time = journal.time();
                 }
 
-                let should_expand_selection_left = shared_journal.find_press(PressLabel::SelectionEditLeft, selection_expand_left_time);
+                let should_expand_selection_left = journal.find_press(PressLabel::SelectionEditLeft, selection_expand_left_time);
                 if should_expand_selection_left {
                     if let Some(c) = preline.pop() {
                         midline.insert(0, c);
                         midline_side = MidlineSide::Left;
                     }
-                    selection_expand_left_time = shared_journal.time();
+                    selection_expand_left_time = journal.time();
                 }
 
-                let screen_metrics: ScreenMetrics = shared_journal.screen_metrics();
+                let screen_metrics: ScreenMetrics = journal.screen_metrics();
                 let line_height = screen_metrics.active_cage.frame.h;
 
                 let (preline_units, preline_caravel) = {
                     if preline.is_empty() {
                         (0.0, ColorCaravel::new(Sigil::of_fill(), ROSE))
                     } else {
-                        let sigil = Sigil::of_line(preline.as_str(), shared_journal.glyffiary());
+                        let sigil = Sigil::of_line(preline.as_str(), journal.glyffiary());
                         let preline_width = sigil.width_per_height() * line_height;
                         let (preline_units, _) = screen_metrics.main_units_to_grid(preline_width, line_height);
                         (preline_units, ColorCaravel::new(sigil, color))
@@ -98,12 +102,12 @@ pub fn line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> LambdaCara
                 };
 
                 let (cursor_width, cursor_caravel) = {
-                    if let Some(ascii_point) = optional_preview_char {
-                        let sigil = Sigil::of_point(ascii_point, shared_journal.glyffiary());
+                    if let Some(PressLabel::Ascii(ascii_point)) = optional_preview_press {
+                        let sigil = Sigil::of_point(ascii_point.as_char(), journal.glyffiary());
                         cursor_width_and_caravel(sigil, line_height, &screen_metrics, cursor_color_index)
                     } else {
                         if midline.len() > 0 {
-                            let sigil = Sigil::of_line(&midline, shared_journal.glyffiary());
+                            let sigil = Sigil::of_line(&midline, journal.glyffiary());
                             cursor_width_and_caravel(sigil, line_height, &screen_metrics, cursor_color_index)
                         } else {
                             empty_cursor_width_and_caravel(cursor_color_index)

@@ -2,9 +2,21 @@ use std::collections::HashMap;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum AsciiPoint {
+    Space,
     Backspace,
     Y,
     U,
+}
+
+impl AsciiPoint {
+    pub fn as_char(&self) -> char {
+        match self {
+            &AsciiPoint::Space => ' ',
+            &AsciiPoint::Backspace => '\x08',
+            &AsciiPoint::Y => 'Y',
+            &AsciiPoint::U => 'U',
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
