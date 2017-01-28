@@ -1,4 +1,5 @@
 use sakura::PressLabel;
+use sakura::AsciiPoint;
 use hand::Hand;
 
 pub enum UserEvent {
@@ -7,4 +8,5 @@ pub enum UserEvent {
     SetHand(Hand),
     Press(PressLabel),
     Release(PressLabel),
+    Preview(Option<AsciiPoint>),
 }

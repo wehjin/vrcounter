@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use vrcounter::glyffin::Glyffiary;
 use traveller::Traveller;
 use vrcounter::user::UserEvent;
-use vrcounter::sakura::{PressLabel, Pressboard};
+use vrcounter::sakura::{PressLabel, Pressboard, AsciiPoint};
 use caravel::Caravel;
 use std::sync::mpsc::Sender;
 
@@ -26,6 +26,7 @@ enum AppMessage {
     Frame,
     Press(PressLabel),
     Release(PressLabel),
+    Preview(Option<AsciiPoint>),
     Start,
     Stop,
 }
@@ -53,6 +54,11 @@ impl App {
             let shared_pressboard = Rc::new(RefCell::new(Pressboard::new()));
             loop {
                 match app_message_reader.recv().unwrap() {
+                    AppMessage::Preview(preview) => {
+                        { shared_pressboard.borrow_mut().set_preview_option(preview); }
+                        App::update(&mut traveller,
+                                    screen_metrics, &viewer, shared_glyffiary.clone(), shared_pressboard.clone(), app_time)
+                    },
                     AppMessage::Start => {
                         App::update(&mut traveller,
                                     screen_metrics, &viewer, shared_glyffiary.clone(), shared_pressboard.clone(), app_time)
@@ -124,6 +130,7 @@ fn main() {
         UserEvent::EmitAnimationFrame => gl_app.send(AppMessage::Frame),
         UserEvent::Press(label) => gl_app.send(AppMessage::Press(label)),
         UserEvent::Release(label) => gl_app.send(AppMessage::Release(label)),
+        UserEvent::Preview(optional_asciipoint) => gl_app.send(AppMessage::Preview(optional_asciipoint)),
         UserEvent::Stop => println!("UserEvent::Stop"),
         _ => ()
     });

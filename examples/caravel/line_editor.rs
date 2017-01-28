@@ -49,12 +49,6 @@ pub fn line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> LambdaCara
             on_travel: Box::new(move |shared_journal: Rc<Journal>| {
                 let journal: &Journal = shared_journal.as_ref();
 
-                let optional_preview_press = if journal.find_press(PressLabel::Ascii(AsciiPoint::Y), 0) {
-                    Some(PressLabel::Ascii(AsciiPoint::Y))
-                } else {
-                    None
-                };
-
                 let should_erase_back = journal.find_press(PressLabel::Ascii(AsciiPoint::Backspace), back_erasure_time);
                 if should_erase_back {
                     if midline.is_empty() {
@@ -66,9 +60,10 @@ pub fn line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> LambdaCara
                     back_erasure_time = journal.time();
                 }
 
+                let optional_preview = journal.find_preview();
                 let should_insert = journal.find_press(PressLabel::Ascii(AsciiPoint::Space), insertion_time);
                 if should_insert {
-                    if let Some(PressLabel::Ascii(ascii_point)) = optional_preview_press {
+                    if let Some(ascii_point) = optional_preview {
                         preline.write_char(ascii_point.as_char()).unwrap();
                     } else {
                         preline.write_char(' ').unwrap();
@@ -102,7 +97,7 @@ pub fn line_editor(line: &str, _: usize, _: char, color: [f32; 4]) -> LambdaCara
                 };
 
                 let (cursor_width, cursor_caravel) = {
-                    if let Some(PressLabel::Ascii(ascii_point)) = optional_preview_press {
+                    if let Some(ascii_point) = optional_preview {
                         let sigil = Sigil::of_point(ascii_point.as_char(), journal.glyffiary());
                         cursor_width_and_caravel(sigil, line_height, &screen_metrics, cursor_color_index)
                     } else {

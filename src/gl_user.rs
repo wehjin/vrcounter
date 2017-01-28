@@ -24,6 +24,17 @@ pub struct Model {
     on_event: Box<Fn(UserEvent) -> ()>,
     hand: Hand,
     viewer: Viewer,
+    preview: Option<f32>
+}
+
+impl Model
+{
+    pub fn with_camera(self, camera: Camera) -> Self {
+        Model { camera: camera, ..self }
+    }
+    pub fn with_preview(self, preview: Option<f32>) -> Self {
+        Model { preview: preview, ..self }
+    }
 }
 
 pub enum Message {
@@ -34,6 +45,9 @@ pub enum Message {
     EmitAnimationFrame,
     Press(PressLabel),
     Release(PressLabel),
+    StartWheel,
+    MoveWheel(f32),
+    EndWheel,
 }
 
 pub fn run<F>(viewer: Viewer, on_event: F) where F: Fn(UserEvent) -> () + 'static
@@ -63,12 +77,36 @@ pub fn init<F>(viewer: Viewer, on_event: F) -> Model where F: Fn(UserEvent) -> (
         camera: Camera::start(),
         hand: Default::default(),
         viewer: viewer.clone(),
+        preview: None,
     }
 }
 
 pub fn update(message: Message, mut model: Model) -> Option<Model>
 {
     match message {
+        Message::StartWheel => {
+            println!("StartWheel");
+            Some(model)
+        },
+        Message::MoveWheel(distance) => {
+            let (is_new_previous_distance, previous_distance) = match model.preview {
+                Some(distance) => (false, distance),
+                None => (true, 0.0),
+            };
+            let new_distance: f32 = previous_distance + distance / 15.0;
+            let previous_ascii_point = AsciiPoint::from(previous_distance - 78.0);
+            let new_ascii_point = AsciiPoint::from(new_distance - 78.0);
+            if new_ascii_point != previous_ascii_point || is_new_previous_distance {
+                println!("Wheel {:?}", new_ascii_point);
+                (model.on_event)(UserEvent::Preview(Some(new_ascii_point)));
+            }
+            Some(model.with_preview(Some(new_distance)))
+        },
+        Message::EndWheel => {
+            println!("EndWheel");
+            (model.on_event)(UserEvent::Preview(None));
+            Some(model.with_preview(None))
+        },
         Message::Quit => None,
         Message::ResetCamera => Some(model.with_camera(Camera::start())),
         Message::MoveCamera(direction) => {
@@ -141,12 +179,17 @@ pub fn draw(model: &Model) -> Message
     let mut message_option: Option<Message> = None;
     'find_message: while message_option.is_none() {
         for glutin_event in model.display.poll_events() {
+            use glium::glutin::MouseScrollDelta;
+            use glium::glutin::TouchPhase;
+
             message_option = match glutin_event {
-                Event::KeyboardInput(elementstate, _, Some(VirtualKeyCode::Y)) => PressLabel::Ascii(AsciiPoint::Y).to_message(elementstate),
-                Event::KeyboardInput(elementstate, _, Some(VirtualKeyCode::U)) => PressLabel::Ascii(AsciiPoint::U).to_message(elementstate),
                 Event::KeyboardInput(elementstate, _, Some(VirtualKeyCode::Left)) => PressLabel::SelectionEditLeft.to_message(elementstate),
                 Event::KeyboardInput(elementstate, _, Some(VirtualKeyCode::Back)) => PressLabel::Ascii(AsciiPoint::Backspace).to_message(elementstate),
                 Event::KeyboardInput(elementstate, _, Some(VirtualKeyCode::Space)) => PressLabel::Ascii(AsciiPoint::Space).to_message(elementstate),
+                Event::MouseWheel(_, TouchPhase::Started) => Some(Message::StartWheel),
+                Event::MouseWheel(_, TouchPhase::Ended) => Some(Message::EndWheel),
+                Event::MouseWheel(_, TouchPhase::Cancelled) => Some(Message::EndWheel),
+                Event::MouseWheel(MouseScrollDelta::PixelDelta(_, dy), TouchPhase::Moved) => Some(Message::MoveWheel(dy)),
                 _ => None,
             };
             if message_option.is_some() {
@@ -165,21 +208,6 @@ pub fn draw(model: &Model) -> Message
         }
     }
     return message_option.unwrap();
-}
-
-impl Model
-{
-    pub fn with_camera(self, camera: Camera) -> Self {
-        Model {
-            display: self.display,
-            programs: self.programs,
-            keymap: self.keymap,
-            camera: camera,
-            on_event: self.on_event,
-            hand: self.hand,
-            viewer: self.viewer,
-        }
-    }
 }
 
 fn message_option_from_key(key: Key) -> Option<Message> {

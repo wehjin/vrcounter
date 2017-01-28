@@ -6,7 +6,7 @@ use cage::Translation;
 use std::cell::RefCell;
 use std::rc::Rc;
 use vrcounter::glyffin::Glyffiary;
-use vrcounter::sakura::{Pressboard, PressLabel};
+use vrcounter::sakura::{Pressboard, PressLabel, AsciiPoint};
 
 pub enum Journal {
     Prime {
@@ -30,6 +30,17 @@ impl Journal {
             },
             &Journal::Cage { ref delegate, .. } => {
                 delegate.time()
+            }
+        }
+    }
+
+    pub fn find_preview(&self) -> Option<AsciiPoint> {
+        match self {
+            &Journal::Prime { ref shared_pressboard, .. } => {
+                shared_pressboard.borrow().preview_option()
+            }
+            &Journal::Cage { ref delegate, .. } => {
+                delegate.find_preview()
             }
         }
     }
