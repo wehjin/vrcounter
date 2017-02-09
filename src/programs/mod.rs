@@ -24,10 +24,7 @@ pub struct Programs {
 impl Programs {
     pub fn new(display: Rc<Display>, viewer: Viewer, hand_type: HandType) -> Self {
         Programs {
-            floor_program: {
-                let display_ref: &Display = display.borrow();
-                FloorProgram::new(display_ref)
-            },
+            floor_program: FloorProgram::new(display.clone()),
             mist_program: MistProgram::new(display.clone(), viewer.clone()),
             patch_program: PatchProgram::new(display.clone(), viewer.clone()),
             controller_program_option: match hand_type {

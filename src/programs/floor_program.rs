@@ -3,6 +3,8 @@ extern crate glium;
 use mat::IDENTITY44;
 use glium::{Display, Program, VertexBuffer, Surface};
 use glium::index::{NoIndices, PrimitiveType};
+use std::rc::Rc;
+use std::borrow::Borrow;
 
 pub struct FloorProgram {
     program: glium::Program,
@@ -12,15 +14,16 @@ pub struct FloorProgram {
 }
 
 impl FloorProgram {
-    pub fn new(display: &Display) -> Self {
+    pub fn new(display: Rc<Display>) -> Self {
         let nw = Vertex { position: [-1.0, 0.0, -1.0] };
         let ne = Vertex { position: [1.0, 0.0, -1.0] };
         let se = Vertex { position: [1.0, 0.0, 1.0] };
         let sw = Vertex { position: [-1.0, 0.0, 1.0] };
         let vertices = vec![nw, ne.clone(), sw.clone(), ne, se, sw];
+        let display_ref: &Display = display.borrow();
         FloorProgram {
-            program: Program::from_source(display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap(),
-            vertex_buffer: VertexBuffer::new(display, &vertices).unwrap(),
+            program: Program::from_source(display_ref, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap(),
+            vertex_buffer: VertexBuffer::new(display_ref, &vertices).unwrap(),
             indices: NoIndices(PrimitiveType::TrianglesList),
             model_matrix: IDENTITY44,
         }
