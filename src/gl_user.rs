@@ -54,7 +54,7 @@ pub fn run<F>(viewer: Viewer, on_event: F) where F: Fn(UserEvent) -> () + 'stati
 {
     let mut model = init(viewer, on_event);
     loop {
-        let message = draw(&model);
+        let message = draw_and_await_message(&model);
         match update(message, model) {
             None => return,
             Some(next_model) => model = next_model,
@@ -165,14 +165,22 @@ impl PressLabel {
     }
 }
 
-pub fn draw(model: &Model) -> Message
+pub fn draw_and_await_message(model: &Model) -> Message
 {
+    draw(model);
+    await_message(model)
+}
+
+fn draw(model: &Model) {
     let mut target = model.display.draw();
     target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
+
     let (view, perspective) = model.camera.get_view_and_projection(&target);
     model.programs.draw(&mut target, &view, &perspective);
     target.finish().unwrap();
+}
 
+fn await_message(model: &Model) -> Message {
     let frame_instant = Instant::now();
     let frame_duration = Duration::from_millis(300);
 
