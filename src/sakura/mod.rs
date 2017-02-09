@@ -121,9 +121,9 @@ pub enum PressConclusion {
 #[derive(Copy, Clone)]
 pub struct Press {
     press_time: u64,
-    label: PressLabel,
+    _label: PressLabel,
     release_time: Option<u64>,
-    conclusion: Option<PressConclusion>
+    _conclusion: Option<PressConclusion>
 }
 
 impl Press {
@@ -162,7 +162,7 @@ impl Pressboard {
     }
     pub fn begin_press(&mut self, label: PressLabel, time: u64) {
         let next_press = match self.presses.get(&label) {
-            None => Press { press_time: time, label: label, release_time: None, conclusion: None },
+            None => Press { press_time: time, _label: label, release_time: None, _conclusion: None },
             Some(press) => {
                 let mut next_press: Press = *press;
                 if next_press.release_time.is_some() {
