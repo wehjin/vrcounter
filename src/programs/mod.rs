@@ -1,9 +1,14 @@
+mod floor_program;
+mod mist_program;
+mod hand_program;
+mod patch_program;
+
 use glium::{Display, Surface};
-use floor_program::FloorProgram;
-use mist_program::MistProgram;
-use patch_program::PatchProgram;
+use programs::floor_program::FloorProgram;
+use programs::mist_program::MistProgram;
+use programs::patch_program::PatchProgram;
+use programs::hand_program::HandProgram;
 use controller_program::ControllerProgram;
-use hand_program::HandProgram;
 use viewer::Viewer;
 use std::rc::Rc;
 use std::borrow::Borrow;

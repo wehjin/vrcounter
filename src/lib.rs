@@ -20,11 +20,7 @@ pub mod star;
 pub mod user;
 
 mod hand;
-mod hand_program;
 mod keymap;
-mod patch_program;
-mod floor_program;
-mod mist_program;
 mod controller_program;
 mod programs;
 mod mat;
